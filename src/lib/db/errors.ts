@@ -1,13 +1,15 @@
 // Turns database connection failures into a plain-English fix. Shown in the snapshot job's log on GitHub,
 // which only people with CRON_SECRET can trigger. Connection strings are never echoed back.
 
+import { cleanEnv } from "@/lib/env";
+
 export function describeDbError(err: unknown): string {
   const e = err as { code?: unknown; message?: unknown; errno?: unknown };
   const code = typeof e?.code === "string" ? e.code : "";
   const raw = typeof e?.message === "string" ? e.message : String(err);
   const message = raw.replace(/postgres(ql)?:\/\/\S+/gi, "postgres://…");
 
-  if (!process.env.DATABASE_URL && process.env.VERCEL) {
+  if (!cleanEnv("DATABASE_URL") && process.env.VERCEL) {
     return "DATABASE_URL isn't set in Vercel. Add it under Settings → Environment Variables, then redeploy.";
   }
   if (/invalid url/i.test(message) || code === "ERR_INVALID_URL") {

@@ -1,3 +1,4 @@
+import { cleanEnv } from "@/lib/env";
 import { SCHEMA } from "./schema";
 
 export type Row = Record<string, unknown>;
@@ -10,7 +11,7 @@ export interface Db {
 // DATABASE_URL set  -> real Postgres (Supabase in production).
 // DATABASE_URL unset -> PGlite, an embedded Postgres stored in .data/pglite. No install needed.
 async function connect(): Promise<Db> {
-  const url = process.env.DATABASE_URL;
+  const url = cleanEnv("DATABASE_URL");
 
   if (url) {
     const { default: postgres } = await import("postgres");

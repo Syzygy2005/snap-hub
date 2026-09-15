@@ -1,5 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { getDb } from "@/lib/db";
+import { cleanEnv } from "@/lib/env";
 import { deckKey } from "./aggregate";
 import { parseGameState, type ParsedGame } from "./parse-game";
 
@@ -14,9 +15,9 @@ export type CreateTrackerResult = { ok: true; token: string; tracker: Tracker } 
 
 /** Anyone can make a key unless TRACKER_INVITE_CODE is set, in which case they need the code. */
 export async function createTracker(input: { name?: unknown; inviteCode?: unknown }): Promise<CreateTrackerResult> {
-  const required = process.env.TRACKER_INVITE_CODE;
+  const required = cleanEnv("TRACKER_INVITE_CODE");
   if (required) {
-    const given = Buffer.from(typeof input.inviteCode === "string" ? input.inviteCode : "");
+    const given = Buffer.from(typeof input.inviteCode === "string" ? input.inviteCode.trim() : "");
     const expected = Buffer.from(required);
     if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
       return { ok: false, error: "That invite code isn't right.", status: 403 };
@@ -35,7 +36,7 @@ export async function createTracker(input: { name?: unknown; inviteCode?: unknow
 }
 
 export function trackerInviteRequired(): boolean {
-  return !!process.env.TRACKER_INVITE_CODE;
+  return !!cleanEnv("TRACKER_INVITE_CODE");
 }
 
 export async function authenticate(request: Request): Promise<Tracker | null> {
