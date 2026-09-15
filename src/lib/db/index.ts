@@ -14,10 +14,17 @@ async function connect(): Promise<Db> {
 
   if (url) {
     const { default: postgres } = await import("postgres");
-    const { hostname, searchParams } = new URL(url);
     // Hosted databases (Supabase) get TLS; a local server or an explicit ?sslmode= in the URL decides for itself.
-    const local = ["localhost", "127.0.0.1", "::1"].includes(hostname);
-    const ssl = local || searchParams.has("sslmode") ? undefined : ("require" as const);
+    let local = false;
+    let sslmode = false;
+    try {
+      const parsed = new URL(url);
+      local = ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname);
+      sslmode = parsed.searchParams.has("sslmode");
+    } catch {
+      // postgres.js parses more loosely than URL(); let it report anything truly malformed.
+    }
+    const ssl = local || sslmode ? undefined : ("require" as const);
     // prepare:false keeps us compatible with Supabase's transaction pooler (port 6543).
     // onnotice: silence "relation already exists, skipping" from the idempotent schema on every cold start.
     const sql = postgres(url, { prepare: false, max: 5, idle_timeout: 20, onnotice: () => {}, ssl });
@@ -29,7 +36,12 @@ async function connect(): Promise<Db> {
         throw new Error("Nested transactions are not supported");
       },
     });
-    await sql.unsafe(SCHEMA).simple();
+    // Several serverless instances can start at once; concurrent "create table if not exists" can collide,
+    // so the schema runs in one transaction behind an advisory lock (safe with the transaction pooler).
+    await sql.begin(async (tx) => {
+      await tx.unsafe("select pg_advisory_xact_lock(727274)");
+      await tx.unsafe(SCHEMA).simple();
+    });
     return {
       ...wrap(sql),
       transaction: async (fn) => (await sql.begin((tx) => fn(wrap(tx)))) as never,

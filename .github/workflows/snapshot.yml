@@ -19,6 +19,20 @@ jobs:
           SITE_URL: ${{ secrets.SITE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          curl --fail-with-body --silent --show-error --max-time 120 \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            "${SITE_URL%/}/api/cron/snapshot"
+          if [ -z "$SITE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::Add the SITE_URL and CRON_SECRET repository secrets (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          url="${SITE_URL%/}/api/cron/snapshot"
+          status=$(curl --silent --show-error --max-time 120 --output response.txt --write-out "%{http_code}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" "$url") || true
+          echo "HTTP ${status:-no response}"
+          head -c 4000 response.txt 2>/dev/null; echo
+          case "$status" in
+            200) exit 0 ;;
+            401) echo "::error::401: SITE_URL must be the public address under Vercel > Domains, and CRON_SECRET must match Vercel exactly (redeploy after changing it)." ;;
+            404) echo "::error::404: SITE_URL is wrong. Copy it again from Vercel > Domains." ;;
+            500) echo "::error::500: the site hit an error. The reason is in the response above." ;;
+            *) echo "::error::Unexpected response from $url" ;;
+          esac
+          exit 1
