@@ -1,0 +1,24 @@
+name: Leaderboard snapshot
+
+# Calls the deployed site every 30 minutes so it saves a copy of the Infinite leaderboard.
+# Needs two repository secrets: SITE_URL (e.g. https://snap-hub.vercel.app) and CRON_SECRET.
+# GitHub may delay scheduled runs by a few minutes, and pauses schedules in repos with no
+# commits for 60 days (re-enable it from the Actions tab).
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Take snapshot
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 120 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${SITE_URL%/}/api/cron/snapshot"

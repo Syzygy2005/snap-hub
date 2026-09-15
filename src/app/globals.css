@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/* Palette and type from the Snap Hub brand sheet (brand/brand-sheet.png). */
+@theme inline {
+  --color-bg: #0a0a0f; /* Background Dark */
+  --color-surface: #1a1a1f; /* Surface */
+  --color-surface-2: #212128;
+  --color-surface-3: #2b2b33;
+  --color-line: #2c2c35;
+  --color-ink: #f5f7fa; /* Text Primary */
+  --color-muted: #a1a7b3; /* Text Secondary */
+  --color-faint: #6b7180;
+
+  --color-accent: #ffd600; /* Primary Yellow: buttons, highlights, icons */
+  --color-accent-strong: #ffe14d;
+  --color-accent-deep: #b8860b; /* Dark Gold: gradients, hover */
+  --color-gold: #ffd600;
+
+  --color-gem-purple: #a855f7;
+  --color-gem-blue: #3b82f6;
+  --color-up: #22c55e; /* Gem Green */
+  --color-down: #ef4444; /* Gem Red */
+
+  /* "Sharp corners and clean lines" */
+  --radius-sm: 2px;
+  --radius: 3px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-orbitron), var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(1100px 420px at 80% -140px, rgb(255 214 0 / 0.07), transparent 70%);
+  background-repeat: no-repeat;
+  min-height: 100dvh;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgb(255 214 0 / 0.35);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+
+/* The diagonal yellow slashes from the banner, used sparingly on dividers. */
+.brand-slashes {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    var(--color-accent) 0 3px,
+    transparent 3px 11px
+  );
+}
+
+.brand-rule {
+  background: linear-gradient(90deg, transparent, var(--color-accent) 20%, var(--color-accent) 80%, transparent);
+}
