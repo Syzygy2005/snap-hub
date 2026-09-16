@@ -41,7 +41,7 @@ export function LeaderboardTable({ rows, compact = false }: { rows: BoardRow[]; 
             }}
             placeholder="Filter by name or rank…"
             aria-label="Filter leaderboard"
-            className="min-w-0 flex-1 basis-full rounded-lg border border-line bg-bg px-3 py-1.5 text-sm placeholder:text-faint focus:border-accent focus:outline-none sm:max-w-xs sm:basis-auto"
+            className="min-w-0 flex-1 basis-full rounded-lg border border-line bg-bg px-3 py-1.5 text-base placeholder:text-faint focus:border-accent focus:outline-none sm:max-w-xs sm:basis-auto sm:text-sm"
           />
           <div className="flex gap-1 text-sm" role="group" aria-label="Show">
             {(
