@@ -43,6 +43,14 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
           <>
             Shared <RelativeTime iso={deck.createdAt} /> · {deck.views.toLocaleString()} view{deck.views === 1 ? "" : "s"} · avg
             cost {avgCost.toFixed(1)}
+            {!deck.listed && (
+              <span
+                title="Kept off the Decks page. Anyone with this link can open it."
+                className="ml-2 rounded-sm border border-line px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted"
+              >
+                Unlisted
+              </span>
+            )}
           </>
         }
       >

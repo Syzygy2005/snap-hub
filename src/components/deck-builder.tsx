@@ -123,6 +123,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId }: Props) 
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
   const [myOpen, setMyOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const statusTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -215,13 +216,13 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId }: Props) 
     }
   };
 
-  const share = async () => {
+  const share = async (listed: boolean) => {
     setSaving(true);
     try {
       const res = await fetch("/api/decks", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, cards: deckCards.map((c) => c.defId) }),
+        body: JSON.stringify({ name, cards: deckCards.map((c) => c.defId), listed }),
       });
       const body = (await res.json()) as { ok: boolean; id?: string; error?: string };
       if (!body.ok || !body.id) throw new Error(body.error ?? "Save failed");
@@ -497,12 +498,37 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId }: Props) 
             <button
               type="button"
               disabled={!complete || saving}
-              onClick={share}
-              title={complete ? "Posts the deck publicly and gives you a link" : `Add ${DECK_SIZE - deck.length} more card(s) to share`}
+              onClick={() => setShareOpen((o) => !o)}
+              aria-expanded={shareOpen}
+              title={complete ? "Put the deck online and get a link" : `Add ${DECK_SIZE - deck.length} more card(s) to share`}
               className="rounded-lg border border-accent px-3 py-2 text-sm font-semibold text-ink hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? "Saving…" : "Share link"}
             </button>
+            {shareOpen && (
+              <div className="col-span-2 space-y-2">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => share(true)}
+                  className="w-full rounded-lg bg-accent px-3 py-2 text-left text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-40"
+                >
+                  Share publicly
+                  <span className="block text-[11px] font-normal">Listed on the Decks page for everyone.</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => share(false)}
+                  className="w-full rounded-lg border border-line px-3 py-2 text-left text-sm font-semibold hover:bg-surface-3 disabled:opacity-40"
+                >
+                  Share unlisted
+                  <span className="block text-[11px] font-normal text-muted">
+                    Kept off the Decks page. Anyone you send the link to can open it.
+                  </span>
+                </button>
+              </div>
+            )}
             <button
               type="button"
               disabled={!deck.length || (!!savedId && !unsaved)}

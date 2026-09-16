@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { syncCards } from "@/lib/cards/sync";
-import { likePattern, listDecks, saveDeck } from "./queries";
+import { getDeck, likePattern, listDecks, saveDeck } from "./queries";
 
 const card = (i: number) => ({
   name: `Hero ${i}`,
@@ -77,5 +77,42 @@ describe("listDecks", () => {
 
   it("honours limit", async () => {
     expect(await listDecks({ limit: 1 })).toHaveLength(1);
+  });
+});
+
+const idOf = (r: Awaited<ReturnType<typeof saveDeck>>) => {
+  if (!r.ok) throw new Error(r.error);
+  return r.id;
+};
+
+describe("unlisted decks", () => {
+  it("stays off the list but stays reachable by its link", async () => {
+    const id = idOf(await saveDeck({ name: "Secret Brew", cards: ids(37), listed: false }));
+
+    expect(await names({})).not.toContain("Secret Brew");
+    expect(await names({ q: "Secret" })).toEqual([]);
+    expect(await names({ q: "Hero 37" })).toEqual([]);
+    expect(await names({ cards: ["Hero37"] })).toEqual([]);
+
+    const fetched = await getDeck(id);
+    expect(fetched?.name).toBe("Secret Brew");
+    expect(fetched?.listed).toBe(false);
+  });
+
+  it("dedupes within one visibility but never across it", async () => {
+    const hidden = idOf(await saveDeck({ name: "Same Name", cards: ids(49), listed: false }));
+    expect(idOf(await saveDeck({ name: "Same Name", cards: ids(49), listed: false }))).toBe(hidden);
+
+    // The old dedupe key would have handed this back the unlisted row and quietly published it.
+    const shown = idOf(await saveDeck({ name: "Same Name", cards: ids(49) }));
+    expect(shown).not.toBe(hidden);
+    expect((await getDeck(hidden))?.listed).toBe(false);
+    expect((await getDeck(shown))?.listed).toBe(true);
+    expect(await names({ q: "Same Name" })).toEqual(["Same Name"]);
+  });
+
+  it("stays public when the caller says nothing", async () => {
+    const id = idOf(await saveDeck({ name: "Old Client", cards: ids(61) }));
+    expect((await getDeck(id))?.listed).toBe(true);
   });
 });

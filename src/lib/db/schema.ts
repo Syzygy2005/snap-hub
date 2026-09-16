@@ -70,10 +70,18 @@ create table if not exists decks (
   name text not null,
   cards text[] not null,
   card_key text not null,
+  -- false = reachable by link but kept off the Decks page.
+  listed boolean not null default true,
   created_at timestamptz not null default now(),
   views int not null default 0
 );
-create unique index if not exists decks_dedupe_idx on decks (card_key, name);
+-- Added after launch; decks that predate it are public, which is what they already were.
+alter table decks add column if not exists listed boolean not null default true;
+-- A public and an unlisted copy of the same list are different decks, so visibility is part
+-- of the dedupe key. Replaces decks_dedupe_idx, which would have handed the second person
+-- the first person's row and silently changed who could see it.
+drop index if exists decks_dedupe_idx;
+create unique index if not exists decks_dedupe_v2_idx on decks (card_key, name, listed);
 create index if not exists decks_created_idx on decks (created_at desc);
 
 -- Stats tracker. A tracker key belongs to one person; games are uploaded by the PC tracker script.
