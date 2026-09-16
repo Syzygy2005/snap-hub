@@ -119,8 +119,12 @@ create table if not exists tracked_games (
   opponent_cards text[] not null default '{}',
   cards_drawn text[] not null default '{}',
   cards_played text[] not null default '{}',
-  locations text[] not null default '{}'
+  locations text[] not null default '{}',
+  -- [{location, player, opponent}] per location at the end of the game. Null for games
+  -- recorded before this was captured, which is why nothing reads it without a fallback.
+  board jsonb
 );
+alter table tracked_games add column if not exists board jsonb;
 create unique index if not exists tracked_games_dedupe_idx on tracked_games (game_id, account_hash);
 create index if not exists tracked_games_time_idx on tracked_games (played_at desc);
 create index if not exists tracked_games_tracker_idx on tracked_games (tracker_id, played_at desc);

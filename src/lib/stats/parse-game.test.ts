@@ -3,7 +3,7 @@ import { parseGameState } from "./parse-game";
 
 // SYNTHETIC fixture shaped after the published tracker field map, not a real game file.
 // When a real GameState.json is available, add it as a fixture and extend these tests.
-function gameState(overrides: { localSlot?: 0 | 1; withResult?: boolean } = {}) {
+function gameState(overrides: { localSlot?: 0 | 1; withResult?: boolean; locationIds?: unknown[] } = {}) {
   const local = overrides.localSlot ?? 0;
   const me = { $id: "p-me", PlayerInfo: { $id: "pi-me", AccountId: "acct-me", Name: "Me" }, _turnsOnStakesRaiseRequested: [] };
   const opp = {
@@ -44,7 +44,7 @@ function gameState(overrides: { localSlot?: 0 | 1; withResult?: boolean } = {}) 
                 FinalCubeValue: 4,
                 TurnsTaken: 6,
                 TotalTurns: 6,
-                LocationDefIdsAtEndOfGame: ["Asgard", "Wakanda", "Xandar"],
+                LocationDefIdsAtEndOfGame: overrides.locationIds ?? ["Asgard", "Wakanda", "Xandar"],
                 GameResultAccountItems: [
                   {
                     IsWinner: local === 0,
@@ -99,6 +99,11 @@ describe("parseGameState", () => {
         cardsDrawn: ["AntMan", "Thanos", "Wasp"],
         cardsPlayed: ["AntMan", "Thanos"],
         locations: ["Asgard", "Wakanda", "Xandar"],
+        board: [
+          { location: "Asgard", player: ["AntMan"], opponent: ["Hulk"] },
+          { location: "Wakanda", player: ["Thanos"], opponent: ["Sunspot"] },
+          { location: "Xandar", player: [], opponent: [] },
+        ],
       },
     });
   });
@@ -111,6 +116,21 @@ describe("parseGameState", () => {
     expect(res.game.cubes).toBe(-4);
     expect(res.game.opponentName).toBe("Rival#123");
     expect(res.game.opponentCards).toEqual(["Hulk", "Sunspot"]);
+    // The board follows the player, not the slot: their cards stay under "player".
+    expect(res.game.board).toEqual([
+      { location: "Asgard", player: ["AntMan"], opponent: ["Hulk"] },
+      { location: "Wakanda", player: ["Thanos"], opponent: ["Sunspot"] },
+      { location: "Xandar", player: [], opponent: [] },
+    ]);
+  });
+
+  it("keeps the board when the game doesn't name every location", () => {
+    const res = parseGameState(JSON.stringify(gameState({ locationIds: ["Asgard", null] })), "acct-me");
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.game.board.map((z) => z.location)).toEqual(["Asgard", null, null]);
+    expect(res.game.board[1].player).toEqual(["Thanos"]);
+    expect(res.game.locations).toEqual(["Asgard"]);
   });
 
   it("reports games that haven't finished and half-written files", () => {

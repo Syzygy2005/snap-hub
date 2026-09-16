@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db";
 import { getCards } from "@/lib/cards/queries";
 import type { Card } from "@/lib/cards/types";
 import { cardStats, clusterDecks, summarize, type Archetype, type CardStat, type GameForStats, type Summary } from "./aggregate";
+import type { BoardZone } from "./parse-game";
 
 export const STAT_WINDOWS = { "7d": 7, "30d": 30, all: null } as const;
 export type StatWindow = keyof typeof STAT_WINDOWS;
@@ -25,6 +26,25 @@ interface GameRow {
   cards_drawn: string[];
   cards_played: string[];
   locations: string[];
+  board: BoardZone[] | string | null;
+}
+
+/** Drivers differ on whether jsonb arrives parsed, and older rows have no board at all. */
+function toBoard(value: BoardZone[] | string | null): BoardZone[] {
+  const parsed = typeof value === "string" ? safeJson(value) : value;
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(
+    (z): z is BoardZone =>
+      !!z && typeof z === "object" && Array.isArray(z.player) && Array.isArray(z.opponent),
+  );
+}
+
+function safeJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 const toStatsGame = (r: GameRow): GameForStats & { row: GameRow } => ({
@@ -42,7 +62,7 @@ async function loadGames(opts: { window: StatWindow; league?: string | null; tra
   return db.query<GameRow>(
     `select id, tracker_id, played_at, league, battle_mode, result, cubes, final_cube_value, snapped,
             opponent_snapped, turns, deck_name, deck_cards, opponent_name, opponent_cards, cards_drawn,
-            cards_played, locations
+            cards_played, locations, board
        from tracked_games
       where not friendly
         and ($1::timestamptz is null or played_at >= $1)
@@ -128,6 +148,8 @@ export interface PersonalGame {
   deckCards: string[];
   opponentName: string | null;
   opponentCards: string[];
+  /** Empty for games recorded before the board was captured. */
+  board: BoardZone[];
 }
 
 export interface PersonalStats {
@@ -172,9 +194,14 @@ export async function getPersonalStats(tracker: { id: number; name: string }, wi
     deckCards: r.deck_cards,
     opponentName: r.opponent_name,
     opponentCards: r.opponent_cards,
+    board: toBoard(r.board),
   }));
 
-  const used = new Set<string>([...rows.flatMap((r) => r.deck_cards), ...recent.flatMap((g) => g.opponentCards)]);
+  const used = new Set<string>([
+    ...rows.flatMap((r) => r.deck_cards),
+    ...recent.flatMap((g) => g.opponentCards),
+    ...recent.flatMap((g) => g.board.flatMap((z) => [...z.player, ...z.opponent])),
+  ]);
   const cardInfo: PersonalStats["cardInfo"] = {};
   for (const id of used) {
     const c = byId.get(id);

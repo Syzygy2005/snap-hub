@@ -27,6 +27,15 @@ export interface ParsedGame {
   cardsDrawn: string[];
   cardsPlayed: string[];
   locations: string[];
+  /** How the three locations looked when the game ended, in the game's own left-to-right order. */
+  board: BoardZone[];
+}
+
+export interface BoardZone {
+  /** null when the game didn't name this location, so the cards still render without it. */
+  location: string | null;
+  player: string[];
+  opponent: string[];
 }
 
 export type ParseResult =
@@ -110,10 +119,13 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
     return { ok: false, reason: "missing-fields", detail: "No FinalCubeValue in the game result" };
   }
 
-  // Cards each side had at the three locations at the end of the game.
-  const locations = list(get(state, "_to"));
-  const side = (n: 1 | 2) => unique(locations.flatMap((loc) => list(get(loc, `_player${n}Cards`)).map(cardId)));
-  const sides = [side(1), side(2)];
+  // Cards each side had at the three locations at the end of the game, kept per location
+  // so the board can be shown as it stood, then flattened for the whole-game card lists.
+  const zones = list(get(state, "_to")).map((loc) => [
+    unique(list(get(loc, "_player1Cards")).map(cardId)),
+    unique(list(get(loc, "_player2Cards")).map(cardId)),
+  ]);
+  const sides = [unique(zones.flatMap((z) => z[0])), unique(zones.flatMap((z) => z[1]))];
   if (localIndex < 0) {
     const overlap = (cards: string[]) => cards.filter((c) => deckCards.includes(c)).length;
     localIndex = overlap(sides[1]) > overlap(sides[0]) ? 1 : 0;
@@ -124,6 +136,17 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   const isWinner = get(item, "IsWinner") === true;
   const isLoser = get(item, "IsLoser") === true;
   const outcome: ParsedGame["result"] = isWinner ? "win" : isLoser ? "loss" : "tie";
+
+  // LocationDefIdsAtEndOfGame comes in the same order as _to, so they pair by index. If a
+  // future game version stops lining them up, the cards still show, just without a name.
+  const locationIds = list(get(result, "LocationDefIdsAtEndOfGame")).map((l) =>
+    typeof l === "string" && l ? l : null,
+  );
+  const board: BoardZone[] = zones.map((z, i) => ({
+    location: locationIds[i] ?? null,
+    player: z[localIndex],
+    opponent: z[opponentIndex],
+  }));
 
   const name = get(opponent, "PlayerInfo", "Name");
   const deckName = get(item, "Deck", "Name");
@@ -150,7 +173,8 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
       opponentCards: sides[opponentIndex],
       cardsDrawn: cardIds(get(remote, "ClientPlayerInfo", "CardsDrawn")),
       cardsPlayed: cardIds(get(remote, "ClientPlayerInfo", "CardsPlayed")),
-      locations: unique(list(get(result, "LocationDefIdsAtEndOfGame")).map((l) => (typeof l === "string" ? l : null))),
+      locations: unique(locationIds),
+      board,
     },
   };
 
