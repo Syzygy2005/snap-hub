@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
-import { saveTrackerKey } from "@/lib/stats/client-key";
+import { loadTrackerKey, saveTrackerKey } from "@/lib/stats/client-key";
 
 const subscribeNoop = () => () => {};
 
@@ -14,8 +14,33 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const storedKey = useSyncExternalStore(subscribeNoop, loadTrackerKey, () => null);
+  // A key made a moment ago, or one this browser already had, so coming back still works.
+  const activeKey = token ?? storedKey;
 
   const command = `powershell -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\\Downloads\\snaphub-tracker.ps1" -Site ${origin}`;
+
+  const downloadZip = async (key: string) => {
+    setDownloading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/tracker/download", { headers: { authorization: `Bearer ${key}` } });
+      if (!res.ok) throw new Error("That key wasn't accepted. Make a new one above.");
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "snap-hub-tracker.zip";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Download failed");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const copy = async (text: string, label: string) => {
     try {
@@ -102,41 +127,59 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
         )}
       </Step>
 
-      <Step n={2} title="Download the tracker">
-        <p className="mb-2 text-sm text-muted">
-          A small PowerShell script (built into Windows, nothing to install). It&apos;s plain text: open it in Notepad to read
-          exactly what it does before running it.
-        </p>
-        <a
-          href="/tracker/snaphub-tracker.ps1"
-          download
-          className="inline-block rounded-md border border-accent px-4 py-2 text-sm font-semibold hover:bg-accent/10"
-        >
-          Download snaphub-tracker.ps1
-        </a>
+      <Step n={2} title="Download your tracker">
+        {activeKey ? (
+          <>
+            <p className="mb-2 text-sm text-muted">
+              A zip with the tracker and a file that starts it. Your key is already in it, so there&apos;s nothing to paste.
+              Unzip it somewhere you&apos;ll find again, keep both files together, and don&apos;t pass the folder on: anyone
+              who has it can add games to your stats.
+            </p>
+            <button
+              type="button"
+              onClick={() => downloadZip(activeKey)}
+              disabled={downloading}
+              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+            >
+              {downloading ? "Preparing…" : "Download snap-hub-tracker.zip"}
+            </button>
+          </>
+        ) : (
+          <p className="text-sm text-muted">Make a key above and your download appears here.</p>
+        )}
       </Step>
 
-      <Step n={3} title="Run it while you play">
-        <p className="mb-2 text-sm text-muted">
-          Open <strong className="text-ink">PowerShell</strong> (Start menu → type PowerShell) and paste this. Leave the window
-          open while you play Marvel Snap on PC. Next time, run the same line again; it remembers your key.
+      <Step n={3} title="Start it while you play">
+        <p className="text-sm text-muted">
+          Double-click <strong className="text-ink">Start Snap Hub Tracker.cmd</strong> and leave the window open while you
+          play Marvel Snap on PC. Windows asks once whether to run a file from the internet; choose Run. Start it the same way
+          every time.
         </p>
-        <div className="flex flex-wrap items-start gap-2">
-          <code className="min-w-0 flex-1 break-all rounded-md border border-line bg-bg px-3 py-2 font-mono text-xs text-muted">
-            {command}
-          </code>
-          <button
-            type="button"
-            onClick={() => copy(command, "command")}
-            className="rounded-md border border-line px-3 py-2 text-sm font-semibold hover:border-accent"
-          >
-            {copied === "command" ? "Copied!" : "Copy"}
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-faint">
-          <code>-ExecutionPolicy Bypass</code> lets this one script run without changing your PC&apos;s settings. If you saved the
-          file somewhere other than Downloads, change the path.
-        </p>
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs text-faint hover:text-muted">Rather run it yourself?</summary>
+          <p className="mt-2 text-sm text-muted">
+            The tracker is a PowerShell script, plain text you can read in Notepad first. Download{" "}
+            <a href="/tracker/snaphub-tracker.ps1" download className="text-accent hover:underline">
+              snaphub-tracker.ps1
+            </a>{" "}
+            on its own and run this in PowerShell instead. It asks for your key the first time, then remembers it.
+          </p>
+          <div className="mt-2 flex flex-wrap items-start gap-2">
+            <code className="min-w-0 flex-1 break-all rounded-md border border-line bg-bg px-3 py-2 font-mono text-xs text-muted">
+              {command}
+            </code>
+            <button
+              type="button"
+              onClick={() => copy(command, "command")}
+              className="rounded-md border border-line px-3 py-2 text-sm font-semibold hover:border-accent"
+            >
+              {copied === "command" ? "Copied!" : "Copy"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-faint">
+            <code>-ExecutionPolicy Bypass</code> lets this one script run without changing your PC&apos;s settings.
+          </p>
+        </details>
       </Step>
 
       <Step n={4} title="Play">

@@ -16,6 +16,9 @@
 - Stats tracker: `public/tracker/snaphub-tracker.ps1` must stay plain ASCII (Windows PowerShell 5.1 reads BOM-less
   scripts as ANSI). Test it end to end with a fake nvprod folder and `-Once -StateDir ... -ConfigDir ...`.
 - `parse-game.ts` has only been tested on synthetic files. When a real GameState.json turns up (tracker `-SaveRaw`),
-  add it as a fixture before changing field paths.
+  add it as a fixture before changing field paths. The per-location board pairs `_to` with
+  `LocationDefIdsAtEndOfGame` by index; a real file would confirm that order.
+- `/api/tracker/download` reads `public/tracker/snaphub-tracker.ps1` off disk at request time. Next.js can't infer
+  that, so it's listed in `outputFileTracingIncludes`; moving or renaming the script means updating both.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
