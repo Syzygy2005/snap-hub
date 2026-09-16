@@ -225,13 +225,13 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search name or ability…"
               aria-label="Search cards"
-              className="min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 py-1.5 text-sm placeholder:text-faint focus:border-accent focus:outline-none"
+              className="min-w-0 flex-1 basis-full rounded-lg border border-line bg-bg px-3 py-1.5 text-base placeholder:text-faint focus:border-accent focus:outline-none sm:basis-auto sm:text-sm"
             />
             <select
               value={series}
               onChange={(e) => setSeries(e.target.value)}
               aria-label="Series"
-              className="rounded-lg border border-line bg-bg px-2 py-1.5 text-sm focus:border-accent focus:outline-none"
+              className="rounded-lg border border-line bg-bg px-2 py-1.5 text-base focus:border-accent focus:outline-none sm:text-sm"
             >
               <option value="all">All series</option>
               {seriesOptions.map((s) => (
@@ -244,7 +244,7 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
               value={sort}
               onChange={(e) => setSort(e.target.value as Sort)}
               aria-label="Sort by"
-              className="rounded-lg border border-line bg-bg px-2 py-1.5 text-sm focus:border-accent focus:outline-none"
+              className="rounded-lg border border-line bg-bg px-2 py-1.5 text-base focus:border-accent focus:outline-none sm:text-sm"
             >
               <option value="cost">Sort: Cost</option>
               <option value="power">Sort: Power</option>
@@ -458,7 +458,7 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
                   rows={4}
                   placeholder="Paste a deck code or the text copied from Marvel Snap"
                   aria-label="Deck code to import"
-                  className="w-full rounded-lg border border-line bg-bg p-2 font-mono text-xs placeholder:font-sans placeholder:text-faint focus:border-accent focus:outline-none"
+                  className="w-full rounded-lg border border-line bg-bg p-2 font-mono text-base placeholder:font-sans placeholder:text-faint focus:border-accent focus:outline-none sm:text-xs"
                 />
                 <button
                   type="button"

@@ -77,7 +77,7 @@ export function MyStats() {
             onChange={(e) => setDraft(e.target.value)}
             placeholder="shk_…"
             aria-label="Tracker key"
-            className="w-full rounded-md border border-line bg-bg px-3 py-2 font-mono text-sm focus:border-accent focus:outline-none"
+            className="w-full rounded-md border border-line bg-bg px-3 py-2 font-mono text-base focus:border-accent focus:outline-none sm:text-sm"
           />
           <button className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-strong">Show my stats</button>
         </form>

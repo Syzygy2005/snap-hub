@@ -77,7 +77,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
                 onChange={(e) => setName(e.target.value.slice(0, 30))}
                 required
                 placeholder="Your Snap name"
-                className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none"
+                className="rounded-md border border-line bg-bg px-3 py-2 text-base text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:text-sm"
               />
             </label>
             {inviteRequired && (
@@ -87,7 +87,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
                   value={invite}
                   onChange={(e) => setInvite(e.target.value)}
                   required
-                  className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
+                  className="rounded-md border border-line bg-bg px-3 py-2 text-base text-ink focus:border-accent focus:outline-none sm:text-sm"
                 />
               </label>
             )}

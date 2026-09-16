@@ -23,7 +23,7 @@ export function SiteHeader() {
             name="q"
             type="search"
             placeholder="Search players…"
-            className="w-full rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:w-52"
+            className="w-full rounded-md border border-line bg-surface px-3 py-1.5 text-base text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:w-52 sm:text-sm"
           />
         </form>
       </div>

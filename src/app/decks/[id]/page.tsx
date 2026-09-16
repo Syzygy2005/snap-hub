@@ -84,7 +84,7 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
                 value={code}
                 rows={5}
                 aria-label="Deck code"
-                className="w-full resize-none rounded-lg border border-line bg-bg p-2 font-mono text-[11px] text-muted"
+                className="w-full resize-none rounded-lg border border-line bg-bg p-2 font-mono text-base text-muted sm:text-[11px]"
               />
               <p className="mt-2 text-xs text-faint">In Marvel Snap, open the deck editor and paste to import.</p>
             </div>
