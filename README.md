@@ -12,7 +12,8 @@ builder, and win rate / cube rate stats from a PC tracker.
   public link listed on /decks or an unlisted link that is not.
 - **Decks**: browse shared decks, search deck names and the cards inside them, filter by cards a deck contains.
 - **Stats**: meta share, win rate and cube rate by deck archetype and by card (in deck / drawn / played), plus a
-  private "My stats" page with match history. Data comes from players running the PC tracker.
+  private "My stats" page with match history, including how the three locations stood when each game ended.
+  Data comes from players running the PC tracker.
 
 ## Run it locally
 
@@ -55,6 +56,12 @@ Every push to GitHub redeploys the site on Vercel.
 it gzips the file and posts it to `/api/tracker/games` with the player's tracker key. The server parses it
 (`src/lib/stats/parse-game.ts`), keeps a summary, and discards the raw file. Setup instructions for players are
 on `/stats/tracker`.
+
+Players don't run the script by hand. `/api/tracker/download` returns a zip holding the script, a
+`Start Snap Hub Tracker.cmd` that already carries the site address and their key, and a readme, so setup is
+download, unzip, double-click. The zip is built by `src/lib/tracker/zip.ts` (stored entries, no dependency) and
+the route reads the script off disk, which is why `next.config.ts` lists it under `outputFileTracingIncludes`.
+The launcher holds a live key, so the readme says not to pass the folder on.
 
 Limits worth knowing:
 
