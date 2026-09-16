@@ -22,7 +22,7 @@ export default async function Home() {
   const [board, movers, decks, cards] = await Promise.all([
     season ? getBoard(season, "global", 24) : null,
     season ? getMovers(season, "global", 24, 6) : null,
-    listDecks(3),
+    listDecks({ limit: 3 }),
     getCards({ deckableOnly: true }),
   ]);
   const byId = new Map(cards.map((c) => [c.defId, c]));

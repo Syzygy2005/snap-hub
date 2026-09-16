@@ -8,6 +8,13 @@ export function param(sp: SearchParams, key: string): string | undefined {
   return Array.isArray(v) ? v[0] : v;
 }
 
+/** A parameter that can repeat, like ?card=Thanos&card=AntMan. */
+export function paramList(sp: SearchParams, key: string): string[] {
+  const v = sp[key];
+  if (Array.isArray(v)) return v.filter(Boolean);
+  return v ? [v] : [];
+}
+
 /** Resolve ?season= and ?region= against what we actually have stored. */
 export async function resolveBoardParams(sp: SearchParams) {
   const regionParam = param(sp, "region");

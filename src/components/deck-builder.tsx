@@ -4,9 +4,20 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DECK_SIZE, type Card } from "@/lib/cards/types";
 import { decodeDeckInput, encodeDeck, gameClipboardText } from "@/lib/decks/code";
+import {
+  newDeckId,
+  readDraft,
+  readLocalDecks,
+  removeLocalDeck,
+  sameCards,
+  UNTITLED,
+  upsertLocalDeck,
+  writeDraft,
+  writeLocalDecks,
+  type LocalDeck,
+} from "@/lib/decks/local";
 import { AbilityText, CardArt, COST_BUCKETS, EnergyCurve } from "./cards";
-
-const DRAFT_KEY = "snaphub:deck-draft";
+import { RelativeTime } from "./relative-time";
 
 const KEYWORDS: { label: string; test: (c: Card) => boolean }[] = [
   { label: "On Reveal", test: (c) => /on reveal/i.test(c.ability) },
@@ -25,6 +36,8 @@ interface Props {
   cards: Card[];
   initial?: { name: string; defIds: string[] } | null;
   importCode?: string | null;
+  /** id of a deck saved in this browser, from the My decks list on /decks. */
+  openLocalId?: string | null;
 }
 
 type Status = { tone: "ok" | "warn"; text: string } | null;
@@ -51,35 +64,52 @@ const IMPORT_FAILED: Status = {
 };
 
 // Runs once, in the browser only (this component is loaded with ssr: false).
-function startingState(cards: Card[], initial: Props["initial"], importCode: Props["importCode"]) {
+function startingState(
+  cards: Card[],
+  initial: Props["initial"],
+  importCode: Props["importCode"],
+  openLocalId: Props["openLocalId"],
+  saved: LocalDeck[],
+) {
   const known = new Set(cards.map((c) => c.defId));
+  const keep = (ids: string[]) => ids.filter((id) => known.has(id)).slice(0, DECK_SIZE);
+  // A shared deck or a pasted code is new work, so it isn't tied to a saved deck yet.
   if (initial) {
-    return { deck: initial.defIds.filter((id) => known.has(id)).slice(0, DECK_SIZE), name: initial.name, status: null };
+    return { deck: keep(initial.defIds), name: initial.name, status: null, savedId: null };
+  }
+  const opened = openLocalId ? saved.find((d) => d.id === openLocalId) : undefined;
+  if (opened) {
+    return {
+      deck: keep(opened.cards),
+      name: opened.name === UNTITLED ? "" : opened.name,
+      status: null,
+      savedId: opened.id,
+    };
   }
   if (importCode) {
     const imported = importDeck(importCode, cards);
     return imported
-      ? { deck: imported.deck, name: imported.name ?? "", status: imported.status }
-      : { deck: [], name: "", status: IMPORT_FAILED };
+      ? { deck: imported.deck, name: imported.name ?? "", status: imported.status, savedId: null }
+      : { deck: [], name: "", status: IMPORT_FAILED, savedId: null };
   }
-  try {
-    const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null") as { name?: string; deck?: string[] } | null;
-    if (saved?.deck?.length) {
-      return { deck: saved.deck.filter((id) => known.has(id)).slice(0, DECK_SIZE), name: saved.name ?? "", status: null };
-    }
-  } catch {
-    // storage unavailable
+  const draft = readDraft();
+  if (draft?.deck.length) {
+    // Drop the link if the saved deck it points at has since been deleted.
+    const savedId = draft.savedId && saved.some((d) => d.id === draft.savedId) ? draft.savedId : null;
+    return { deck: keep(draft.deck), name: draft.name, status: null, savedId };
   }
-  return { deck: [] as string[], name: "", status: null };
+  return { deck: [] as string[], name: "", status: null, savedId: null };
 }
 
-export function DeckBuilder({ cards, initial, importCode }: Props) {
+export function DeckBuilder({ cards, initial, importCode, openLocalId }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(cards.map((c) => [c.defId, c])), [cards]);
 
-  const [start] = useState(() => startingState(cards, initial, importCode));
+  const [savedDecks, setSavedDecks] = useState<LocalDeck[]>(readLocalDecks);
+  const [start] = useState(() => startingState(cards, initial, importCode, openLocalId, savedDecks));
   const [deck, setDeck] = useState<string[]>(start.deck);
   const [name, setName] = useState(start.name);
+  const [savedId, setSavedId] = useState<string | null>(start.savedId);
 
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -92,6 +122,7 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
   const [status, setStatus] = useState<Status>(start.status);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
+  const [myOpen, setMyOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const statusTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -109,17 +140,14 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
     }
     setDeck(imported.deck);
     if (imported.name) setName(imported.name);
+    setSavedId(null);
     flash(imported.status);
     return true;
   };
 
   useEffect(() => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ name, deck }));
-    } catch {
-      // storage unavailable
-    }
-  }, [deck, name]);
+    writeDraft({ name, deck, savedId });
+  }, [deck, name, savedId]);
 
   const keywordIndex = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -202,6 +230,47 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
       flash({ tone: "warn", text: err instanceof Error ? err.message : "Save failed" });
       setSaving(false);
     }
+  };
+
+  // Saved decks live in this browser only. There are no accounts, so "private" means it
+  // never reaches the server, not a flag on a row the server could still read.
+  const openDeck = savedId ? savedDecks.find((d) => d.id === savedId) : undefined;
+  const deckName = name.trim() || UNTITLED;
+  const unsaved = openDeck ? !sameCards(openDeck.cards, deck) || openDeck.name !== deckName : deck.length > 0;
+
+  const saveLocal = () => {
+    const entry: LocalDeck = {
+      id: savedId ?? newDeckId(),
+      name: deckName,
+      cards: deck,
+      updatedAt: new Date().toISOString(),
+    };
+    const next = upsertLocalDeck(savedDecks, entry);
+    if (!writeLocalDecks(next)) {
+      flash({ tone: "warn", text: "This browser won't store decks. Private browsing blocks it." });
+      return;
+    }
+    setSavedDecks(next);
+    setSavedId(entry.id);
+    flash({ tone: "ok", text: savedId ? `Updated ${entry.name}.` : `Saved ${entry.name} to this browser.` });
+  };
+
+  const loadLocal = (d: LocalDeck) => {
+    if (unsaved && !confirm(`You have unsaved changes. Open ${d.name} and lose them?`)) return;
+    setDeck(d.cards.filter((id) => byId.has(id)).slice(0, DECK_SIZE));
+    setName(d.name === UNTITLED ? "" : d.name);
+    setSavedId(d.id);
+    setMyOpen(false);
+    flash({ tone: "ok", text: `Opened ${d.name}.` });
+  };
+
+  const deleteLocal = (d: LocalDeck) => {
+    if (!confirm(`Delete ${d.name}? This can't be undone.`)) return;
+    const next = removeLocalDeck(savedDecks, d.id);
+    writeLocalDecks(next);
+    setSavedDecks(next);
+    if (savedId === d.id) setSavedId(null);
+    flash({ tone: "ok", text: `Deleted ${d.name}.` });
   };
 
   const inspected = (inspect && byId.get(inspect)) || deckCards.at(-1) || null;
@@ -429,11 +498,61 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
               type="button"
               disabled={!complete || saving}
               onClick={share}
-              title={complete ? "Save and get a share link" : `Add ${DECK_SIZE - deck.length} more card(s) to share`}
+              title={complete ? "Posts the deck publicly and gives you a link" : `Add ${DECK_SIZE - deck.length} more card(s) to share`}
               className="rounded-lg border border-accent px-3 py-2 text-sm font-semibold text-ink hover:bg-accent/15 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving ? "Saving…" : "Share link"}
             </button>
+            <button
+              type="button"
+              disabled={!deck.length || (!!savedId && !unsaved)}
+              onClick={saveLocal}
+              title="Kept in this browser. Nothing is uploaded and nobody else can see it."
+              className={`rounded-lg border border-line px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-3 disabled:cursor-not-allowed disabled:opacity-40 ${
+                savedDecks.length ? "" : "col-span-2"
+              }`}
+            >
+              {savedId ? (unsaved ? "Save changes" : "Saved") : "Save to browser"}
+            </button>
+            {savedDecks.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setMyOpen((o) => !o)}
+                aria-expanded={myOpen}
+                className="rounded-lg border border-line px-3 py-2 text-sm font-semibold text-muted hover:text-ink"
+              >
+                My decks <span className="num">{savedDecks.length}</span>
+              </button>
+            )}
+            {myOpen && savedDecks.length > 0 && (
+              <ul className="col-span-2 space-y-1">
+                {savedDecks.map((d) => (
+                  <li
+                    key={d.id}
+                    className={`flex items-center gap-1 rounded-lg border px-2 py-1.5 ${
+                      d.id === savedId ? "border-accent/60 bg-accent/10" : "border-line"
+                    }`}
+                  >
+                    <button type="button" onClick={() => loadLocal(d)} className="min-w-0 flex-1 text-left">
+                      <span className="block truncate text-sm font-medium">{d.name}</span>
+                      <span className="num block text-[11px] text-faint">
+                        {d.cards.length}/{DECK_SIZE} · <RelativeTime iso={d.updatedAt} />
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteLocal(d)}
+                      aria-label={`Delete ${d.name}`}
+                      className="shrink-0 rounded p-1.5 text-faint hover:text-down"
+                    >
+                      <svg viewBox="0 0 14 14" className="h-3.5 w-3.5" aria-hidden>
+                        <path d="M3 3l8 8M11 3l-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <button
               type="button"
               disabled={!deck.length}
@@ -480,6 +599,7 @@ export function DeckBuilder({ cards, initial, importCode }: Props) {
               onClick={() => {
                 setDeck([]);
                 setName("");
+                setSavedId(null);
               }}
               className="col-span-2 text-xs text-faint hover:text-down disabled:opacity-40"
             >
