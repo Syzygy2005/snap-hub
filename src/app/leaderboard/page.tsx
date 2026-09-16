@@ -89,7 +89,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
       </div>
 
       <Panel>
-        <LeaderboardTable rows={rows} />
+        <LeaderboardTable rows={rows} latestUpdate={meta.updatedAt} />
       </Panel>
     </>
   );
