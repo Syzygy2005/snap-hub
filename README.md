@@ -8,7 +8,9 @@ builder, and win rate / cube rate stats from a PC tracker.
 - **Movers**: climbers, fallers, new entries and drop-outs over 6h / 24h / 7d.
 - **Player pages**: rank and points chart, point changes, past seasons.
 - **Deck builder**: filter by cost, ability and series; energy curve; copy a code the game accepts; import codes
-  (long or short format, or the text the game copies); share links.
+  (long or short format, or the text the game copies). Decks save to a named list in the browser, or share as a
+  public link listed on /decks or an unlisted link that is not.
+- **Decks**: browse shared decks, search deck names and the cards inside them, filter by cards a deck contains.
 - **Stats**: meta share, win rate and cube rate by deck archetype and by card (in deck / drawn / played), plus a
   private "My stats" page with match history. Data comes from players running the PC tracker.
 
