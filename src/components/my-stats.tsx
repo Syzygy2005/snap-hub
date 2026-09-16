@@ -6,7 +6,7 @@ import type { PersonalStats } from "@/lib/stats/queries";
 import { forgetTrackerKey, loadTrackerKey, saveTrackerKey } from "@/lib/stats/client-key";
 import { encodeDeck } from "@/lib/decks/code";
 import { formatRelative, useNow } from "./relative-time";
-import { CardStrip, CubeRate, pct, ResultBadge, signed, WinRate } from "./stats-ui";
+import { BoardView, CardStrip, CubeRate, pct, ResultBadge, signed, WinRate } from "./stats-ui";
 import { EmptyState, Panel, Stat } from "./ui";
 
 type Window = "7d" | "30d" | "all";
@@ -26,6 +26,7 @@ export function MyStats() {
   const [stats, setStats] = useState<PersonalStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [openBoard, setOpenBoard] = useState<number | null>(null);
   const now = useNow();
 
   const load = useCallback(async (token: string, w: Window, signal?: AbortSignal) => {
@@ -177,31 +178,54 @@ export function MyStats() {
           <Panel title="Recent games">
             <ul>
               {stats.recent.map((g) => (
-                <li key={g.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-line/60 px-4 py-2.5 text-sm first:border-t-0">
-                  <ResultBadge result={g.result} />
-                  <span className={`num w-10 font-bold ${g.cubes > 0 ? "text-up" : g.cubes < 0 ? "text-down" : "text-muted"}`}>
-                    {signed(g.cubes, 0)}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="font-medium">{g.deckName ?? "Deck"}</span>
-                    {g.opponentName && <span className="text-muted"> vs {g.opponentName}</span>}
-                    <span className="block text-xs text-faint">
-                      {[
-                        g.league,
-                        g.turns ? `${g.turns} turns` : null,
-                        g.snapped ? "you snapped" : null,
-                        g.opponentSnapped ? "they snapped" : null,
-                        now === null ? null : formatRelative(g.playedAt, now),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
+                <li key={g.id} className="border-t border-line/60 first:border-t-0">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 text-sm">
+                    <ResultBadge result={g.result} />
+                    <span className={`num w-10 font-bold ${g.cubes > 0 ? "text-up" : g.cubes < 0 ? "text-down" : "text-muted"}`}>
+                      {signed(g.cubes, 0)}
                     </span>
-                  </span>
-                  {g.opponentCards.length > 0 && (
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-[11px] uppercase tracking-wider text-faint">They showed</span>
-                      <CardStrip ids={g.opponentCards} info={stats.cardInfo} max={8} />
+                    <span className="min-w-0 flex-1">
+                      <span className="font-medium">{g.deckName ?? "Deck"}</span>
+                      {g.opponentName && <span className="text-muted"> vs {g.opponentName}</span>}
+                      <span className="block text-xs text-faint">
+                        {[
+                          g.league,
+                          g.turns ? `${g.turns} turns` : null,
+                          g.snapped ? "you snapped" : null,
+                          g.opponentSnapped ? "they snapped" : null,
+                          now === null ? null : formatRelative(g.playedAt, now),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
                     </span>
+                    {(g.opponentCards.length > 0 || g.board.length > 0) && (
+                      // Its own row on a phone, otherwise it squeezes the deck name and
+                      // match details into a one-word-per-line column.
+                      <span className="flex basis-full items-center gap-2 sm:basis-auto">
+                        {g.opponentCards.length > 0 && (
+                          <>
+                            <span className="text-[11px] uppercase tracking-wider text-faint">They showed</span>
+                            <CardStrip ids={g.opponentCards} info={stats.cardInfo} max={8} />
+                          </>
+                        )}
+                        {g.board.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setOpenBoard((o) => (o === g.id ? null : g.id))}
+                            aria-expanded={openBoard === g.id}
+                            className="ml-auto rounded-md border border-line px-2 py-1 text-[11px] font-medium uppercase tracking-wider text-muted hover:border-accent/60 hover:text-ink sm:ml-0"
+                          >
+                            Board
+                          </button>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  {openBoard === g.id && (
+                    <div className="border-t border-line/40 px-4 py-3">
+                      <BoardView zones={g.board} info={stats.cardInfo} />
+                    </div>
                   )}
                 </li>
               ))}

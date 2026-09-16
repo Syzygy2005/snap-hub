@@ -70,9 +70,9 @@ export async function recordGame(
     `insert into tracked_games (tracker_id, account_hash, game_id, played_at, league, battle_mode, friendly, result,
                                 cubes, final_cube_value, snapped, opponent_snapped, conceded, turns, total_turns,
                                 deck_name, deck_cards, deck_key, opponent_name, opponent_cards, cards_drawn,
-                                cards_played, locations)
+                                cards_played, locations, board)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::text[], $18, $19,
-             $20::text[], $21::text[], $22::text[], $23::text[])
+             $20::text[], $21::text[], $22::text[], $23::text[], $24::jsonb)
      on conflict (game_id, account_hash) do nothing
      returning id`,
     [
@@ -99,6 +99,8 @@ export async function recordGame(
       g.cardsDrawn,
       g.cardsPlayed,
       g.locations,
+      // Passed as text and cast, so the same call works on postgres.js and PGlite.
+      JSON.stringify(g.board),
     ],
   );
   await db.query(`update trackers set last_upload_at = $1 where id = $2`, [now, tracker.id]);
