@@ -84,6 +84,27 @@ drop index if exists decks_dedupe_idx;
 create unique index if not exists decks_dedupe_v2_idx on decks (card_key, name, listed);
 create index if not exists decks_created_idx on decks (created_at desc);
 
+-- Signed-in people. Discord owns the credential; we keep only what's shown on the site.
+create table if not exists accounts (
+  id serial primary key,
+  discord_id text not null unique,
+  username text not null,
+  avatar text,
+  created_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now()
+);
+
+-- Only a hash of the session token is stored, the same way tracker keys are held, so the
+-- table is useless to anyone who reads it and a session can be revoked by deleting a row.
+create table if not exists sessions (
+  token_hash text primary key,
+  account_id int not null references accounts(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+create index if not exists sessions_account_idx on sessions (account_id);
+create index if not exists sessions_expiry_idx on sessions (expires_at);
+
 -- Stats tracker. A tracker key belongs to one person; games are uploaded by the PC tracker script.
 create table if not exists trackers (
   id serial primary key,

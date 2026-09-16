@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { authenticate } from "@/lib/stats/tracker";
-import { SCRIPT_NAME, siteOrigin, trackerBundle } from "@/lib/tracker/download";
+import { siteOrigin } from "@/lib/site-origin";
+import { SCRIPT_NAME, trackerBundle } from "@/lib/tracker/download";
 import { zip } from "@/lib/tracker/zip";
 
 export const dynamic = "force-dynamic";

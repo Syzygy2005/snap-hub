@@ -7,22 +7,6 @@ const crlf = (lines: string[]) => lines.join("\r\n") + "\r\n";
 export const SCRIPT_NAME = "snaphub-tracker.ps1";
 export const LAUNCHER_NAME = "Start Snap Hub Tracker.cmd";
 
-const first = (value: string | null) => value?.split(",")[0]?.trim() || null;
-
-/**
- * The address the tracker should upload to. `request.url` carries whatever address the
- * server itself is bound to, not the one the visitor typed, so a proxy's forwarded headers
- * decide. Anything that isn't a plain scheme and host is ignored rather than written into
- * a quoted batch argument.
- */
-export function siteOrigin(request: Request): string {
-  const url = new URL(request.url);
-  const host = first(request.headers.get("x-forwarded-host")) ?? first(request.headers.get("host"));
-  const proto = first(request.headers.get("x-forwarded-proto")) ?? url.protocol.replace(":", "");
-  const usable = !!host && /^[A-Za-z0-9.-]+(:\d{1,5})?$/.test(host) && /^https?$/.test(proto);
-  return usable ? `${proto}://${host}` : url.origin;
-}
-
 /** The files the visitor unzips: the tracker, a launcher that already knows their key, and a readme. */
 export function trackerBundle(opts: { site: string; key: string; name: string; script: Uint8Array }): ZipEntry[] {
   return [
