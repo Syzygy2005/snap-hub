@@ -3,13 +3,22 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import type { BoardRow } from "@/lib/leaderboard/queries";
 import { PlayerName, RankDelta, ScoreDelta } from "./ui";
-import { formatRelative, useNow } from "./relative-time";
+import { formatLastMoved, useNow } from "./relative-time";
 
 const PAGE = 100;
 
 type Filter = "all" | "active" | "climbing";
 
-export function LeaderboardTable({ rows, compact = false }: { rows: BoardRow[]; compact?: boolean }) {
+export function LeaderboardTable({
+  rows,
+  compact = false,
+  latestUpdate = null,
+}: {
+  rows: BoardRow[];
+  compact?: boolean;
+  /** taken_at of the newest snapshot. A score that changed then moved in the last push. */
+  latestUpdate?: string | null;
+}) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [limit, setLimit] = useState(PAGE);
@@ -109,7 +118,19 @@ export function LeaderboardTable({ rows, compact = false }: { rows: BoardRow[]; 
                 )}
                 {!compact && (
                   <td className="hidden px-4 py-2 text-right text-xs text-muted lg:table-cell">
-                    {now === null ? "" : formatRelative(r.scoreChangedAt, now)}
+                    {latestUpdate && r.scoreChangedAt === latestUpdate ? (
+                      <span
+                        title="Score moved in the most recent update"
+                        className="inline-flex items-center gap-1 font-semibold text-up"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-up" aria-hidden />
+                        Live
+                      </span>
+                    ) : now === null ? (
+                      ""
+                    ) : (
+                      formatLastMoved(r.scoreChangedAt, now)
+                    )}
                   </td>
                 )}
               </tr>
