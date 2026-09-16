@@ -36,6 +36,7 @@ export default async function BuilderPage(props: PageProps<"/decks/builder">) {
         cards={cards}
         initial={saved ? { name: saved.name, defIds: saved.cards } : null}
         importCode={param(sp, "code") ?? null}
+        openLocalId={param(sp, "local") ?? null}
       />
     </>
   );

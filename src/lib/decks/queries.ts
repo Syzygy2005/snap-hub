@@ -70,11 +70,34 @@ export async function getDeck(id: string, countView = false): Promise<SavedDeck 
   return rows[0] ? toDeck(rows[0]) : null;
 }
 
-export async function listDecks(limit = 48, offset = 0): Promise<SavedDeck[]> {
+export interface DeckQuery {
+  /** Matches the deck name or the name of any card in the deck. */
+  q?: string;
+  /** def_ids the deck must contain, all of them. */
+  cards?: string[];
+  limit?: number;
+  offset?: number;
+}
+
+/** Escapes a user's text so % and _ match themselves instead of acting as wildcards. */
+export function likePattern(q: string): string {
+  return `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+}
+
+export async function listDecks(opts: DeckQuery = {}): Promise<SavedDeck[]> {
   const db = await getDb();
+  const q = (opts.q ?? "").trim();
+  const cards = opts.cards ?? [];
   const rows = await db.query<Parameters<typeof toDeck>[0]>(
-    `select id, name, cards, created_at, views from decks order by created_at desc limit $1 offset $2`,
-    [limit, offset],
+    `select id, name, cards, created_at, views
+       from decks
+      where ($1 = '' or name ilike $2 or cards && (
+              select coalesce(array_agg(def_id), '{}'::text[]) from cards where name ilike $2
+            ))
+        and ($3::text[] = '{}'::text[] or cards @> $3::text[])
+      order by created_at desc
+      limit $4 offset $5`,
+    [q, likePattern(q), cards, opts.limit ?? 48, opts.offset ?? 0],
   );
   return rows.map(toDeck);
 }
