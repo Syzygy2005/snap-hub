@@ -132,8 +132,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
           <>
             <p className="mb-2 text-sm text-muted">
               A zip with the tracker and a file that starts it. Your key is already in it, so there&apos;s nothing to paste.
-              Unzip it somewhere you&apos;ll find again, keep both files together, and don&apos;t pass the folder on: anyone
-              who has it can add games to your stats.
+              Don&apos;t pass the folder on: anyone who has it can add games to your stats.
             </p>
             <button
               type="button"
@@ -149,11 +148,16 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
         )}
       </Step>
 
-      <Step n={3} title="Start it while you play">
+      <Step n={3} title="Unpack it, then start it">
         <p className="text-sm text-muted">
-          Double-click <strong className="text-ink">Start Snap Hub Tracker.cmd</strong> and leave the window open while you
-          play Marvel Snap on PC. Windows asks once whether to run a file from the internet; choose Run. Start it the same way
-          every time.
+          <strong className="text-ink">Unpack the zip first.</strong> Right-click it, choose Extract All, then Extract.
+          Opening the zip and running the file straight from inside it doesn&apos;t work: Windows copies out only the file you
+          clicked and leaves the tracker behind.
+        </p>
+        <p className="mt-2 text-sm text-muted">
+          Then open the folder that appears and double-click <strong className="text-ink">Start Snap Hub Tracker.cmd</strong>.
+          Leave the window open while you play Marvel Snap on PC. Windows asks once whether to run a file from the internet;
+          choose Run. Start it the same way every time.
         </p>
         <details className="mt-3">
           <summary className="cursor-pointer text-xs text-faint hover:text-muted">Rather run it yourself?</summary>
