@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { SITE_NAME } from "@/lib/config";
+import { discordConfig } from "@/lib/auth/discord";
+import { currentAccount } from "@/lib/auth/session";
+import { AccountMenu } from "./account-menu";
 import { NavLinks } from "./nav-links";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const enabled = !!discordConfig();
+  const account = enabled ? await currentAccount() : null;
+
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5 sm:px-6">
@@ -26,6 +32,8 @@ export function SiteHeader() {
             className="w-full rounded-md border border-line bg-surface px-3 py-1.5 text-base text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:w-52 sm:text-sm"
           />
         </form>
+
+        <AccountMenu account={account} enabled={enabled} />
       </div>
       <div className="brand-rule h-px opacity-40" aria-hidden />
     </header>
