@@ -66,6 +66,19 @@ describe("trackerBundle", () => {
     }
   });
 
+  it("checks for the script before calling PowerShell, and says what to do when it's absent", () => {
+    // Windows runs a .cmd double-clicked from inside a zip out of a temp folder on its own,
+    // so the guard has to come before the line that would otherwise fail with a temp path.
+    const guard = launcher.indexOf(`if not exist "%~dp0${SCRIPT_NAME}" goto notunpacked`);
+    const run = launcher.indexOf("powershell -NoProfile");
+    expect(guard).toBeGreaterThan(-1);
+    expect(guard).toBeLessThan(run);
+    expect(launcher).toContain("\r\n:notunpacked\r\n");
+    expect(launcher).toContain("Extract All");
+    // The guard branch must be reachable only by the goto, never fallen into.
+    expect(launcher.slice(run, guard + launcher.slice(guard).indexOf(":notunpacked"))).toContain("exit /b");
+  });
+
   it("warns that the folder carries a live key", () => {
     expect(launcher).toContain("could upload");
     expect(String(byName["README.txt"])).toContain("Do not send it to anyone");
