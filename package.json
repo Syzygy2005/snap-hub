@@ -8,7 +8,8 @@
     "start": "next start -p 3100",
     "lint": "eslint",
     "test": "vitest run",
-    "snapshot": "node scripts/snapshot.mjs"
+    "snapshot": "node scripts/snapshot.mjs",
+    "merge-players": "tsx --tsconfig tsconfig.json scripts/merge-players.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

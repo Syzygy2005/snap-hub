@@ -35,6 +35,8 @@
 - `detectRenames` only pairs a departure and an arrival on an **exact** score match, unique on both
   sides. Loosening that trades missed renames for merged strangers, which is unrecoverable once the
   histories are joined; widen it only against real board data, never a guessed threshold.
+- `merge-players` is destructive and one-way. It dry-runs by default and refuses when both players
+  held a rank in the same snapshot; keep that check if the merge logic is ever touched.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

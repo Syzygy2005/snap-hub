@@ -70,6 +70,12 @@ Deliberately conservative: a wrong pairing welds two real players' histories tog
 worse than missing one. It will not catch a rename by someone who played between snapshots, because
 their score moved.
 
+For the ones it misses, and for rows that split before this existed, `npm run merge-players --
+--keep <id> --absorb <id>` prints what it would do and changes nothing until `--apply`. It refuses
+outright when the two players ever held a rank in the same snapshot, since one person cannot be in
+two places on one board. Locally the dev server has to be stopped first, because PGlite allows one
+process at a time.
+
 ## Accounts
 
 Sign-in is Discord OAuth, hand-rolled in `src/lib/auth/` rather than pulled in, for the same reason the
