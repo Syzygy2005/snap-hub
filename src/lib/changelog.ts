@@ -13,6 +13,10 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-17",
     changes: [
       {
+        title: "Decks with a bad name can be fixed rather than lost",
+        detail: "Reported decks can now be renamed or removed.",
+      },
+      {
         title: "Players who change their name keep their history",
         detail:
           "A rename used to look like one player vanishing and a stranger appearing at a similar rank. The board now spots it, tags them as a new name, and their profile lists what they were called before.",

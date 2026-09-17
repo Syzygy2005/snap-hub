@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AbilityText, CardArt, EnergyCurve } from "@/components/cards";
+import { DeckAdmin } from "@/components/deck-admin";
 import { CopyButton } from "@/components/deck-actions";
 import { RelativeTime } from "@/components/relative-time";
 import { PageHeader, Panel } from "@/components/ui";
@@ -9,6 +10,8 @@ import { getCards } from "@/lib/cards/queries";
 import type { Card } from "@/lib/cards/types";
 import { encodeDeck, gameClipboardText } from "@/lib/decks/code";
 import { getDeck } from "@/lib/decks/queries";
+import { isAdmin } from "@/lib/auth/admin";
+import { currentAccount } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +22,9 @@ export async function generateMetadata(props: PageProps<"/decks/[id]">): Promise
 
 export default async function DeckPage(props: PageProps<"/decks/[id]">) {
   const { id } = await props.params;
-  const [deck, allCards] = await Promise.all([getDeck(id, true), getCards()]);
+  const [deck, allCards, account] = await Promise.all([getDeck(id, true), getCards(), currentAccount()]);
   if (!deck) notFound();
+  const admin = isAdmin(account);
 
   const byId = new Map(allCards.map((c) => [c.defId, c]));
   const cards = deck.cards
@@ -64,6 +68,8 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
           Edit a copy
         </Link>
       </PageHeader>
+
+      {admin && <DeckAdmin id={deck.id} name={deck.name} />}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
