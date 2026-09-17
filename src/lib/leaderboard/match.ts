@@ -58,3 +58,63 @@ export function matchEntries(entries: BoardEntry[], known: KnownStanding[]): (nu
 
   return result;
 }
+
+export interface Departure {
+  playerId: number;
+  name: string;
+  score: number;
+  rank: number;
+}
+
+export interface Arrival {
+  /** Index into the entries array this tick. */
+  index: number;
+  name: string;
+  score: number;
+  rank: number;
+}
+
+export interface Rename {
+  index: number;
+  playerId: number;
+  from: string;
+  to: string;
+}
+
+/**
+ * Spots a player who renamed rather than left and was replaced.
+ *
+ * The API has no IDs, so a rename looks like one name vanishing and an unrelated one
+ * appearing in the same snapshot, which then reads as a brand new player with no history.
+ * The thing a rename cannot change is the score, so a departure and an arrival holding the
+ * exact same score are almost certainly one person.
+ *
+ * Deliberately conservative, because a wrong guess welds two real players' histories
+ * together: a score only counts when exactly one departure and exactly one arrival carry it.
+ * Two players sharing a score in one tick are left alone rather than guessed between. This
+ * misses a rename by someone who played between snapshots, which is the price of not
+ * inventing merges.
+ */
+export function detectRenames(departures: Departure[], arrivals: Arrival[]): Rename[] {
+  const byScore = <T extends { score: number }>(rows: T[]) => {
+    const map = new Map<number, T[]>();
+    for (const r of rows) {
+      const list = map.get(r.score);
+      if (list) list.push(r);
+      else map.set(r.score, [r]);
+    }
+    return map;
+  };
+
+  const left = byScore(departures);
+  const arrived = byScore(arrivals);
+
+  const renames: Rename[] = [];
+  for (const [score, gone] of left) {
+    const came = arrived.get(score);
+    if (gone.length !== 1 || !came || came.length !== 1) continue;
+    if (gone[0].name === came[0].name) continue;
+    renames.push({ index: came[0].index, playerId: gone[0].playerId, from: gone[0].name, to: came[0].name });
+  }
+  return renames;
+}

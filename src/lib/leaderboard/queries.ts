@@ -13,6 +13,8 @@ export interface BoardRow {
   pastRank?: number | null;
   pastScore?: number | null;
   isNew: boolean;
+  /** The name they used until recently, when they renamed inside the comparison window. */
+  renamedFrom: string | null;
   sharedName: boolean;
 }
 
@@ -69,6 +71,7 @@ interface RawBoardRow {
   best_rank: number;
   peak_score: number;
   score_changed_at: Date;
+  renamed_from: string | null;
   first_seen: Date;
   on_board: boolean;
   has_past: boolean;
@@ -87,10 +90,17 @@ async function rawBoard(season: string, region: Region, windowStart: Date | null
      )
      select s.player_id as id, p.name, s.rank, s.score, s.best_rank, s.peak_score,
             s.score_changed_at, s.first_seen, s.on_board,
-            (past.player_id is not null) as has_past, past.rank as past_rank, past.score as past_score
+            (past.player_id is not null) as has_past, past.rank as past_rank, past.score as past_score,
+            renamed.name as renamed_from
        from standings s
        join players p on p.id = s.player_id
        left join past on past.player_id = s.player_id
+       -- Only a rename inside the comparison window, so the tag fades with the rank arrows.
+       left join lateral (
+         select n.name from player_names n
+          where n.player_id = s.player_id and n.changed_at >= $3
+          order by n.changed_at desc limit 1
+       ) renamed on true
       where s.season = $1 and s.region = $2 and ($4::boolean = false or s.on_board)
       order by s.on_board desc, s.rank`,
     [season, region, windowStart ?? new Date(0), onBoardOnly],
@@ -117,6 +127,7 @@ function toBoardRows(raw: RawBoardRow[], meta: BoardMeta): BoardRow[] {
     pastRank: comparable ? (r.has_past ? r.past_rank : null) : undefined,
     pastScore: comparable ? (r.has_past ? r.past_score : null) : undefined,
     isNew: comparable && !r.has_past,
+    renamedFrom: r.renamed_from,
     sharedName: (nameCounts.get(r.name) ?? 0) > 1,
   }));
 }
@@ -214,12 +225,19 @@ export async function getPlayer(id: number) {
     [player.name, id],
   );
 
+  // Newest first, so the profile reads back through the names they have used.
+  const formerNames = await db.query<{ name: string; changed_at: Date }>(
+    `select name, changed_at from player_names where player_id = $1 order by changed_at desc`,
+    [id],
+  );
+
   return {
     id: player.id,
     name: player.name,
     firstSeen: player.first_seen.toISOString(),
     lastSeen: player.last_seen.toISOString(),
     sameNameCount: others?.n ?? 0,
+    formerNames: formerNames.map((n) => ({ name: n.name, changedAt: n.changed_at.toISOString() })),
     seasons: seasons.map<PlayerSeason>((s) => ({
       season: s.season,
       region: s.region,

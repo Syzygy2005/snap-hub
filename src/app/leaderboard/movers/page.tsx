@@ -91,7 +91,7 @@ function MoverList({ title, rows, empty, showScore }: { title: string; rows: Boa
                 <RankBadge rank={r.rank} />
               </span>
               <span className="min-w-0 flex-1">
-                <PlayerName id={r.id} name={r.name} shared={r.sharedName} />
+                <PlayerName id={r.id} name={r.name} shared={r.sharedName} renamedFrom={r.renamedFrom} />
               </span>
               <span className="w-16 text-right text-xs">
                 {showScore ? (

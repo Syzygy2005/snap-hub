@@ -87,10 +87,28 @@ export function ScoreDelta({ past, now }: { past?: number | null; now: number })
   );
 }
 
-export function PlayerName({ id, name, shared }: { id: number; name: string; shared?: boolean }) {
+export function PlayerName({
+  id,
+  name,
+  shared,
+  renamedFrom,
+}: {
+  id: number;
+  name: string;
+  shared?: boolean;
+  renamedFrom?: string | null;
+}) {
   return (
     <Link href={`/players/${id}`} className="group inline-flex min-w-0 items-center gap-1.5">
       <span className="truncate font-medium text-ink group-hover:text-accent">{name.trim() || "(blank)"}</span>
+      {renamedFrom && (
+        <span
+          title={`Previously ${renamedFrom}`}
+          className="shrink-0 rounded border border-gem-purple/50 px-1 text-[10px] font-medium uppercase text-gem-purple"
+        >
+          new name
+        </span>
+      )}
       {shared && (
         <span
           title="More than one player on the board uses this name. We tell them apart by score."

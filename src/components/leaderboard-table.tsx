@@ -107,7 +107,7 @@ export function LeaderboardTable({
                   <RankDelta past={r.pastRank} now={r.rank} isNew={r.isNew} />
                 </td>
                 <td className="max-w-[14rem] px-2 py-2 sm:max-w-none">
-                  <PlayerName id={r.id} name={r.name} shared={r.sharedName} />
+                  <PlayerName id={r.id} name={r.name} shared={r.sharedName} renamedFrom={r.renamedFrom} />
                 </td>
                 <td className="num py-2 pl-2 pr-4 text-right font-semibold text-gold sm:pr-2">{r.score.toLocaleString()}</td>
                 <td className="hidden px-2 py-2 text-right text-xs sm:table-cell">

@@ -57,6 +57,19 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
 
 Every push to GitHub redeploys the site on Vercel.
 
+## Renames
+
+The board has no player IDs, so someone changing their name reads as one player vanishing and a
+brand new one appearing with no history. `detectRenames` in `src/lib/leaderboard/match.ts` pairs a
+departure with an arrival holding the **exact same score** in the same snapshot, and only when
+exactly one of each carries that score. The player keeps their row and their history, and the old
+name goes in `player_names`, which the leaderboard reads for a "new name" tag and the profile lists
+in full.
+
+Deliberately conservative: a wrong pairing welds two real players' histories together, and that is
+worse than missing one. It will not catch a rename by someone who played between snapshots, because
+their score moved.
+
 ## Accounts
 
 Sign-in is Discord OAuth, hand-rolled in `src/lib/auth/` rather than pulled in, for the same reason the

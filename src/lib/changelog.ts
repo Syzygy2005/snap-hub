@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-17",
     changes: [
       {
+        title: "Players who change their name keep their history",
+        detail:
+          "A rename used to look like one player vanishing and a stranger appearing at a similar rank. The board now spots it, tags them as a new name, and their profile lists what they were called before.",
+      },
+      {
         title: "Decks show who posted them",
         detail:
           "Share a deck while signed in and it carries your name. Two people sharing the same twelve cards under the same name now get a deck each instead of landing on one.",
