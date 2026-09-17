@@ -31,6 +31,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               open work.{" "}
               <Link href="/credits" className="font-medium text-muted underline-offset-2 hover:text-accent hover:underline">
                 See credits
+              </Link>{" "}
+              or{" "}
+              <Link href="/changelog" className="font-medium text-muted underline-offset-2 hover:text-accent hover:underline">
+                what&apos;s new
               </Link>
               .
             </p>
