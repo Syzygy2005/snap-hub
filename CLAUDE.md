@@ -27,5 +27,11 @@
 - `SiteHeader` reads the session on every request on purpose. Skipping that read when Discord looks
   unconfigured let statically rendered pages bake a signed-out header in at build time; any page showing
   per-visitor state has to render per request.
+- The deck dedupe index has changed three times: `(card_key, name)`, then `+ listed`, now `+ owner_id` with
+  `nulls not distinct`. Adding another concept to a deck almost certainly means touching it again, and the
+  matching `on conflict` target in `saveDeck` with it.
+- `accounts` must stay above `decks` and `trackers` in `schema.ts`; both carry a foreign key to it and the
+  whole file runs top to bottom on connect.
+- Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

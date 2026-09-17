@@ -11,6 +11,9 @@ builder, and win rate / cube rate stats from a PC tracker.
   (long or short format, or the text the game copies). Decks save to a named list in the browser, or share as a
   public link listed on /decks or an unlisted link that is not.
 - **Decks**: browse shared decks, search deck names and the cards inside them, filter by cards a deck contains.
+  A deck shared while signed in carries the poster's name.
+- **What's new**: `/changelog`, written by hand in `src/lib/changelog.ts`. Add an entry when a change is worth
+  a player noticing; the newest one also shows on the home page.
 - **Stats**: meta share, win rate and cube rate by deck archetype and by card (in deck / drawn / played), plus a
   private "My stats" page with match history, including how the three locations stood when each game ended.
   Data comes from players running the PC tracker.
@@ -64,6 +67,11 @@ for: an id, a username and an avatar. No email.
 
 Sessions are opaque tokens in an `HttpOnly` cookie, stored as a sha256 hash exactly the way tracker keys
 are, so the table is useless to anyone who reads it and a session is revoked by deleting a row.
+
+Decks belong to whoever posted them while signed in, and to nobody otherwise. Dedupe is per poster, so two
+people sharing the same twelve cards under the same name each get their own deck rather than the second
+silently landing on the first one's; `nulls not distinct` keeps signed-out posts collapsing as they always
+did. Deleting an account leaves its decks standing and only removes the byline.
 
 A tracker key stays the upload credential; an account only groups keys for viewing. A key made while
 signed in lands on the account; one made earlier is added from My stats, proved by holding the key. Stats

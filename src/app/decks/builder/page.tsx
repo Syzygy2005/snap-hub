@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DeckBuilderLoader } from "@/components/deck-builder-loader";
+import { currentAccount } from "@/lib/auth/session";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { getCards } from "@/lib/cards/queries";
 import { getDeck } from "@/lib/decks/queries";
@@ -10,6 +11,7 @@ export const metadata: Metadata = { title: "Deck Builder" };
 
 export default async function BuilderPage(props: PageProps<"/decks/builder">) {
   const sp = await props.searchParams;
+  const account = await currentAccount();
   const [cards, saved] = await Promise.all([
     getCards({ deckableOnly: true }),
     param(sp, "deck") ? getDeck(param(sp, "deck")!) : Promise.resolve(null),
@@ -37,6 +39,7 @@ export default async function BuilderPage(props: PageProps<"/decks/builder">) {
         initial={saved ? { name: saved.name, defIds: saved.cards } : null}
         importCode={param(sp, "code") ?? null}
         openLocalId={param(sp, "local") ?? null}
+        postAs={account?.username ?? null}
       />
     </>
   );

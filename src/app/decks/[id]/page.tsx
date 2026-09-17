@@ -41,7 +41,8 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
         title={deck.name}
         subtitle={
           <>
-            Shared <RelativeTime iso={deck.createdAt} /> · {deck.views.toLocaleString()} view{deck.views === 1 ? "" : "s"} · avg
+            Shared {deck.owner && <>by <strong className="text-ink">{deck.owner}</strong> </>}
+            <RelativeTime iso={deck.createdAt} /> · {deck.views.toLocaleString()} view{deck.views === 1 ? "" : "s"} · avg
             cost {avgCost.toFixed(1)}
             {!deck.listed && (
               <span
