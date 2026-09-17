@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Montserrat, Orbitron } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { SiteHeader } from "@/components/site-header";
 import { SITE_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/config";
 import "./globals.css";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <p className="shrink-0 font-semibold uppercase tracking-[0.18em] text-accent/80">{SITE_TAGLINE}</p>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
