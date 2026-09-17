@@ -240,6 +240,12 @@ export function DeckDirectory({ decks, cards, q, selected }: Props) {
                   cards={resolve(d.cards)}
                   meta={
                     <>
+                      {d.owner && (
+                        <>
+                          <span className="text-muted">{d.owner}</span>
+                          {" · "}
+                        </>
+                      )}
                       <RelativeTime iso={d.createdAt} /> · {d.views} view{d.views === 1 ? "" : "s"}
                     </>
                   }

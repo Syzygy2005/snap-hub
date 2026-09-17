@@ -38,6 +38,8 @@ interface Props {
   importCode?: string | null;
   /** id of a deck saved in this browser, from the My decks list on /decks. */
   openLocalId?: string | null;
+  /** Display name a shared deck will carry, or null when signed out. */
+  postAs?: string | null;
 }
 
 type Status = { tone: "ok" | "warn"; text: string } | null;
@@ -101,7 +103,7 @@ function startingState(
   return { deck: [] as string[], name: "", status: null, savedId: null };
 }
 
-export function DeckBuilder({ cards, initial, importCode, openLocalId }: Props) {
+export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(cards.map((c) => [c.defId, c])), [cards]);
 
@@ -514,7 +516,9 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId }: Props) 
                   className="w-full rounded-lg bg-accent px-3 py-2 text-left text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-40"
                 >
                   Share publicly
-                  <span className="block text-[11px] font-normal">Listed on the Decks page for everyone.</span>
+                  <span className="block text-[11px] font-normal">
+                    Listed on the Decks page for everyone{postAs ? `, as ${postAs}` : ""}.
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -524,7 +528,8 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId }: Props) 
                 >
                   Share unlisted
                   <span className="block text-[11px] font-normal text-muted">
-                    Kept off the Decks page. Anyone you send the link to can open it.
+                    Kept off the Decks page. Anyone you send the link to can open it
+                    {postAs ? `, and it carries your name` : ""}.
                   </span>
                 </button>
               </div>

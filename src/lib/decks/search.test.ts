@@ -116,3 +116,60 @@ describe("unlisted decks", () => {
     expect((await getDeck(id))?.listed).toBe(true);
   });
 });
+
+describe("deck ownership", () => {
+  it("keeps a signed-out re-post landing on the same deck, as it always did", async () => {
+    const first = idOf(await saveDeck({ name: "Anon Pile", cards: ids(73) }));
+    expect(idOf(await saveDeck({ name: "Anon Pile", cards: ids(73) }))).toBe(first);
+    expect((await getDeck(first))?.owner).toBeNull();
+  });
+
+  it("gives two people posting the same list under the same name a deck each", async () => {
+    const { upsertAccount } = await import("@/lib/auth/session");
+    const noah = await upsertAccount({ id: "deck-noah", username: "NoahR", avatar: null });
+    const other = await upsertAccount({ id: "deck-other", username: "Someone", avatar: null });
+
+    const a = idOf(await saveDeck({ name: "Shared Name", cards: ids(85) }, noah.id));
+    const b = idOf(await saveDeck({ name: "Shared Name", cards: ids(85) }, other.id));
+    expect(b).not.toBe(a);
+    expect((await getDeck(a))?.owner).toBe("NoahR");
+    expect((await getDeck(b))?.owner).toBe("Someone");
+  });
+
+  it("still collapses a repost by the same person", async () => {
+    const { upsertAccount } = await import("@/lib/auth/session");
+    const noah = await upsertAccount({ id: "deck-repost", username: "NoahR", avatar: null });
+    const first = idOf(await saveDeck({ name: "My Pile", cards: ids(97) }, noah.id));
+    expect(idOf(await saveDeck({ name: "My Pile", cards: ids(97) }, noah.id))).toBe(first);
+  });
+
+  it("separates a signed-out post from the same list posted by an account", async () => {
+    const { upsertAccount } = await import("@/lib/auth/session");
+    const noah = await upsertAccount({ id: "deck-split", username: "NoahR", avatar: null });
+    const anon = idOf(await saveDeck({ name: "Split", cards: ids(61) }));
+    const mine = idOf(await saveDeck({ name: "Split", cards: ids(61) }, noah.id));
+    expect(mine).not.toBe(anon);
+  });
+
+  it("carries the byline into the listing", async () => {
+    const { upsertAccount } = await import("@/lib/auth/session");
+    const noah = await upsertAccount({ id: "deck-list", username: "NoahR", avatar: null });
+    await saveDeck({ name: "Listed By Noah", cards: ids(49) }, noah.id);
+    const found = (await listDecks({ q: "Listed By Noah" }))[0];
+    expect(found?.owner).toBe("NoahR");
+  });
+
+  it("keeps the deck and drops the byline when the account goes", async () => {
+    const { upsertAccount } = await import("@/lib/auth/session");
+    const { getDb } = await import("@/lib/db");
+    const gone = await upsertAccount({ id: "deck-gone", username: "Leaving", avatar: null });
+    const id = idOf(await saveDeck({ name: "Outlives Me", cards: ids(37) }, gone.id));
+
+    const db = await getDb();
+    await db.query(`delete from accounts where id = $1`, [gone.id]);
+
+    const deck = await getDeck(id);
+    expect(deck?.name).toBe("Outlives Me");
+    expect(deck?.owner).toBeNull();
+  });
+});

@@ -65,25 +65,6 @@ create table if not exists cards (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists decks (
-  id text primary key,
-  name text not null,
-  cards text[] not null,
-  card_key text not null,
-  -- false = reachable by link but kept off the Decks page.
-  listed boolean not null default true,
-  created_at timestamptz not null default now(),
-  views int not null default 0
-);
--- Added after launch; decks that predate it are public, which is what they already were.
-alter table decks add column if not exists listed boolean not null default true;
--- A public and an unlisted copy of the same list are different decks, so visibility is part
--- of the dedupe key. Replaces decks_dedupe_idx, which would have handed the second person
--- the first person's row and silently changed who could see it.
-drop index if exists decks_dedupe_idx;
-create unique index if not exists decks_dedupe_v2_idx on decks (card_key, name, listed);
-create index if not exists decks_created_idx on decks (created_at desc);
-
 -- Signed-in people. Discord owns the credential; we keep only what's shown on the site.
 create table if not exists accounts (
   id serial primary key,
@@ -104,6 +85,33 @@ create table if not exists sessions (
 );
 create index if not exists sessions_account_idx on sessions (account_id);
 create index if not exists sessions_expiry_idx on sessions (expires_at);
+
+create table if not exists decks (
+  id text primary key,
+  name text not null,
+  cards text[] not null,
+  card_key text not null,
+  -- false = reachable by link but kept off the Decks page.
+  listed boolean not null default true,
+  created_at timestamptz not null default now(),
+  views int not null default 0
+);
+-- Added after launch; decks that predate it are public, which is what they already were.
+alter table decks add column if not exists listed boolean not null default true;
+-- A public and an unlisted copy of the same list are different decks, so visibility is part
+-- of the dedupe key. Replaces decks_dedupe_idx, which would have handed the second person
+-- the first person's row and silently changed who could see it.
+drop index if exists decks_dedupe_idx;
+-- Who posted it. Null for a deck shared before accounts existed, or by someone signed out,
+-- and set null on account deletion so the deck survives and simply loses its byline.
+alter table decks add column if not exists owner_id int references accounts(id) on delete set null;
+create index if not exists decks_owner_idx on decks (owner_id);
+-- Dedupe is per poster now: two people sharing the same list under the same name each get
+-- their own deck, rather than the second silently landing on the first one's. NULLS NOT
+-- DISTINCT keeps signed-out posts collapsing together exactly as they did before.
+drop index if exists decks_dedupe_v2_idx;
+create unique index if not exists decks_dedupe_v3_idx on decks (card_key, name, listed, owner_id) nulls not distinct;
+create index if not exists decks_created_idx on decks (created_at desc);
 
 -- Stats tracker. A tracker key belongs to one person; games are uploaded by the PC tracker script.
 create table if not exists trackers (

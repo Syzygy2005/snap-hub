@@ -10,6 +10,8 @@ export interface SavedDeck {
   views: number;
   /** false = reachable by link but kept off the Decks page. */
   listed: boolean;
+  /** Display name of whoever posted it; null for signed-out and pre-accounts decks. */
+  owner: string | null;
 }
 
 const toDeck = (r: {
@@ -19,6 +21,7 @@ const toDeck = (r: {
   created_at: Date;
   views: number;
   listed: boolean;
+  owner: string | null;
 }): SavedDeck => ({
   id: r.id,
   name: r.name,
@@ -26,15 +29,23 @@ const toDeck = (r: {
   createdAt: r.created_at.toISOString(),
   views: r.views,
   listed: r.listed,
+  owner: r.owner,
 });
+
+// Every read wants the poster's name rather than their id, and a deck outlives its owner's account.
+const DECK_COLUMNS = `d.id, d.name, d.cards, d.created_at, d.views, d.listed, a.username as owner`;
+const DECK_FROM = `from decks d left join accounts a on a.id = d.owner_id`;
 
 export type SaveDeckResult = { ok: true; id: string } | { ok: false; error: string };
 
-export async function saveDeck(input: {
-  name?: unknown;
-  cards?: unknown;
-  listed?: unknown;
-}): Promise<SaveDeckResult> {
+export async function saveDeck(
+  input: {
+    name?: unknown;
+    cards?: unknown;
+    listed?: unknown;
+  },
+  ownerId?: number | null,
+): Promise<SaveDeckResult> {
   const name = typeof input.name === "string" ? input.name.trim().slice(0, 40) : "";
   // Anything other than an explicit false stays public, so an old client keeps its behaviour.
   const listed = input.listed !== false;
@@ -53,22 +64,30 @@ export async function saveDeck(input: {
 
   const cardKey = [...cards].sort().join(",");
   const finalName = name || "Untitled deck";
-  const [existing] = await db.query<{ id: string }>(
-    `select id from decks where card_key = $1 and name = $2 and listed = $3`,
-    [cardKey, finalName, listed],
-  );
+  const owner = ownerId ?? null;
+  // "is not distinct from" so a signed-out re-post finds the earlier signed-out one, which
+  // plain = would not, null being equal to nothing.
+  const mine = `card_key = $1 and name = $2 and listed = $3 and owner_id is not distinct from $4`;
+  const [existing] = await db.query<{ id: string }>(`select id from decks where ${mine}`, [
+    cardKey,
+    finalName,
+    listed,
+    owner,
+  ]);
   if (existing) return { ok: true, id: existing.id };
 
   const id = randomBytes(6).toString("base64url");
   await db.query(
-    `insert into decks (id, name, cards, card_key, listed) values ($1, $2, $3::text[], $4, $5)
-     on conflict (card_key, name, listed) do nothing`,
-    [id, finalName, cards, cardKey, listed],
+    `insert into decks (id, name, cards, card_key, listed, owner_id) values ($1, $2, $3::text[], $4, $5, $6)
+     on conflict (card_key, name, listed, owner_id) do nothing`,
+    [id, finalName, cards, cardKey, listed, owner],
   );
-  const [row] = await db.query<{ id: string }>(
-    `select id from decks where card_key = $1 and name = $2 and listed = $3`,
-    [cardKey, finalName, listed],
-  );
+  const [row] = await db.query<{ id: string }>(`select id from decks where ${mine}`, [
+    cardKey,
+    finalName,
+    listed,
+    owner,
+  ]);
   return { ok: true, id: row.id };
 }
 
@@ -77,13 +96,11 @@ export async function getDeck(id: string, countView = false): Promise<SavedDeck 
   // Unlisted decks are fetched the same way: the link is what grants access.
   const rows = countView
     ? await db.query<Parameters<typeof toDeck>[0]>(
-        `update decks set views = views + 1 where id = $1 returning id, name, cards, created_at, views, listed`,
+        `with bumped as (update decks set views = views + 1 where id = $1 returning *)
+         select ${DECK_COLUMNS} from bumped d left join accounts a on a.id = d.owner_id`,
         [id],
       )
-    : await db.query<Parameters<typeof toDeck>[0]>(
-        `select id, name, cards, created_at, views, listed from decks where id = $1`,
-        [id],
-      );
+    : await db.query<Parameters<typeof toDeck>[0]>(`select ${DECK_COLUMNS} ${DECK_FROM} where d.id = $1`, [id]);
   return rows[0] ? toDeck(rows[0]) : null;
 }
 
@@ -106,14 +123,14 @@ export async function listDecks(opts: DeckQuery = {}): Promise<SavedDeck[]> {
   const q = (opts.q ?? "").trim();
   const cards = opts.cards ?? [];
   const rows = await db.query<Parameters<typeof toDeck>[0]>(
-    `select id, name, cards, created_at, views, listed
-       from decks
-      where listed
-        and ($1 = '' or name ilike $2 or cards && (
+    `select ${DECK_COLUMNS}
+       ${DECK_FROM}
+      where d.listed
+        and ($1 = '' or d.name ilike $2 or d.cards && (
               select coalesce(array_agg(def_id), '{}'::text[]) from cards where name ilike $2
              ))
-        and ($3::text[] = '{}'::text[] or cards @> $3::text[])
-      order by created_at desc
+        and ($3::text[] = '{}'::text[] or d.cards @> $3::text[])
+      order by d.created_at desc
       limit $4 offset $5`,
     [q, likePattern(q), cards, opts.limit ?? 48, opts.offset ?? 0],
   );
