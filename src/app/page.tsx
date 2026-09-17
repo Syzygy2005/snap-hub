@@ -3,6 +3,8 @@ import { CardArt } from "@/components/cards";
 import { LeaderboardTable, RankBadge } from "@/components/leaderboard-table";
 import { RelativeTime } from "@/components/relative-time";
 import { Panel, PlayerName, RankDelta } from "@/components/ui";
+import { latestRelease } from "@/lib/changelog";
+import { formatReleaseDate } from "@/components/changelog-date";
 import { SITE_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/config";
 import { getCards } from "@/lib/cards/queries";
 import { listDecks } from "@/lib/decks/queries";
@@ -18,6 +20,7 @@ const FEATURES = [
 ];
 
 export default async function Home() {
+  const latest = latestRelease();
   const [season] = await listSeasons("global");
   const [board, movers, decks, cards] = await Promise.all([
     season ? getBoard(season, "global", 24) : null,
@@ -150,6 +153,24 @@ export default async function Home() {
               </p>
             )}
           </Panel>
+
+          {latest && (
+            <Panel
+              title="What's new"
+              action={
+                <Link href="/changelog" className="text-xs font-medium text-accent hover:underline">
+                  All updates
+                </Link>
+              }
+            >
+              <p className="px-4 pt-3 text-xs text-faint">{formatReleaseDate(latest.date)}</p>
+              <ul className="list-disc space-y-1 px-4 pb-4 pl-9 pt-2 text-sm text-muted">
+                {latest.changes.slice(0, 3).map((c) => (
+                  <li key={c.title}>{c.title}</li>
+                ))}
+              </ul>
+            </Panel>
+          )}
 
           <Link
             href="/stats/tracker"
