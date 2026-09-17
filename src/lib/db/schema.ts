@@ -9,6 +9,16 @@ create table if not exists players (
 create index if not exists players_name_idx on players (name);
 create index if not exists players_name_lower_idx on players (lower(name));
 
+-- Names a player used before renaming. The board has no player IDs, so a rename otherwise
+-- reads as one player vanishing and a brand new one appearing with no history.
+create table if not exists player_names (
+  id serial primary key,
+  player_id int not null references players(id) on delete cascade,
+  name text not null,
+  changed_at timestamptz not null
+);
+create index if not exists player_names_player_idx on player_names (player_id, changed_at desc);
+
 -- One row per snapshot that actually changed something.
 create table if not exists snapshots (
   id serial primary key,

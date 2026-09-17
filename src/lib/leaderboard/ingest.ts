@@ -2,7 +2,7 @@ import { getDb, type Db } from "@/lib/db";
 import { RANK_DRIFT_INTERVAL_MS, trackedRegions, type Region } from "@/lib/config";
 import { currentSeason, previousSeason, seasonKey, type SeasonRef } from "@/lib/season";
 import { fetchBoard, type BoardEntry } from "./fetch";
-import { matchEntries } from "./match";
+import { detectRenames, matchEntries } from "./match";
 
 export interface IngestSummary {
   season: string;
@@ -11,6 +11,7 @@ export interface IngestSummary {
   entries?: number;
   changed?: number;
   newPlayers?: number;
+  renamed?: number;
   left?: number;
   detail?: string;
 }
@@ -47,6 +48,27 @@ export async function ingestBoard(
       entries,
       known.map((k) => ({ playerId: k.player_id, name: k.name, score: k.score })),
     );
+
+    // A rename looks like a departure and an arrival in the same tick. Catch it here, before
+    // anything decides the arrival is a new player, so the history stays on one row.
+    const claimed = new Set(ids.filter((id): id is number => id !== null));
+    const renames = detectRenames(
+      known
+        .filter((k) => k.on_board && !claimed.has(k.player_id))
+        .map((k) => ({ playerId: k.player_id, name: k.name, score: k.score, rank: k.rank })),
+      ids.flatMap((id, i) =>
+        id === null ? [{ index: i, name: entries[i].name, score: entries[i].score, rank: entries[i].rank }] : [],
+      ),
+    );
+    for (const r of renames) {
+      ids[r.index] = r.playerId;
+      await tx.query(`update players set name = $1, last_seen = $2 where id = $3`, [r.to, now, r.playerId]);
+      await tx.query(`insert into player_names (player_id, name, changed_at) values ($1, $2, $3)`, [
+        r.playerId,
+        r.from,
+        now,
+      ]);
+    }
 
     // Players new to this season: reuse a player from an earlier season with the same name, else create one.
     const unmatched = ids.flatMap((id, i) => (id === null ? [i] : []));
@@ -108,7 +130,8 @@ export async function ingestBoard(
     for (const k of left) history.push({ id: k.player_id, rank: null, score: k.score });
 
     if (changed === 0 && left.length === 0) {
-      return { season, region, status: "unchanged", entries: entries.length, changed: 0 } as const;
+      // A rename on its own moves nothing, but it has already been written in this transaction.
+      return { season, region, status: "unchanged", entries: entries.length, changed: 0, renamed: renames.length } as const;
     }
 
     await tx.query(
@@ -169,6 +192,7 @@ export async function ingestBoard(
     );
 
     return {
+      renamed: renames.length,
       season,
       region,
       status: "updated",

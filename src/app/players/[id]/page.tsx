@@ -52,6 +52,20 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
         subtitle={
           <>
             First seen <RelativeTime iso={player.firstSeen} /> · last on a board <RelativeTime iso={player.lastSeen} />
+            {player.formerNames.length > 0 && (
+              <span className="mt-1 block text-xs text-muted">
+                Previously{" "}
+                {player.formerNames.map((n, i) => (
+                  <span key={`${n.name}-${n.changedAt}`}>
+                    {i > 0 && ", "}
+                    <strong className="font-medium text-ink">{n.name}</strong>{" "}
+                    <span className="text-faint">
+                      (until <RelativeTime iso={n.changedAt} />)
+                    </span>
+                  </span>
+                ))}
+              </span>
+            )}
             {player.sameNameCount > 0 && (
               <span className="mt-1 block text-xs text-faint">
                 {player.sameNameCount} other tracked player{player.sameNameCount === 1 ? " uses" : "s use"} this name.{" "}

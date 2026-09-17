@@ -4,11 +4,13 @@ import { LeaderboardTable, RankBadge } from "@/components/leaderboard-table";
 import { RelativeTime } from "@/components/relative-time";
 import { Panel, PlayerName, RankDelta } from "@/components/ui";
 import { latestRelease } from "@/lib/changelog";
+import { SignInNotice } from "@/components/signin-notice";
 import { formatReleaseDate } from "@/components/changelog-date";
 import { SITE_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/config";
 import { getCards } from "@/lib/cards/queries";
 import { listDecks } from "@/lib/decks/queries";
 import { getBoard, getMovers, listSeasons } from "@/lib/leaderboard/queries";
+import { param } from "@/lib/leaderboard/params";
 import { seasonLabel } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +21,8 @@ const FEATURES = [
   { href: "/stats", title: "Stats Tracker", blurb: "Track your progress." },
 ];
 
-export default async function Home() {
+export default async function Home(props: PageProps<"/">) {
+  const signin = param(await props.searchParams, "signin");
   const latest = latestRelease();
   const [season] = await listSeasons("global");
   const [board, movers, decks, cards] = await Promise.all([
@@ -32,6 +35,8 @@ export default async function Home() {
 
   return (
     <>
+      <SignInNotice reason={signin} />
+
       <section className="relative -mt-6 mb-8 overflow-hidden border-b border-line sm:mt-0 sm:rounded-xl sm:border">
         <h1 className="sr-only">
           {SITE_NAME}: {SITE_SLOGAN}
@@ -111,7 +116,7 @@ export default async function Home() {
                   <li key={r.id} className="flex items-center gap-3 border-t border-line/60 px-4 py-2 text-sm first:border-t-0">
                     <RankBadge rank={r.rank} />
                     <span className="min-w-0 flex-1">
-                      <PlayerName id={r.id} name={r.name} />
+                      <PlayerName id={r.id} name={r.name} renamedFrom={r.renamedFrom} />
                     </span>
                     <span className="text-xs">
                       <RankDelta past={r.pastRank} now={r.rank} />
