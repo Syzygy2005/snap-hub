@@ -136,3 +136,30 @@ export async function listDecks(opts: DeckQuery = {}): Promise<SavedDeck[]> {
   );
   return rows.map(toDeck);
 }
+
+/** Moderation, not tidying: there is no undo, so only an admin route reaches this. */
+export async function deleteDeck(id: string): Promise<boolean> {
+  const db = await getDb();
+  const rows = await db.query<{ id: string }>(`delete from decks where id = $1 returning id`, [id]);
+  return rows.length > 0;
+}
+
+/**
+ * Renames a deck in place, for the usual case where the list is fine and the name is not.
+ * The dedupe key includes the name, so a rename can collide with a deck that already has
+ * the new name; the unique index refuses that rather than merging two people's decks.
+ */
+export async function renameDeck(id: string, name: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const trimmed = name.trim().slice(0, 40);
+  if (!trimmed) return { ok: false, error: "Give the deck a name." };
+  const db = await getDb();
+  try {
+    const rows = await db.query<{ id: string }>(`update decks set name = $1 where id = $2 returning id`, [
+      trimmed,
+      id,
+    ]);
+    return rows.length > 0 ? { ok: true } : { ok: false, error: "That deck no longer exists." };
+  } catch {
+    return { ok: false, error: "Another deck with the same cards already uses that name." };
+  }
+}

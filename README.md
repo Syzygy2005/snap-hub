@@ -46,6 +46,8 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
      the sign-in button never appears.
    - `SITE_URL` (optional): the one address sign-in runs on, matching the redirect registered above.
      Without it Vercel's production domain is used, and locally the address the request arrived on.
+   - `ADMIN_DISCORD_IDS` (optional): comma separated Discord user ids who can moderate. Unset means
+     nobody can, including you.
 
    Deploy. Tables are created on the first request. Then in **Settings → Functions**, set the function region to the
    one closest to your Supabase region so database calls stay fast.
@@ -56,6 +58,18 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
    minutes. GitHub pauses scheduled workflows after 60 days without commits; re-enable it from the Actions tab.
 
 Every push to GitHub redeploys the site on Vercel.
+
+## Moderation
+
+Admins are named in `ADMIN_DISCORD_IDS` rather than flagged in the database: there is no bootstrap
+problem, nobody can grant it to themselves by reaching the database, and removing it is a redeploy.
+An admin sees rename and delete on a deck page. Rename is there because when a deck's name is the
+problem the twelve cards usually are not, and taking somebody's deck away over a word is heavier
+than fixing the word. `isAdmin` is checked in the route handler on every call; hiding the buttons
+is convenience, not the boundary.
+
+Merging two player rows stays a command rather than a button. It is destructive, one-way and rare,
+and a dry run you read before committing beats a mis-click.
 
 ## Renames
 
