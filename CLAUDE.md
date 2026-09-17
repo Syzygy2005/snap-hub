@@ -24,5 +24,8 @@
   and the header hides the button. Discord matches the redirect URL literally, so OAuth uses
   `canonicalOrigin` (`SITE_URL`, else Vercel's production domain, else the request) rather than the host the
   visitor arrived on, and a sign-in starting elsewhere is moved there first. Register exactly one redirect.
+- `SiteHeader` reads the session on every request on purpose. Skipping that read when Discord looks
+  unconfigured let statically rendered pages bake a signed-out header in at build time; any page showing
+  per-visitor state has to render per request.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

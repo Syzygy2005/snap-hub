@@ -65,6 +65,12 @@ for: an id, a username and an avatar. No email.
 Sessions are opaque tokens in an `HttpOnly` cookie, stored as a sha256 hash exactly the way tracker keys
 are, so the table is useless to anyone who reads it and a session is revoked by deleting a row.
 
+A tracker key stays the upload credential; an account only groups keys for viewing. A key made while
+signed in lands on the account; one made earlier is added from My stats, proved by holding the key. Stats
+then add up across every key on the account, which is what makes them follow you between devices. A key
+already on another account is refused rather than moved, and deleting an account releases its keys instead
+of destroying the games.
+
 Sign-in runs on one address, `canonicalOrigin` in `src/lib/site-origin.ts`, rather than whichever hostname
 the visitor arrived at. Discord matches a redirect literally, so a site answering on both an apex and a
 `www` name, or on Vercel's per-deployment hostnames, would only ever have one of them registered. Cookies

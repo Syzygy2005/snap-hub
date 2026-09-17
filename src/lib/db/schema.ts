@@ -110,9 +110,14 @@ create table if not exists trackers (
   id serial primary key,
   name text not null,
   token_hash text not null unique,
+  -- Null for a key made before accounts existed, or by someone not signed in. The key stays
+  -- the upload credential either way; the account only decides whose stats page shows it.
+  account_id int references accounts(id) on delete set null,
   created_at timestamptz not null default now(),
   last_upload_at timestamptz
 );
+alter table trackers add column if not exists account_id int references accounts(id) on delete set null;
+create index if not exists trackers_account_idx on trackers (account_id);
 
 create table if not exists tracked_games (
   id serial primary key,
