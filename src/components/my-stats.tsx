@@ -28,11 +28,13 @@ export function MyStats() {
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [openBoard, setOpenBoard] = useState<number | null>(null);
-  const [account, setAccount] = useState<{ signedIn: boolean; trackers: Linked[]; heldKeyLinked: boolean | null }>({
-    signedIn: false,
-    trackers: [],
-    heldKeyLinked: null,
-  });
+  const [account, setAccount] = useState<{
+    signedIn: boolean;
+    trackers: Linked[];
+    heldKeyLinked: boolean | null;
+    discordId: string | null;
+  }>({ signedIn: false, trackers: [], heldKeyLinked: null, discordId: null });
+  const [copiedId, setCopiedId] = useState(false);
   const [linking, setLinking] = useState(false);
   const now = useNow();
 
@@ -50,6 +52,7 @@ export function MyStats() {
       signedIn?: boolean;
       trackers?: Linked[];
       heldKeyLinked?: boolean | null;
+      discordId?: string | null;
     };
     if (!body.ok || !body.stats) {
       throw new Error(res.status === 401 ? "That key wasn't recognised." : body.error ?? "Couldn't load stats");
@@ -66,6 +69,7 @@ export function MyStats() {
             signedIn: !!body.signedIn,
             trackers: body.trackers ?? [],
             heldKeyLinked: body.heldKeyLinked ?? null,
+            discordId: body.discordId ?? null,
           });
           setError(null);
         })
@@ -170,6 +174,27 @@ export function MyStats() {
                   {" · "}
                   {account.trackers.length} tracker key{account.trackers.length === 1 ? "" : "s"}
                 </>
+              )}
+              {account.discordId && (
+                <span className="mt-1 flex flex-wrap items-center gap-2 text-xs text-faint">
+                  Your Discord ID
+                  <code className="num rounded border border-line bg-bg px-1.5 py-0.5 text-ink">{account.discordId}</code>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(account.discordId!);
+                        setCopiedId(true);
+                        setTimeout(() => setCopiedId(false), 2000);
+                      } catch {
+                        setCopiedId(false);
+                      }
+                    }}
+                    className="text-accent hover:underline"
+                  >
+                    {copiedId ? "Copied" : "Copy"}
+                  </button>
+                </span>
               )}
             </>
           ) : (

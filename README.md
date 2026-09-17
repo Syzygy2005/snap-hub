@@ -61,6 +61,9 @@ Every push to GitHub redeploys the site on Vercel.
 
 ## Moderation
 
+Sign in, then read your own Discord id off My stats; `ADMIN_DISCORD_IDS` wants exactly that value,
+and the site already knows it, so there is no reason to go hunting in Discord's developer mode.
+
 Admins are named in `ADMIN_DISCORD_IDS` rather than flagged in the database: there is no bootstrap
 problem, nobody can grant it to themselves by reaching the database, and removing it is a redeploy.
 An admin sees rename and delete on a deck page. Rename is there because when a deck's name is the
