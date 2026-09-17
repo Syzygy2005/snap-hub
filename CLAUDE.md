@@ -21,7 +21,8 @@
 - `/api/tracker/download` reads `public/tracker/snaphub-tracker.ps1` off disk at request time. Next.js can't infer
   that, so it's listed in `outputFileTracingIncludes`; moving or renaming the script means updating both.
 - Sign-in needs `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`; without them `discordConfig()` returns null
-  and the header hides the button. Discord requires each redirect URL to be registered exactly, so preview
-  deployments on changing URLs cannot sign in unless each one is added to the Discord application.
+  and the header hides the button. Discord matches the redirect URL literally, so OAuth uses
+  `canonicalOrigin` (`SITE_URL`, else Vercel's production domain, else the request) rather than the host the
+  visitor arrived on, and a sign-in starting elsewhere is moved there first. Register exactly one redirect.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

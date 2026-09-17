@@ -39,8 +39,10 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
    - `CRON_SECRET`: a long random string (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
    - `TRACKER_INVITE_CODE` (optional): a code people must enter to make a tracker key
    - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` (optional): a Discord application, which turns on
-     sign-in. Register `<site>/api/auth/discord/callback` as a redirect URL on that application, once per
-     address the site answers on. Leave both unset and the sign-in button never appears.
+     sign-in. Register `<site>/api/auth/discord/callback` as its one redirect URL. Leave both unset and
+     the sign-in button never appears.
+   - `SITE_URL` (optional): the one address sign-in runs on, matching the redirect registered above.
+     Without it Vercel's production domain is used, and locally the address the request arrived on.
 
    Deploy. Tables are created on the first request. Then in **Settings → Functions**, set the function region to the
    one closest to your Supabase region so database calls stay fast.
@@ -62,6 +64,12 @@ for: an id, a username and an avatar. No email.
 
 Sessions are opaque tokens in an `HttpOnly` cookie, stored as a sha256 hash exactly the way tracker keys
 are, so the table is useless to anyone who reads it and a session is revoked by deleting a row.
+
+Sign-in runs on one address, `canonicalOrigin` in `src/lib/site-origin.ts`, rather than whichever hostname
+the visitor arrived at. Discord matches a redirect literally, so a site answering on both an apex and a
+`www` name, or on Vercel's per-deployment hostnames, would only ever have one of them registered. Cookies
+are scoped to a hostname too, so two working names would mean two parallel sign-ins on one site. A
+sign-in that starts elsewhere is moved to that address first, once, before its state cookie is set.
 
 Set `DISCORD_AUTHORIZE_URL`, `DISCORD_TOKEN_URL` and `DISCORD_USER_URL` to walk the whole flow against a
 stub locally without a Discord app. They are unset in production.
