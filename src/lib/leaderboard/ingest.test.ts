@@ -142,6 +142,41 @@ describe("renames", () => {
     expect(profile?.formerNames.map((n) => n.name)).toEqual(["PXL D. Rick"]);
   });
 
+  // The case this was built for, with the real numbers from the board: PXL D. Rick at rank 92
+  // and PXL Rick at rank 80, both on 8,598. The rank moved because others did; the score did
+  // not, which is the whole signal.
+  it("handles the reported PXL Rick rename, rank change and all", async () => {
+    const s3 = { year: 2027, month: 1 };
+    const filler = (from: number, to: number, score: number) =>
+      Array.from({ length: to - from + 1 }, (_, i) => ({ rank: from + i, name: `Filler${from + i}`, score }));
+
+    await ingestBoard(
+      db,
+      s3,
+      "global",
+      [...filler(80, 91, 8600), { rank: 92, name: "PXL D. Rick", score: 8598 }],
+      1000,
+      start,
+    );
+
+    // A dozen players above him fall below, so his rank improves without his score moving.
+    await ingestBoard(
+      db,
+      s3,
+      "global",
+      [{ rank: 80, name: "PXL Rick", score: 8598 }, ...filler(81, 92, 8000)],
+      1000,
+      later(1),
+    );
+
+    const board = await getBoard("2027-01", "global");
+    const rick = board.rows.find((r) => r.name === "PXL Rick")!;
+    expect(rick.renamedFrom).toBe("PXL D. Rick");
+    expect(rick.rank).toBe(80);
+    expect(rick.isNew).toBe(false);
+    expect(board.rows.some((r) => r.name === "PXL D. Rick")).toBe(false);
+  });
+
   it("does not merge two players who merely swapped places", async () => {
     const s2 = { year: 2026, month: 12 };
     await ingestBoard(
