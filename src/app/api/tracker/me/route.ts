@@ -18,11 +18,21 @@ async function subject(request: Request) {
       trackerIds: trackers.map((t) => t.id),
       signedIn: true as const,
       trackers,
+      // Their own Discord id, shown back to them because ADMIN_DISCORD_IDS needs it and the
+      // only other way to find it was Discord's developer mode.
+      discordId: account.discordId,
     };
   }
   const tracker = await authenticate(request);
   if (!tracker) return null;
-  return { id: tracker.id, name: tracker.name, trackerIds: [tracker.id], signedIn: false as const, trackers: [] };
+  return {
+    id: tracker.id,
+    name: tracker.name,
+    trackerIds: [tracker.id],
+    signedIn: false as const,
+    trackers: [],
+    discordId: null,
+  };
 }
 
 export async function GET(request: Request) {
@@ -43,6 +53,7 @@ export async function GET(request: Request) {
     ok: true,
     signedIn: who.signedIn,
     trackers: who.trackers,
+    discordId: who.discordId,
     heldKeyLinked,
     stats: await getPersonalStats(who, window),
   });
