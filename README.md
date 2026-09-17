@@ -71,8 +71,11 @@ problem the twelve cards usually are not, and taking somebody's deck away over a
 than fixing the word. `isAdmin` is checked in the route handler on every call; hiding the buttons
 is convenience, not the boundary.
 
-Merging two player rows stays a command rather than a button. It is destructive, one-way and rare,
-and a dry run you read before committing beats a mis-click.
+Merging two player rows is on the profile page for an admin, and also available as
+`npm run merge-players` for anyone with a checkout. Both preview first and apply second: the
+browser version shows the same plan the dry run prints and asks to confirm. The plan is never
+taken from the caller; it is worked out again on the server immediately before applying, so the
+safety check runs against the database as it is rather than as it was when previewed.
 
 ## Renames
 
