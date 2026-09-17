@@ -56,7 +56,13 @@ const toStatsGame = (r: GameRow): GameForStats & { row: GameRow } => ({
   row: r,
 });
 
-async function loadGames(opts: { window: StatWindow; league?: string | null; trackerId?: number; limit?: number }) {
+async function loadGames(opts: {
+  window: StatWindow;
+  league?: string | null;
+  /** Empty means every tracker, which is what the public meta stats want. */
+  trackerIds?: number[];
+  limit?: number;
+}) {
   const days = STAT_WINDOWS[opts.window];
   const db = await getDb();
   return db.query<GameRow>(
@@ -67,13 +73,13 @@ async function loadGames(opts: { window: StatWindow; league?: string | null; tra
       where not friendly
         and ($1::timestamptz is null or played_at >= $1)
         and ($2::text is null or coalesce(league, 'Unknown') = $2)
-        and ($3::int is null or tracker_id = $3)
+        and ($3::int[] = '{}'::int[] or tracker_id = any($3::int[]))
       order by played_at desc
       limit $4`,
     [
       days ? new Date(Date.now() - days * 86_400_000) : null,
       opts.league ?? null,
-      opts.trackerId ?? null,
+      opts.trackerIds ?? [],
       opts.limit ?? 50_000,
     ],
   );
@@ -162,8 +168,27 @@ export interface PersonalStats {
   cardInfo: Record<string, Pick<Card, "name" | "art" | "cost">>;
 }
 
-export async function getPersonalStats(tracker: { id: number; name: string }, window: StatWindow): Promise<PersonalStats> {
-  const [rows, allCards] = await Promise.all([loadGames({ window, trackerId: tracker.id }), getCards()]);
+/**
+ * One person's games. Signed in that is every tracker key on their account, so stats follow
+ * them between devices; with a bare key it is just that one.
+ */
+export async function getPersonalStats(
+  subject: { id: number; name: string; trackerIds: number[] },
+  window: StatWindow,
+): Promise<PersonalStats> {
+  // No keys yet means no games, not everyone's games.
+  if (subject.trackerIds.length === 0) {
+    return {
+      tracker: { id: subject.id, name: subject.name },
+      window,
+      summary: summarize([]),
+      decks: [],
+      cubesOverTime: [],
+      recent: [],
+      cardInfo: {},
+    };
+  }
+  const [rows, allCards] = await Promise.all([loadGames({ window, trackerIds: subject.trackerIds }), getCards()]);
   const byId = new Map(allCards.map((c) => [c.defId, c]));
   const games = rows.map(toStatsGame);
 
@@ -209,7 +234,7 @@ export async function getPersonalStats(tracker: { id: number; name: string }, wi
   }
 
   return {
-    tracker,
+    tracker: { id: subject.id, name: subject.name },
     window,
     summary: summarize(games),
     decks: [...decks.entries()]

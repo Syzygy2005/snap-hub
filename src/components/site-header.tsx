@@ -6,8 +6,11 @@ import { AccountMenu } from "./account-menu";
 import { NavLinks } from "./nav-links";
 
 export async function SiteHeader() {
+  // Read the session unconditionally, and first. A header showing who is signed in can never
+  // be prerendered, and skipping the read whenever Discord looks unconfigured let statically
+  // rendered pages bake in a signed-out header at build time and keep it forever.
+  const account = await currentAccount();
   const enabled = !!discordConfig();
-  const account = enabled ? await currentAccount() : null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-md">
@@ -33,7 +36,7 @@ export async function SiteHeader() {
           />
         </form>
 
-        <AccountMenu account={account} enabled={enabled} />
+        <AccountMenu account={enabled ? account : null} enabled={enabled} />
       </div>
       <div className="brand-rule h-px opacity-40" aria-hidden />
     </header>

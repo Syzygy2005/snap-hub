@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { PersonalStats } from "@/lib/stats/queries";
+import type { LinkedTracker as Linked } from "@/lib/stats/tracker";
 import { forgetTrackerKey, loadTrackerKey, saveTrackerKey } from "@/lib/stats/client-key";
 import { encodeDeck } from "@/lib/decks/code";
 import { formatRelative, useNow } from "./relative-time";
@@ -27,30 +28,80 @@ export function MyStats() {
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [openBoard, setOpenBoard] = useState<number | null>(null);
+  const [account, setAccount] = useState<{ signedIn: boolean; trackers: Linked[]; heldKeyLinked: boolean | null }>({
+    signedIn: false,
+    trackers: [],
+    heldKeyLinked: null,
+  });
+  const [linking, setLinking] = useState(false);
   const now = useNow();
 
-  const load = useCallback(async (token: string, w: Window, signal?: AbortSignal) => {
-    const res = await fetch(`/api/tracker/me?window=${w}`, { headers: { authorization: `Bearer ${token}` }, signal });
-    const body = (await res.json()) as { ok: boolean; stats?: PersonalStats; error?: string };
-    if (!body.ok || !body.stats) throw new Error(res.status === 401 ? "That key wasn't recognised." : body.error ?? "Couldn't load stats");
-    return body.stats;
+  // The key still goes along when this browser has one: signed in the server ignores it for
+  // whose stats to show and only reports whether it is already on the account.
+  const load = useCallback(async (token: string | null, w: Window, signal?: AbortSignal) => {
+    const res = await fetch(`/api/tracker/me?window=${w}`, {
+      headers: token ? { authorization: `Bearer ${token}` } : undefined,
+      signal,
+    });
+    const body = (await res.json()) as {
+      ok: boolean;
+      stats?: PersonalStats;
+      error?: string;
+      signedIn?: boolean;
+      trackers?: Linked[];
+      heldKeyLinked?: boolean | null;
+    };
+    if (!body.ok || !body.stats) {
+      throw new Error(res.status === 401 ? "That key wasn't recognised." : body.error ?? "Couldn't load stats");
+    }
+    return body;
   }, []);
 
-  useEffect(() => {
-    if (!activeKey) return;
-    const ctrl = new AbortController();
-    load(activeKey, window, ctrl.signal)
-      .then((s) => {
-        setStats(s);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (!ctrl.signal.aborted) setError(err instanceof Error ? err.message : "Couldn't load stats");
-      });
-    return () => ctrl.abort();
-  }, [activeKey, window, load]);
+  const refresh = useCallback(
+    (signal?: AbortSignal) =>
+      load(activeKey, window, signal)
+        .then((body) => {
+          setStats(body.stats!);
+          setAccount({
+            signedIn: !!body.signedIn,
+            trackers: body.trackers ?? [],
+            heldKeyLinked: body.heldKeyLinked ?? null,
+          });
+          setError(null);
+        })
+        .catch((err: unknown) => {
+          if (!signal?.aborted) setError(err instanceof Error ? err.message : "Couldn't load stats");
+        }),
+    [activeKey, window, load],
+  );
 
-  if (!activeKey || (error && !stats)) {
+  useEffect(() => {
+    const ctrl = new AbortController();
+    void refresh(ctrl.signal);
+    return () => ctrl.abort();
+  }, [refresh]);
+
+  const linkHeldKey = async () => {
+    if (!activeKey) return;
+    setLinking(true);
+    try {
+      const res = await fetch("/api/tracker/claim", {
+        method: "POST",
+        headers: { authorization: `Bearer ${activeKey}` },
+      });
+      const body = (await res.json()) as { ok: boolean; error?: string };
+      if (!body.ok) throw new Error(body.error ?? "Could not add that key");
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not add that key");
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  // Signed in with no key in this browser is a normal, working state: the account's own keys
+  // are what the stats come from, so don't demand a paste.
+  if ((!activeKey && !account.signedIn && !stats) || (error && !stats)) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
         {error && <p className="rounded-md border border-down/40 bg-down/10 px-3 py-2 text-sm text-down">{error}</p>}
@@ -92,9 +143,40 @@ export function MyStats() {
 
   return (
     <div className="space-y-6">
+      {account.signedIn && activeKey && account.heldKeyLinked === false && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
+          <p className="min-w-0 text-sm">
+            This browser has a tracker key that isn&apos;t on your account yet. Add it and its games follow you
+            wherever you sign in.
+          </p>
+          <button
+            type="button"
+            onClick={linkHeldKey}
+            disabled={linking}
+            className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+          >
+            {linking ? "Adding…" : "Add to my account"}
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Signed in with the key for <strong className="text-ink">{stats.tracker.name}</strong>
+          {account.signedIn ? (
+            <>
+              Signed in as <strong className="text-ink">{stats.tracker.name}</strong>
+              {account.trackers.length > 0 && (
+                <>
+                  {" · "}
+                  {account.trackers.length} tracker key{account.trackers.length === 1 ? "" : "s"}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              Signed in with the key for <strong className="text-ink">{stats.tracker.name}</strong>
+            </>
+          )}
         </p>
         <div className="inline-flex rounded-lg border border-line bg-surface p-0.5 text-sm" role="group" aria-label="Time range">
           {WINDOWS.map((w) => (

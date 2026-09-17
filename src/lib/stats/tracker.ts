@@ -14,7 +14,10 @@ export interface Tracker {
 export type CreateTrackerResult = { ok: true; token: string; tracker: Tracker } | { ok: false; error: string; status: number };
 
 /** Anyone can make a key unless TRACKER_INVITE_CODE is set, in which case they need the code. */
-export async function createTracker(input: { name?: unknown; inviteCode?: unknown }): Promise<CreateTrackerResult> {
+export async function createTracker(
+  input: { name?: unknown; inviteCode?: unknown },
+  accountId?: number | null,
+): Promise<CreateTrackerResult> {
   const required = cleanEnv("TRACKER_INVITE_CODE");
   if (required) {
     const given = Buffer.from(typeof input.inviteCode === "string" ? input.inviteCode.trim() : "");
@@ -29,10 +32,44 @@ export async function createTracker(input: { name?: unknown; inviteCode?: unknow
   const token = `shk_${randomBytes(24).toString("base64url")}`;
   const db = await getDb();
   const [row] = await db.query<Tracker>(
-    `insert into trackers (name, token_hash) values ($1, $2) returning id, name`,
-    [name, sha256(token)],
+    `insert into trackers (name, token_hash, account_id) values ($1, $2, $3) returning id, name`,
+    [name, sha256(token), accountId ?? null],
   );
   return { ok: true, token, tracker: row };
+}
+
+export interface LinkedTracker extends Tracker {
+  lastUploadAt: string | null;
+}
+
+/** Every key on an account. Games from all of them add up on one stats page. */
+export async function trackersForAccount(accountId: number): Promise<LinkedTracker[]> {
+  const db = await getDb();
+  const rows = await db.query<{ id: number; name: string; last_upload_at: Date | null }>(
+    `select id, name, last_upload_at from trackers where account_id = $1 order by id`,
+    [accountId],
+  );
+  return rows.map((r) => ({ id: r.id, name: r.name, lastUploadAt: r.last_upload_at?.toISOString() ?? null }));
+}
+
+export type ClaimResult = { ok: true; tracker: Tracker } | { ok: false; error: string; status: number };
+
+/**
+ * Attaches a tracker key to an account. Holding the key is the proof, which is the same bar
+ * as reading its stats, so this adds no access. A key already on another account is refused
+ * rather than moved, so nobody quietly takes over a key that leaked.
+ */
+export async function claimTracker(tracker: Tracker, accountId: number): Promise<ClaimResult> {
+  const db = await getDb();
+  const [row] = await db.query<{ account_id: number | null }>(`select account_id from trackers where id = $1`, [
+    tracker.id,
+  ]);
+  if (!row) return { ok: false, error: "That tracker key no longer exists.", status: 404 };
+  if (row.account_id !== null && row.account_id !== accountId) {
+    return { ok: false, error: "That key is already on another account.", status: 409 };
+  }
+  await db.query(`update trackers set account_id = $1 where id = $2`, [accountId, tracker.id]);
+  return { ok: true, tracker };
 }
 
 export function trackerInviteRequired(): boolean {
