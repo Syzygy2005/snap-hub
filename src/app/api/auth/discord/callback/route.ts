@@ -9,7 +9,7 @@ import {
   upsertAccount,
 } from "@/lib/auth/session";
 import { redirectUriFor, safeReturnTo } from "@/lib/auth/urls";
-import { siteOrigin } from "@/lib/site-origin";
+import { canonicalOrigin } from "@/lib/site-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,9 @@ function readPending(raw: string | undefined): Pending | null {
 }
 
 export async function GET(request: Request) {
-  const origin = siteOrigin(request);
+  // Must be the same origin the authorize request was built from: Discord compares the
+  // redirect_uri on the exchange against the one it was sent, character for character.
+  const origin = canonicalOrigin(request);
   const store = await cookies();
   const fail = (why: string) => {
     store.delete(SIGNIN_COOKIE);
