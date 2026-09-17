@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { HistoryChart } from "@/components/history-chart";
 import { RelativeTime } from "@/components/relative-time";
 import { PageHeader, Panel, Stat, Tabs } from "@/components/ui";
+import { PlayerAdmin } from "@/components/player-admin";
+import { isAdmin } from "@/lib/auth/admin";
+import { currentAccount } from "@/lib/auth/session";
 import { isRegion, REGION_LABELS } from "@/lib/config";
 import { param } from "@/lib/leaderboard/params";
 import { getPlayer, getPlayerHistory } from "@/lib/leaderboard/queries";
@@ -24,11 +27,17 @@ export async function generateMetadata(props: PageProps<"/players/[id]">): Promi
 
 export default async function PlayerPage(props: PageProps<"/players/[id]">) {
   const [{ id }, sp] = await Promise.all([props.params, props.searchParams]);
-  const player = await load(id);
+  const [player, account] = await Promise.all([load(id), currentAccount()]);
   if (!player) notFound();
+  const admin = isAdmin(account);
 
   if (player.seasons.length === 0) {
-    return <PageHeader title={player.name.trim()} subtitle="No leaderboard appearances recorded." />;
+    return (
+      <>
+        <PageHeader title={player.name.trim()} subtitle="No leaderboard appearances recorded." />
+        {admin && <PlayerAdmin playerId={player.id} playerName={player.name} />}
+      </>
+    );
   }
 
   const seasonParam = param(sp, "season");
@@ -87,6 +96,8 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
           />
         )}
       </PageHeader>
+
+      {admin && <PlayerAdmin playerId={player.id} playerName={player.name} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
