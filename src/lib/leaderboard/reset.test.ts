@@ -37,6 +37,9 @@ describe("reset-leaderboard.sql", () => {
     );
     await db.query(`insert into meta (key, value) values ('cards_synced', '"2026-09-10"'::jsonb)`);
     await db.query(`insert into meta (key, value) values ('season_closed:2026-08:global', '{}'::jsonb)`);
+    await db.query(
+      `insert into news (kind, title, body, published_at) values ('balance', 'Keep me too', 'x', now())`,
+    );
 
     await ingestBoard(
       db,
@@ -89,6 +92,7 @@ describe("reset-leaderboard.sql", () => {
     // Everything that is not the leaderboard is still there.
     expect(await count("accounts")).toBe(1);
     expect(await count("trackers")).toBe(1);
+    expect(await count("news")).toBe(1);
     const [kept] = await db.query<{ name: string; owner_id: number }>(
       `select name, owner_id from decks where id = 'keepme'`,
     );

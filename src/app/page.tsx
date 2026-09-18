@@ -4,6 +4,7 @@ import { LeaderboardTable, RankBadge } from "@/components/leaderboard-table";
 import { RelativeTime } from "@/components/relative-time";
 import { Panel, PlayerName, RankDelta } from "@/components/ui";
 import { latestRelease } from "@/lib/changelog";
+import { KIND_LABELS, latestNews } from "@/lib/news/queries";
 import { SignInNotice } from "@/components/signin-notice";
 import { formatReleaseDate } from "@/components/changelog-date";
 import { SITE_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/config";
@@ -24,6 +25,7 @@ const FEATURES = [
 export default async function Home(props: PageProps<"/">) {
   const signin = param(await props.searchParams, "signin");
   const latest = latestRelease();
+  const news = await latestNews();
   const [season] = await listSeasons("global");
   const [board, movers, decks, cards] = await Promise.all([
     season ? getBoard(season, "global", 24) : null,
@@ -158,6 +160,32 @@ export default async function Home(props: PageProps<"/">) {
               </p>
             )}
           </Panel>
+
+          {news && (
+            <Panel
+              title="Game news"
+              action={
+                <Link href="/news" className="text-xs font-medium text-accent hover:underline">
+                  All news
+                </Link>
+              }
+            >
+              <div className="px-4 py-3">
+                <p className="text-xs text-faint">
+                  {KIND_LABELS[news.kind]} &middot;{" "}
+                  {new Date(news.publishedAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })}
+                </p>
+                <Link href="/news" className="mt-1 block font-medium hover:text-accent">
+                  {news.title}
+                </Link>
+              </div>
+            </Panel>
+          )}
 
           {latest && (
             <Panel

@@ -54,6 +54,11 @@
 - `scripts/reset-leaderboard.sql` is the one-way leaderboard wipe, run by hand in Supabase.
   `reset.test.ts` asserts what it clears and what it must leave standing; if a new table gains a
   foreign key to `players`, both the script and that test need it.
+- Game news (`/news`, table `news`, `src/lib/news/`) is admin-written rows, not a fetched feed and
+  not a file: `src/lib/changelog.ts` is this site's changes, `news` is the game's. The pure parts
+  live in `news/types.ts` so the admin form can import them without pulling the database client
+  into the browser bundle, the same split as `cards/types.ts`. Bodies render as text, never markup,
+  and `cleanSourceUrl` keeps anything that is not http(s) out of an `href`.
 - Admin is `ADMIN_DISCORD_IDS`, checked with `isAdmin` inside every admin route handler. Hiding a
   control in the UI is not the boundary; if a new admin action appears, it checks server side too.
 - Merging players is destructive and one-way, reachable from the profile page as an admin and as
