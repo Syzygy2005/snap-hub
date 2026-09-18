@@ -49,6 +49,10 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
    - `ADMIN_DISCORD_IDS` (optional): comma separated Discord user ids who can moderate. Unset means
      nobody can, including you.
 
+   Scope `DATABASE_URL` to Production only if you do not want preview deployments writing to the
+   live database. Previews then have no database at all: PGlite falls back to an in-memory one,
+   so they load and show an empty board rather than failing, and say so in the function log.
+
    Deploy. Tables are created on the first request. Then in **Settings → Functions**, set the function region to the
    one closest to your Supabase region so database calls stay fast.
 4. **GitHub repo → Settings → Secrets and variables → Actions → New repository secret**:

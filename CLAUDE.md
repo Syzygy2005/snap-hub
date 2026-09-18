@@ -30,6 +30,10 @@
 - The deck dedupe index has changed three times: `(card_key, name)`, then `+ listed`, now `+ owner_id` with
   `nulls not distinct`. Adding another concept to a deck almost certainly means touching it again, and the
   matching `on conflict` target in `saveDeck` with it.
+- With no `DATABASE_URL`, PGlite wants a writable directory and a serverless box has none, so
+  `pgliteDir()` falls back to `memory://` and warns rather than dying on the mkdir. That is what
+  keeps a preview deployment standing once `DATABASE_URL` is scoped to Production only. Do not
+  make it silent: an empty database is a misconfiguration, not a mode.
 - `accounts` must stay above `decks` and `trackers` in `schema.ts`; both carry a foreign key to it and the
   whole file runs top to bottom on connect.
 - `detectRenames` only pairs a departure and an arrival on an **exact** score match, unique on both
