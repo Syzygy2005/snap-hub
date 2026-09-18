@@ -218,3 +218,61 @@ describe("renames", () => {
     expect(names[0].n).toBe(0);
   });
 });
+
+describe("shared names do not invent renames", () => {
+  it("leaves a default name alone when the board still shows it", async () => {
+    const s = { year: 2027, month: 6 };
+    const start = new Date("2027-06-01T00:00:00Z");
+
+    // Two players carry the same default name, which the board hands out a lot.
+    await ingestBoard(
+      db,
+      s,
+      "global",
+      [
+        { rank: 1, name: "PlayerName", score: 900 },
+        { rank: 2, name: "PlayerName", score: 800 },
+        { rank: 3, name: "Real Guy", score: 700 },
+      ],
+      1000,
+      start,
+    );
+
+    // One of them drops off and a genuinely new player arrives on that exact score. Before
+    // the board was consulted, this read as a rename and stamped "previously PlayerName"
+    // onto a stranger.
+    await ingestBoard(
+      db,
+      s,
+      "global",
+      [
+        { rank: 1, name: "PlayerName", score: 900 },
+        { rank: 2, name: "Brand New", score: 800 },
+        { rank: 3, name: "Real Guy", score: 700 },
+      ],
+      1000,
+      new Date(start.getTime() + 3600_000),
+    );
+
+    const board = await getBoard("2027-06", "global");
+    const fresh = board.rows.find((r) => r.name === "Brand New")!;
+    expect(fresh.renamedFrom).toBeNull();
+
+    const { getPlayer } = await import("./queries");
+    expect((await getPlayer(fresh.id))?.formerNames).toEqual([]);
+
+    // And the player who kept the default name still has it, with no history stamped on them.
+    const kept = board.rows.find((r) => r.name === "PlayerName")!;
+    expect(kept).toBeDefined();
+    expect(kept.renamedFrom).toBeNull();
+    expect((await getPlayer(kept.id))?.formerNames).toEqual([]);
+
+    // Nobody in this season picked up a former name. Other tests in this file record real
+    // renames, so this counts only the players involved here.
+    const [{ n }] = await db.query<{ n: number }>(
+      `select count(*)::int as n from player_names where player_id = any($1::int[])`,
+      [board.rows.map((r) => r.id)],
+    );
+    expect(n).toBe(0);
+  });
+});

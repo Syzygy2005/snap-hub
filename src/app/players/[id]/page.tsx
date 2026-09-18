@@ -35,7 +35,7 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
     return (
       <>
         <PageHeader title={player.name.trim()} subtitle="No leaderboard appearances recorded." />
-        {admin && <PlayerAdmin playerId={player.id} playerName={player.name} />}
+        {admin && <PlayerAdmin playerId={player.id} playerName={player.name} formerNames={player.formerNames} />}
       </>
     );
   }
@@ -97,7 +97,7 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
         )}
       </PageHeader>
 
-      {admin && <PlayerAdmin playerId={player.id} playerName={player.name} />}
+      {admin && <PlayerAdmin playerId={player.id} playerName={player.name} formerNames={player.formerNames} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat

@@ -15,7 +15,15 @@ interface Plan {
  * Merging two player rows, for a rename the board could not prove on its own. Preview first,
  * then confirm: a mis-typed id is caught by reading the two names back before anything happens.
  */
-export function PlayerAdmin({ playerId, playerName }: { playerId: number; playerName: string }) {
+export function PlayerAdmin({
+  playerId,
+  playerName,
+  formerNames,
+}: {
+  playerId: number;
+  playerName: string;
+  formerNames: { id: number; name: string }[];
+}) {
   const router = useRouter();
   const [absorbId, setAbsorbId] = useState("");
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -48,9 +56,52 @@ export function PlayerAdmin({ playerId, playerName }: { playerId: number; player
     }
   };
 
+  const dropFormerName = async (nameId: number, name: string) => {
+    if (!confirm(`Remove "${name}" from this player's former names?`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/players/${playerId}/names/${nameId}`, { method: "DELETE" });
+      const body = (await res.json()) as { ok: boolean; error?: string };
+      if (!body.ok) throw new Error(body.error ?? "Could not remove that name");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove that name");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="mt-4 rounded-xl border border-gem-purple/40 bg-gem-purple/5 px-4 py-3">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gem-purple">Admin</p>
+
+      {formerNames.length > 0 && (
+        <div className="mb-3">
+          <p className="mb-1.5 text-sm text-muted">
+            Former names. Remove one if the rename never happened; the player and their history stay.
+          </p>
+          <ul className="flex flex-wrap gap-1.5">
+            {formerNames.map((n) => (
+              <li key={n.id}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => dropFormerName(n.id, n.name)}
+                  title={`Remove "${n.name}"`}
+                  className="inline-flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-xs text-muted hover:border-down/60 hover:text-down disabled:opacity-50"
+                >
+                  {n.name}
+                  <svg viewBox="0 0 14 14" className="h-3 w-3" aria-hidden>
+                    <path d="M3 3l8 8M11 3l-8 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <p className="mb-2 text-sm text-muted">
         Merge another player into <strong className="text-ink">{playerName}</strong>, when the two are one person
         under two names. Their id is the number at the end of their profile address.

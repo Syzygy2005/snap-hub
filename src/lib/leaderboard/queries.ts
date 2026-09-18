@@ -226,8 +226,8 @@ export async function getPlayer(id: number) {
   );
 
   // Newest first, so the profile reads back through the names they have used.
-  const formerNames = await db.query<{ name: string; changed_at: Date }>(
-    `select name, changed_at from player_names where player_id = $1 order by changed_at desc`,
+  const formerNames = await db.query<{ id: number; name: string; changed_at: Date }>(
+    `select id, name, changed_at from player_names where player_id = $1 order by changed_at desc`,
     [id],
   );
 
@@ -237,7 +237,7 @@ export async function getPlayer(id: number) {
     firstSeen: player.first_seen.toISOString(),
     lastSeen: player.last_seen.toISOString(),
     sameNameCount: others?.n ?? 0,
-    formerNames: formerNames.map((n) => ({ name: n.name, changedAt: n.changed_at.toISOString() })),
+    formerNames: formerNames.map((n) => ({ id: n.id, name: n.name, changedAt: n.changed_at.toISOString() })),
     seasons: seasons.map<PlayerSeason>((s) => ({
       season: s.season,
       region: s.region,
@@ -313,4 +313,14 @@ export async function getLastSnapshot(): Promise<{ at: string } | null> {
   const db = await getDb();
   const [row] = await db.query<{ value: { at: string } }>(`select value from meta where key = 'last_snapshot'`);
   return row?.value ?? null;
+}
+
+/** Removes one former-name record, for when a rename was detected that never happened. */
+export async function deleteFormerName(playerId: number, nameId: number): Promise<boolean> {
+  const db = await getDb();
+  const rows = await db.query<{ id: number }>(
+    `delete from player_names where id = $1 and player_id = $2 returning id`,
+    [nameId, playerId],
+  );
+  return rows.length > 0;
 }

@@ -53,39 +53,77 @@ describe("matchEntries", () => {
 describe("detectRenames", () => {
   const gone = (playerId: number, name: string, score: number, rank = 90) => ({ playerId, name, score, rank });
   const came = (index: number, name: string, score: number, rank = 80) => ({ index, name, score, rank });
+  /** The ordinary case: the old name has gone from the board and the new one is unheard of. */
+  const clean = (departures: { name: string }[], arrivals: { name: string }[]) => ({
+    onBoard: new Set(arrivals.map((a) => a.name)),
+    known: new Set(departures.map((d) => d.name)),
+  });
 
   it("pairs a departure and an arrival holding the same score", () => {
-    expect(detectRenames([gone(7, "PXL D. Rick", 4200)], [came(3, "PXL Rick", 4200)])).toEqual([
+    expect(detectRenames([gone(7, "PXL D. Rick", 4200)], [came(3, "PXL Rick", 4200)], clean([gone(7, "PXL D. Rick", 4200)], [came(3, "PXL Rick", 4200)]))).toEqual([
       { index: 3, playerId: 7, from: "PXL D. Rick", to: "PXL Rick" },
     ]);
   });
 
   it("leaves it alone when the score moved, rather than guessing", () => {
-    expect(detectRenames([gone(7, "PXL D. Rick", 4200)], [came(3, "PXL Rick", 4207)])).toEqual([]);
+    expect(detectRenames([gone(7, "PXL D. Rick", 4200)], [came(3, "PXL Rick", 4207)], clean([gone(7, "PXL D. Rick", 4200)], [came(3, "PXL Rick", 4207)]))).toEqual([]);
   });
 
   it("refuses to guess when two departures share a score", () => {
-    expect(detectRenames([gone(7, "A", 4200), gone(8, "B", 4200)], [came(3, "C", 4200)])).toEqual([]);
+    expect(detectRenames([gone(7, "A", 4200), gone(8, "B", 4200)], [came(3, "C", 4200)], clean([gone(7, "A", 4200), gone(8, "B", 4200)], [came(3, "C", 4200)]))).toEqual([]);
   });
 
   it("refuses to guess when two arrivals share a score", () => {
-    expect(detectRenames([gone(7, "A", 4200)], [came(3, "B", 4200), came(4, "C", 4200)])).toEqual([]);
+    expect(detectRenames([gone(7, "A", 4200)], [came(3, "B", 4200), came(4, "C", 4200)], clean([gone(7, "A", 4200)], [came(3, "B", 4200), came(4, "C", 4200)]))).toEqual([]);
   });
 
   it("ignores a departure and arrival that are simply the same name", () => {
-    expect(detectRenames([gone(7, "Ghost", 4200)], [came(3, "Ghost", 4200)])).toEqual([]);
+    expect(detectRenames([gone(7, "Ghost", 4200)], [came(3, "Ghost", 4200)], clean([gone(7, "Ghost", 4200)], [came(3, "Ghost", 4200)]))).toEqual([]);
   });
 
   it("handles several unrelated renames in one tick", () => {
-    const result = detectRenames(
-      [gone(7, "Old One", 4200), gone(9, "Old Two", 3100)],
-      [came(1, "New Two", 3100), came(2, "New One", 4200)],
-    );
+    const departures = [gone(7, "Old One", 4200), gone(9, "Old Two", 3100)];
+    const arrivals = [came(1, "New Two", 3100), came(2, "New One", 4200)];
+    const result = detectRenames(departures, arrivals, clean(departures, arrivals));
     expect(result.map((r) => `${r.from}->${r.to}`).sort()).toEqual(["Old One->New One", "Old Two->New Two"]);
   });
 
   it("finds nothing in a quiet tick", () => {
-    expect(detectRenames([], [])).toEqual([]);
-    expect(detectRenames([gone(7, "A", 4200)], [])).toEqual([]);
+    expect(detectRenames([], [], clean([], []))).toEqual([]);
+    expect(detectRenames([gone(7, "A", 4200)], [], clean([gone(7, "A", 4200)], []))).toEqual([]);
+  });
+});
+
+describe("detectRenames and names the board still holds", () => {
+  const gone = (playerId: number, name: string, score: number) => ({ playerId, name, score, rank: 900 });
+  const came = (index: number, name: string, score: number) => ({ index, name, score, rank: 880 });
+
+  it("ignores a departure whose name is still on the board", () => {
+    // Dozens of players share a default name. matchEntries pairs those by closest score, and
+    // when the count shifts one is left unclaimed: a pairing artifact, not somebody leaving.
+    const departures = [gone(7, "PlayerName", 8598)];
+    const arrivals = [came(3, "Somebody Real", 8598)];
+    const names = {
+      onBoard: new Set(["PlayerName", "Somebody Real", "Other"]),
+      known: new Set(["PlayerName", "Other"]),
+    };
+    expect(detectRenames(departures, arrivals, names)).toEqual([]);
+  });
+
+  it("still catches it once that name really has gone from the board", () => {
+    const departures = [gone(7, "PlayerName", 8598)];
+    const arrivals = [came(3, "Somebody Real", 8598)];
+    const names = { onBoard: new Set(["Somebody Real", "Other"]), known: new Set(["PlayerName", "Other"]) };
+    expect(detectRenames(departures, arrivals, names)).toEqual([
+      { index: 3, playerId: 7, from: "PlayerName", to: "Somebody Real" },
+    ]);
+  });
+
+  it("ignores an arrival whose name is already tracked this season", () => {
+    // A name reappearing belongs to the player who had it, not to whoever just left.
+    const departures = [gone(7, "Departed", 8598)];
+    const arrivals = [came(3, "Returning", 8598)];
+    const names = { onBoard: new Set(["Returning"]), known: new Set(["Departed", "Returning"]) };
+    expect(detectRenames(departures, arrivals, names)).toEqual([]);
   });
 });

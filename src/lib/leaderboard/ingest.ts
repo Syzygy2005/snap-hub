@@ -59,6 +59,7 @@ export async function ingestBoard(
       ids.flatMap((id, i) =>
         id === null ? [{ index: i, name: entries[i].name, score: entries[i].score, rank: entries[i].rank }] : [],
       ),
+      { onBoard: new Set(entries.map((e) => e.name)), known: new Set(known.map((k) => k.name)) },
     );
     for (const r of renames) {
       ids[r.index] = r.playerId;
