@@ -13,9 +13,9 @@
 --
 -- WHAT COMES BACK, AND WHAT DOES NOT
 --   The next snapshot refetches the current and previous month's boards from the official API,
---   so the standings return within half an hour. The half-hourly history does not: the API
---   serves a board as it stands now, not how it moved, so every point change recorded so far
---   is gone for good and Movers stays empty until enough new snapshots have accumulated.
+--   so the standings return within minutes. The point history does not: the API serves a board as
+--   it stands now, not how it moved, so every point change recorded so far is gone for good and
+--   Movers stays empty until enough new snapshots have accumulated.
 --
 -- ORDER OF OPERATIONS
 --   1. Deploy first. Running this against an ingest that still writes bad data just starts the
@@ -28,7 +28,9 @@ begin;
 
 truncate table history, standings, player_names, players, snapshots restart identity;
 
--- The site reads this for "updated X ago". A stale value would outlive the data it describes.
-delete from meta where key = 'last_snapshot';
+-- "updated X ago" would otherwise outlive the data it describes, and the season_closed marks
+-- say a finished month's final board is already stored, which after this it is not: leaving
+-- them would stop the previous month ever being fetched again.
+delete from meta where key = 'last_snapshot' or key like 'season_closed:%';
 
 commit;

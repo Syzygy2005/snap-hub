@@ -44,6 +44,13 @@
   between them invents one. `ingest.stress.test.ts` replays a season and pins it with `it.fails`;
   every phantom it makes is a departure in the last handful of slots. Fixing it needs a line drawn
   from real board data, so do not tune it against that simulation's invented score spread.
+- `runSnapshot` fetches the current month every run and the previous month exactly once, marking
+  it `season_closed:<season>:<region>` in `meta` afterwards. The mark is only written once the
+  current season has a standings row, which is the proof that the old month is really over; do not
+  swap that for a settling delay. `rollover.test.ts` covers the turn of the month, the year
+  boundary and a failed fetch being retried.
+- The snapshot workflow runs every 10 minutes. Shortening it was measured, not guessed: detection
+  of real renames went 48% hourly to 81% at ten minutes across eight seeds, and phantoms fell.
 - `scripts/reset-leaderboard.sql` is the one-way leaderboard wipe, run by hand in Supabase.
   `reset.test.ts` asserts what it clears and what it must leave standing; if a new table gains a
   foreign key to `players`, both the script and that test need it.

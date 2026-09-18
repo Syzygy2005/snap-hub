@@ -56,7 +56,7 @@ export default async function Home(props: PageProps<"/">) {
         <p className="max-w-2xl text-muted">
           <span className="block font-display text-sm font-bold uppercase tracking-[0.2em] text-accent">{SITE_TAGLINE}</span>
           <span className="mt-2 block">
-            The Infinite leaderboard saved every 30 minutes, a deck builder that exports straight to the game, and
+            The Infinite leaderboard saved every 10 minutes, a deck builder that exports straight to the game, and
             win rate and cube rate from real tracked games.
           </span>
         </p>

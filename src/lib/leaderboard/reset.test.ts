@@ -36,6 +36,7 @@ describe("reset-leaderboard.sql", () => {
       `insert into trackers (name, token_hash) values ('PC', 'hash') returning id`,
     );
     await db.query(`insert into meta (key, value) values ('cards_synced', '"2026-09-10"'::jsonb)`);
+    await db.query(`insert into meta (key, value) values ('season_closed:2026-08:global', '{}'::jsonb)`);
 
     await ingestBoard(
       db,
@@ -79,7 +80,9 @@ describe("reset-leaderboard.sql", () => {
     for (const table of ["players", "player_names", "standings", "history", "snapshots"]) {
       expect([table, await count(table)]).toEqual([table, 0]);
     }
-    expect(await count("meta")).toBe(1); // cards_synced survives, last_snapshot does not
+    // cards_synced survives. last_snapshot and the season_closed marks must not, or the
+    // previous month would stay marked as captured when its rows have just been deleted.
+    expect(await count("meta")).toBe(1);
     const [meta] = await db.query<{ key: string }>(`select key from meta`);
     expect(meta.key).toBe("cards_synced");
 
