@@ -10,6 +10,21 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-18",
+    changes: [
+      {
+        title: "The leaderboard started over",
+        detail:
+          "Early tracking recorded some players under names that were never theirs, so the stored history was cleared and rebuilt from the official board. Ranks and points came back with the next snapshot. Point changes and Movers build up again from here.",
+      },
+      {
+        title: "Fixed a wrong \u201cnew name\u201d tag",
+        detail:
+          "Dozens of players share the default name, and one of them dropping off the board was being read as a rename and pinned on whoever arrived next. Both sides are now checked against the whole board before anything is recorded.",
+      },
+    ],
+  },
+  {
     date: "2026-09-17",
     changes: [
       {

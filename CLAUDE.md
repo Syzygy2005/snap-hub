@@ -39,6 +39,14 @@
   the name is still on the board. Treating that as a departure invented renames onto strangers.
   Loosening any of it trades missed renames for merged strangers, which is unrecoverable once the
   histories are joined; widen it only against real board data, never a guessed threshold.
+- Rename detection still has an open hole at the cut line: a player pushed off the board and a
+  different player entering carry the same signature as a rename, and an exact score collision
+  between them invents one. `ingest.stress.test.ts` replays a season and pins it with `it.fails`;
+  every phantom it makes is a departure in the last handful of slots. Fixing it needs a line drawn
+  from real board data, so do not tune it against that simulation's invented score spread.
+- `scripts/reset-leaderboard.sql` is the one-way leaderboard wipe, run by hand in Supabase.
+  `reset.test.ts` asserts what it clears and what it must leave standing; if a new table gains a
+  foreign key to `players`, both the script and that test need it.
 - Admin is `ADMIN_DISCORD_IDS`, checked with `isAdmin` inside every admin route handler. Hiding a
   control in the UI is not the boundary; if a new admin action appears, it checks server side too.
 - Merging players is destructive and one-way, reachable from the profile page as an admin and as

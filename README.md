@@ -92,6 +92,14 @@ arriving name has to be new to the season. Names like `PlayerName` are shared by
 without that check a pairing artifact among them read as somebody leaving and stamped a former name
 onto a stranger.
 
+**Known gap: churn at the cut line.** A player pushed off the bottom of the board and a different
+player entering it are, from the board alone, the same two events as a rename. When their scores
+land on the same number the detector cannot tell which happened, and
+`src/lib/leaderboard/ingest.stress.test.ts` replays a season to show it: every phantom it produces
+is a departure ranked in the last handful of slots. Closing it means deciding how near the cut line
+is too near to guess, and that line has to come from real board data, not from the simulation's
+invented score spread. The test marks the case `it.fails`, so it will speak up when it is closed.
+
 Deliberately conservative: a wrong pairing welds two real players' histories together, and that is
 worse than missing one. It will not catch a rename by someone who played between snapshots, because
 their score moved.
@@ -101,6 +109,18 @@ For the ones it misses, and for rows that split before this existed, `npm run me
 outright when the two players ever held a rank in the same snapshot, since one person cannot be in
 two places on one board. Locally the dev server has to be stopped first, because PGlite allows one
 process at a time.
+
+## Starting the leaderboard over
+
+`scripts/reset-leaderboard.sql` clears every player, standing, point change and snapshot, and is run
+by hand in the Supabase SQL editor. Accounts, decks, tracker keys and tracked games are untouched;
+nothing outside the leaderboard has a foreign key to `players`, and
+`src/lib/leaderboard/reset.test.ts` asserts that rather than trusting it.
+
+Deploy before running it, or an ingest that still writes bad rows simply starts again on clean
+tables. Afterwards, kick the workflow from Actions rather than waiting out the half hour. The
+standings come back from the official API; the half-hourly point history does not, because the API
+serves the board as it stands and not how it moved, so Movers stays empty until new snapshots pile up.
 
 ## Accounts
 
