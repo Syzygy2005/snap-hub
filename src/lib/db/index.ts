@@ -8,6 +8,32 @@ export interface Db {
   transaction<R>(fn: (tx: Db) => Promise<R>): Promise<R>;
 }
 
+/**
+ * Where PGlite keeps its files. A directory only makes sense on a machine with a writable
+ * disk; a serverless deployment with no DATABASE_URL has neither, and every request would
+ * die on the mkdir rather than on anything to do with the query. Falling back to an
+ * in-memory database keeps such a deployment standing, empty, and says so in the log,
+ * because an empty database is a misconfiguration and not something to hide.
+ *
+ * A URL-shaped value (memory://, idb://) is PGlite's own and never touches the filesystem.
+ */
+async function pgliteDir(): Promise<string> {
+  const dir = process.env.PGLITE_DIR || ".data/pglite";
+  if (dir.includes("://")) return dir;
+  try {
+    const { mkdirSync } = await import("node:fs");
+    mkdirSync(dir, { recursive: true });
+    return dir;
+  } catch (err) {
+    console.warn(
+      `[db] No DATABASE_URL, and ${dir} is not writable (${err instanceof Error ? err.message : String(err)}). ` +
+        `Falling back to an in-memory database: nothing written will survive the request. ` +
+        `Set DATABASE_URL, or PGLITE_DIR to a writable path or memory://, to stop seeing this.`,
+    );
+    return "memory://";
+  }
+}
+
 // DATABASE_URL set  -> real Postgres (Supabase in production).
 // DATABASE_URL unset -> PGlite, an embedded Postgres stored in .data/pglite. No install needed.
 async function connect(): Promise<Db> {
@@ -50,12 +76,7 @@ async function connect(): Promise<Db> {
   }
 
   const { PGlite } = await import("@electric-sql/pglite");
-  const dir = process.env.PGLITE_DIR || ".data/pglite";
-  if (!dir.includes("://")) {
-    const { mkdirSync } = await import("node:fs");
-    mkdirSync(dir, { recursive: true });
-  }
-  const pg = new PGlite(dir);
+  const pg = new PGlite(await pgliteDir());
   await pg.exec(SCHEMA);
   return {
     query: async <T,>(text: string, params: unknown[] = []) =>
@@ -86,6 +107,9 @@ export function toPgParam(value: unknown): unknown {
   });
   return `{${items.join(",")}}`;
 }
+
+/** Internals reached by tests only. */
+export const __test = { pgliteDir };
 
 // One connection per process; survives dev-server hot reloads.
 const g = globalThis as unknown as { __snapDb?: Promise<Db> };
