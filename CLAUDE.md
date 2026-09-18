@@ -33,7 +33,11 @@
 - `accounts` must stay above `decks` and `trackers` in `schema.ts`; both carry a foreign key to it and the
   whole file runs top to bottom on connect.
 - `detectRenames` only pairs a departure and an arrival on an **exact** score match, unique on both
-  sides. Loosening that trades missed renames for merged strangers, which is unrecoverable once the
+  sides, and only when the departing name has left the board entirely and the arriving name is new
+  to the season. That last part is not optional: names like `PlayerName` are shared by many players,
+  `matchEntries` pairs those by closest score, and a shifting count leaves one unclaimed even though
+  the name is still on the board. Treating that as a departure invented renames onto strangers.
+  Loosening any of it trades missed renames for merged strangers, which is unrecoverable once the
   histories are joined; widen it only against real board data, never a guessed threshold.
 - Admin is `ADMIN_DISCORD_IDS`, checked with `isAdmin` inside every admin route handler. Hiding a
   control in the UI is not the boundary; if a new admin action appears, it checks server side too.

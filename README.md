@@ -66,7 +66,8 @@ and the site already knows it, so there is no reason to go hunting in Discord's 
 
 Admins are named in `ADMIN_DISCORD_IDS` rather than flagged in the database: there is no bootstrap
 problem, nobody can grant it to themselves by reaching the database, and removing it is a redeploy.
-An admin sees rename and delete on a deck page. Rename is there because when a deck's name is the
+An admin sees rename and delete on a deck page, and on a player profile can merge another player in
+or drop a former-name record that a rename got wrong. Rename is there because when a deck's name is the
 problem the twelve cards usually are not, and taking somebody's deck away over a word is heavier
 than fixing the word. `isAdmin` is checked in the route handler on every call; hiding the buttons
 is convenience, not the boundary.
@@ -85,6 +86,11 @@ departure with an arrival holding the **exact same score** in the same snapshot,
 exactly one of each carries that score. The player keeps their row and their history, and the old
 name goes in `player_names`, which the leaderboard reads for a "new name" tag and the profile lists
 in full.
+
+Both sides are also checked against the whole board: the departing name has to have left it, and the
+arriving name has to be new to the season. Names like `PlayerName` are shared by many players, and
+without that check a pairing artifact among them read as somebody leaving and stamped a former name
+onto a stranger.
 
 Deliberately conservative: a wrong pairing welds two real players' histories together, and that is
 worse than missing one. It will not catch a rename by someone who played between snapshots, because

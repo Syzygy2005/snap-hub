@@ -81,6 +81,13 @@ export interface Rename {
   to: string;
 }
 
+export interface BoardNames {
+  /** Every name on the board this tick. */
+  onBoard: Set<string>;
+  /** Every name already tracked this season, on the board or not. */
+  known: Set<string>;
+}
+
 /**
  * Spots a player who renamed rather than left and was replaced.
  *
@@ -89,13 +96,25 @@ export interface Rename {
  * The thing a rename cannot change is the score, so a departure and an arrival holding the
  * exact same score are almost certainly one person.
  *
+ * A real rename retires the old name from the board and brings a name nobody was using, so
+ * both sides are checked against the whole board rather than taken at face value. Without
+ * that, a name many players share is a trap: matchEntries pairs those by closest score, and
+ * when the count shifts it leaves one of them unclaimed even though the name is still all
+ * over the board. That unclaimed row is a pairing artifact, not somebody leaving, and
+ * pairing it with a genuinely new arrival invented a rename out of nothing.
+ *
  * Deliberately conservative, because a wrong guess welds two real players' histories
  * together: a score only counts when exactly one departure and exactly one arrival carry it.
  * Two players sharing a score in one tick are left alone rather than guessed between. This
- * misses a rename by someone who played between snapshots, which is the price of not
- * inventing merges.
+ * misses a rename by someone who played between snapshots, or onto a name already in use,
+ * which is the price of not inventing merges.
  */
-export function detectRenames(departures: Departure[], arrivals: Arrival[]): Rename[] {
+export function detectRenames(departures: Departure[], arrivals: Arrival[], names: BoardNames): Rename[] {
+  // Someone whose name is still on the board did not leave, whatever the pairing decided.
+  departures = departures.filter((d) => !names.onBoard.has(d.name));
+  // A name already tracked this season is not a new identity appearing.
+  arrivals = arrivals.filter((a) => !names.known.has(a.name));
+
   const byScore = <T extends { score: number }>(rows: T[]) => {
     const map = new Map<number, T[]>();
     for (const r of rows) {
