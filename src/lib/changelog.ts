@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-18",
     changes: [
       {
+        title: "The board updates every 10 minutes",
+        detail:
+          "It was every half hour. Checking more often also catches more name changes, because a rename is only recognisable while a player's points sit still.",
+      },
+      {
         title: "The leaderboard started over",
         detail:
           "Early tracking recorded some players under names that were never theirs, so the stored history was cleared and rebuilt from the official board. Ranks and points came back with the next snapshot. Point changes and Movers build up again from here.",

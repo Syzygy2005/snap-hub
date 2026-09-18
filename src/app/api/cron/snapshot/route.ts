@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 const CARD_SYNC_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
-// Called every ~30 minutes by the GitHub Actions workflow (production) or the dev scheduler.
+// Called every ~10 minutes by the GitHub Actions workflow (production) or every 30 by the dev scheduler.
 export async function GET(request: Request) {
   const secret = cleanEnv("CRON_SECRET");
   const authorized = secret

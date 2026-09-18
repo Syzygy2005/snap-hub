@@ -3,7 +3,7 @@
 **Build / Track / Compete.** A fan-made Marvel Snap site: an Infinite leaderboard that keeps history, a deck
 builder, and win rate / cube rate stats from a PC tracker.
 
-- **Leaderboard**: the official top 1000, saved every 30 minutes. 24h rank and point changes, past seasons, and
+- **Leaderboard**: the official top 1000, saved every 10 minutes. 24h rank and point changes, past seasons, and
   players who share a name kept apart.
 - **Movers**: climbers, fallers, new entries and drop-outs over 6h / 24h / 7d.
 - **Player pages**: rank and points chart, point changes, past seasons.
@@ -54,7 +54,7 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
 4. **GitHub repo → Settings → Secrets and variables → Actions → New repository secret**:
    - `SITE_URL`: your Vercel address, e.g. `https://snap-hub.vercel.app`
    - `CRON_SECRET`: the same value as in Vercel
-5. **GitHub repo → Actions → Leaderboard snapshot → Run workflow** for the first snapshot. It then runs every 30
+5. **GitHub repo → Actions → Leaderboard snapshot → Run workflow** for the first snapshot. It then runs every 10
    minutes. GitHub pauses scheduled workflows after 60 days without commits; re-enable it from the Actions tab.
 
 Every push to GitHub redeploys the site on Vercel.
@@ -110,6 +110,28 @@ outright when the two players ever held a rank in the same snapshot, since one p
 two places on one board. Locally the dev server has to be stopped first, because PGlite allows one
 process at a time.
 
+## Snapshots and the turn of the month
+
+The workflow runs every 10 minutes rather than every 30, because a rename is only visible while
+the player's score sits still: a shorter gap catches more of them and leaves coincidence less room
+to look like one. A replay across eight seeds put detection at 48% hourly, 66% half-hourly and 81%
+at ten minutes.
+
+Only the current month is fetched on every run. The previous month cannot change, so it is fetched
+once after it has ended and then marked `season_closed:<season>:<region>` in `meta` and never asked
+for again. Until that one fetch succeeds it keeps being retried, so a site that was asleep over the
+turn of the month still captures the finished board.
+
+The old month is closed only once the new one has a board of its own. Nothing here knows whether
+the official leaderboard freezes a month exactly at UTC midnight, and waiting out a guessed settling
+period would be inventing a number, so it waits for proof instead: the moment anybody has reached
+Infinite in the new month, the old one is over. That costs a few extra fetches on the first of the
+month and nothing after it.
+
+A rename that happens while a player is off the board, or across the turn of the month, cannot be
+detected at all: in a new season everyone is an arrival and there are no departures to pair them
+with. Those surface as a duplicate player and are fixed with the admin merge.
+
 ## Starting the leaderboard over
 
 `scripts/reset-leaderboard.sql` clears every player, standing, point change and snapshot, and is run
@@ -118,9 +140,9 @@ nothing outside the leaderboard has a foreign key to `players`, and
 `src/lib/leaderboard/reset.test.ts` asserts that rather than trusting it.
 
 Deploy before running it, or an ingest that still writes bad rows simply starts again on clean
-tables. Afterwards, kick the workflow from Actions rather than waiting out the half hour. The
-standings come back from the official API; the half-hourly point history does not, because the API
-serves the board as it stands and not how it moved, so Movers stays empty until new snapshots pile up.
+tables. Afterwards, kick the workflow from Actions rather than waiting for the next run. The
+standings come back from the official API; the point history does not, because the API serves the
+board as it stands and not how it moved, so Movers stays empty until new snapshots pile up.
 
 ## Accounts
 

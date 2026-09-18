@@ -7,7 +7,7 @@ import { detectRenames, matchEntries } from "./match";
 export interface IngestSummary {
   season: string;
   region: Region;
-  status: "updated" | "unchanged" | "unavailable" | "error";
+  status: "updated" | "unchanged" | "unavailable" | "error" | "skipped";
   entries?: number;
   changed?: number;
   newPlayers?: number;
@@ -215,26 +215,63 @@ function groupIds(rows: { id: number; name: string }[]): Map<string, number[]> {
   return map;
 }
 
-/** Fetch and store the current and previous month for every tracked region. */
+/** Marks a finished season whose final board is stored, so it is never fetched again. */
+const closedKey = (season: string, region: Region) => `season_closed:${season}:${region}`;
+
+async function fetchAndIngest(db: Db, ref: SeasonRef, region: Region, now: Date): Promise<IngestSummary> {
+  const result = await fetchBoard(ref, region);
+  if (!result.ok) return { season: seasonKey(ref), region, status: result.reason, detail: result.detail };
+  try {
+    return await ingestBoard(db, ref, region, result.entries, result.total, now);
+  } catch (err) {
+    return { season: seasonKey(ref), region, status: "error", detail: String(err) };
+  }
+}
+
+/**
+ * Fetch and store the boards worth fetching.
+ *
+ * The current month moves all day. The previous month cannot move at all, so it is fetched
+ * once after it ends and then left alone, instead of being pulled every tick for a board
+ * that is already final. Until that one fetch lands it keeps being retried, so a site that
+ * was asleep over the turn of the month still captures the finished board.
+ *
+ * It is closed only once the new month has a board of its own. Whether the official
+ * leaderboard freezes the old month exactly at UTC midnight is not something this code
+ * knows, and guessing a settling period would be inventing a number, so it waits for proof
+ * instead: the moment anybody has reached Infinite in the new month, the old one is over.
+ * The cost of that is a few extra fetches on the first of the month and nothing after.
+ */
 export async function runSnapshot(now = new Date()): Promise<IngestSummary[]> {
   const db = await getDb();
   const cur = currentSeason(now);
-  const seasons = [cur, previousSeason(cur)];
+  const prev = previousSeason(cur);
+  const curKey = seasonKey(cur);
+  const prevKey = seasonKey(prev);
   const summaries: IngestSummary[] = [];
 
   for (const region of trackedRegions()) {
-    for (const ref of seasons) {
-      const result = await fetchBoard(ref, region);
-      if (!result.ok) {
-        summaries.push({ season: seasonKey(ref), region, status: result.reason, detail: result.detail });
-        continue;
-      }
-      try {
-        summaries.push(await ingestBoard(db, ref, region, result.entries, result.total, now));
-      } catch (err) {
-        summaries.push({ season: seasonKey(ref), region, status: "error", detail: String(err) });
-      }
+    summaries.push(await fetchAndIngest(db, cur, region, now));
+
+    const closed = await db.query(`select 1 from meta where key = $1`, [closedKey(prevKey, region)]);
+    if (closed.length) {
+      summaries.push({ season: prevKey, region, status: "skipped", detail: "Final board already stored." });
+      continue;
     }
+
+    const previous = await fetchAndIngest(db, prev, region, now);
+    summaries.push(previous);
+    if (previous.status !== "updated" && previous.status !== "unchanged") continue;
+
+    const started = await db.query(`select 1 from standings where season = $1 and region = $2 limit 1`, [
+      curKey,
+      region,
+    ]);
+    if (!started.length) continue;
+    await db.query(
+      `insert into meta (key, value, updated_at) values ($1, $2, $3) on conflict (key) do nothing`,
+      [closedKey(prevKey, region), JSON.stringify({ at: now.toISOString() }), now],
+    );
   }
 
   await db.query(

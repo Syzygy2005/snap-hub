@@ -1,12 +1,14 @@
 name: Leaderboard snapshot
 
-# Calls the deployed site every 30 minutes so it saves a copy of the Infinite leaderboard.
+# Calls the deployed site every 10 minutes so it saves a copy of the Infinite leaderboard.
+# Ten rather than thirty because a rename is only visible while the player's score sits still,
+# so a shorter gap catches more of them and gives coincidence less room to look like one.
 # Needs two repository secrets: SITE_URL (e.g. https://snap-hub.vercel.app) and CRON_SECRET.
 # GitHub may delay scheduled runs by a few minutes, and pauses schedules in repos with no
 # commits for 60 days (re-enable it from the Actions tab).
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
