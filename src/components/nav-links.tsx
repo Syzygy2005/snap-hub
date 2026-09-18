@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/decks/builder", label: "Deck Builder", match: (p: string) => p.startsWith("/decks/builder") },
   { href: "/decks", label: "Decks", match: (p: string) => p === "/decks" || /^\/decks\/(?!builder)/.test(p) },
   { href: "/stats", label: "Stats", match: (p: string) => p.startsWith("/stats") },
+  { href: "/news", label: "News", match: (p: string) => p.startsWith("/news") },
 ];
 
 export function NavLinks() {

@@ -123,6 +123,24 @@ drop index if exists decks_dedupe_v2_idx;
 create unique index if not exists decks_dedupe_v3_idx on decks (card_key, name, listed, owner_id) nulls not distinct;
 create index if not exists decks_created_idx on decks (created_at desc);
 
+-- Game news: balance updates and patches, written by an admin. Below accounts, which it
+-- references. Bodies are stored and rendered as plain text, never HTML.
+create table if not exists news (
+  id serial primary key,
+  kind text not null,
+  title text not null,
+  body text not null,
+  -- The official post this is about. Null when there is nothing to link to.
+  source_url text,
+  -- When the change happened, which is not when the row was written.
+  published_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  -- Set null on account deletion so the item survives and only loses its byline.
+  author_id int references accounts(id) on delete set null
+);
+create index if not exists news_published_idx on news (published_at desc);
+
 -- Stats tracker. A tracker key belongs to one person; games are uploaded by the PC tracker script.
 create table if not exists trackers (
   id serial primary key,

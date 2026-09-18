@@ -59,6 +59,25 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
 
 Every push to GitHub redeploys the site on Vercel.
 
+## Game news
+
+`/news` carries balance updates and patches, as opposed to `/changelog`, which is changes to this
+site. An admin writes them from a form on the page; they are rows in `news`, not a file in the
+repo, because balance updates land every couple of weeks and a change that needs a commit and a
+deploy each time is a change that stops being made.
+
+An item is a short summary in the poster's own words plus a link to the official post.
+Reproducing Second Dinner's notes in full would be someone else's writing republished wholesale,
+and the link is what a reader wants from it anyway.
+
+Nothing is fetched. Whether either official site exposes a usable feed has never been checked
+against the real thing, and writing a parser for a response nobody has seen is how `parse-game.ts`
+ended up untested. If a feed turns out to exist, the list can be filled from it later; the table
+does not change.
+
+Bodies are stored and rendered as text, never markup, and a source link has to parse as `http` or
+`https` before it reaches an `href`, so a mistaken paste is a rejected form rather than a live link.
+
 ## Moderation
 
 Sign in, then read your own Discord id off My stats; `ADMIN_DISCORD_IDS` wants exactly that value,

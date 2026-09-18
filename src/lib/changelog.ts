@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-18",
     changes: [
       {
+        title: "Game news",
+        detail:
+          "Balance updates and patches now have a page of their own at /news, with a link to the official post for each one. Changes to this site stay on What's new.",
+      },
+      {
         title: "The board updates every 10 minutes",
         detail:
           "It was every half hour. Checking more often also catches more name changes, because a rename is only recognisable while a player's points sit still.",
