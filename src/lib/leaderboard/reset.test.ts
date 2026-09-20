@@ -48,6 +48,7 @@ describe("reset-leaderboard.sql", () => {
       [
         { rank: 1, name: "Alpha", score: 9000 },
         { rank: 2, name: "Bravo", score: 8500 },
+        { rank: 3, name: "Tailender", score: 8000 },
       ],
       36000,
       t0,
@@ -60,6 +61,7 @@ describe("reset-leaderboard.sql", () => {
       [
         { rank: 1, name: "Alpha", score: 9000 },
         { rank: 2, name: "Charlie", score: 8500 },
+        { rank: 3, name: "Tailender", score: 8000 },
       ],
       36000,
       new Date(t0.getTime() + 1800_000),

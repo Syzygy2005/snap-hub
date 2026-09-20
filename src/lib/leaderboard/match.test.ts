@@ -58,6 +58,9 @@ describe("detectRenames", () => {
     onBoard: new Set(arrivals.map((a) => a.name)),
     known: new Set(departures.map((d) => d.name)),
     shared: new Set<string>(),
+    // Every departure in these cases is well clear of the bottom of the board.
+    cutScore: 0,
+    maxDrop: 0,
   });
 
   it("pairs a departure and an arrival holding the same score", () => {
@@ -108,6 +111,8 @@ describe("detectRenames and names the board still holds", () => {
       onBoard: new Set(["PlayerName", "Somebody Real", "Other"]),
       known: new Set(["PlayerName", "Other"]),
       shared: new Set<string>(),
+      cutScore: 0,
+    maxDrop: 0,
     };
     expect(detectRenames(departures, arrivals, names)).toEqual([]);
   });
@@ -115,7 +120,13 @@ describe("detectRenames and names the board still holds", () => {
   it("still catches it once that name really has gone from the board", () => {
     const departures = [gone(7, "PlayerName", 8598)];
     const arrivals = [came(3, "Somebody Real", 8598)];
-    const names = { onBoard: new Set(["Somebody Real", "Other"]), known: new Set(["PlayerName", "Other"]), shared: new Set<string>() };
+    const names = {
+      onBoard: new Set(["Somebody Real", "Other"]),
+      known: new Set(["PlayerName", "Other"]),
+      shared: new Set<string>(),
+      cutScore: 0,
+    maxDrop: 0,
+    };
     expect(detectRenames(departures, arrivals, names)).toEqual([
       { index: 3, playerId: 7, from: "PlayerName", to: "Somebody Real" },
     ]);
@@ -131,6 +142,8 @@ describe("detectRenames and names the board still holds", () => {
       onBoard: new Set(["Stranger", "Other"]),
       known: new Set(["PlayerName", "Other"]),
       shared: new Set(["PlayerName"]),
+      cutScore: 0,
+    maxDrop: 0,
     };
     expect(detectRenames(departures, arrivals, names)).toEqual([]);
   });
@@ -142,6 +155,8 @@ describe("detectRenames and names the board still holds", () => {
       onBoard: new Set(["PlayerName"]),
       known: new Set(["Departed"]),
       shared: new Set(["PlayerName"]),
+      cutScore: 0,
+    maxDrop: 0,
     };
     expect(detectRenames(departures, arrivals, names)).toEqual([]);
   });
@@ -153,9 +168,41 @@ describe("detectRenames and names the board still holds", () => {
       onBoard: new Set(["PXL Rick", "Other"]),
       known: new Set(["PXL D. Rick", "Other"]),
       shared: new Set(["PlayerName"]),
+      cutScore: 0,
+    maxDrop: 0,
     };
     expect(detectRenames(departures, arrivals, names)).toEqual([
       { index: 3, playerId: 7, from: "PXL D. Rick", to: "PXL Rick" },
+    ]);
+  });
+
+  it("ignores a departure the board would have kept, once it is under the cut", () => {
+    // Being pushed off the bottom means the cut rose past you. A departure at or under the cut
+    // is ordinary churn; on two live boards every real departure was exactly that.
+    const departures = [gone(7, "Departed", 7784)];
+    const arrivals = [came(3, "Arrived", 7784)];
+    const names = {
+      onBoard: new Set(["Arrived"]),
+      known: new Set(["Departed"]),
+      shared: new Set<string>(),
+      cutScore: 7785,
+      maxDrop: 0,
+    };
+    expect(detectRenames(departures, arrivals, names)).toEqual([]);
+  });
+
+  it("still follows a departure holding a score the board would have kept", () => {
+    const departures = [gone(7, "Departed", 8598)];
+    const arrivals = [came(3, "Arrived", 8598)];
+    const names = {
+      onBoard: new Set(["Arrived"]),
+      known: new Set(["Departed"]),
+      shared: new Set<string>(),
+      cutScore: 7785,
+      maxDrop: 0,
+    };
+    expect(detectRenames(departures, arrivals, names)).toEqual([
+      { index: 3, playerId: 7, from: "Departed", to: "Arrived" },
     ]);
   });
 
@@ -163,7 +210,13 @@ describe("detectRenames and names the board still holds", () => {
     // A name reappearing belongs to the player who had it, not to whoever just left.
     const departures = [gone(7, "Departed", 8598)];
     const arrivals = [came(3, "Returning", 8598)];
-    const names = { onBoard: new Set(["Returning"]), known: new Set(["Departed", "Returning"]), shared: new Set<string>() };
+    const names = {
+      onBoard: new Set(["Returning"]),
+      known: new Set(["Departed", "Returning"]),
+      shared: new Set<string>(),
+      cutScore: 0,
+    maxDrop: 0,
+    };
     expect(detectRenames(departures, arrivals, names)).toEqual([]);
   });
 });
