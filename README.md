@@ -124,6 +124,10 @@ name walking away. It is a count of one against more than one, with nothing to t
 The cost is that somebody renaming away from a shared default name is never recognised. There is no
 way to tell which of them left, so the alternative is guessing between strangers.
 
+The API gives three fields per entry and nothing else: `rank`, `playerName`, `score`. The
+envelope reports `offset`, `limit` and a `total` in the tens of thousands, but `offset` is
+ignored, so the top 1000 is a ceiling rather than a page size.
+
 **Known gap: churn at the cut line.** A player pushed off the bottom of the board and a different
 player entering it are, from the board alone, the same two events as a rename. When their scores
 land on the same number the detector cannot tell which happened, and

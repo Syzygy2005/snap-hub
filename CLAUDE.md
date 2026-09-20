@@ -56,9 +56,19 @@
   unrecoverable once the histories are joined; widen it only against real board data.
 - Rename detection still has an open hole at the cut line: a player pushed off the board and a
   different player entering carry the same signature as a rename, and an exact score collision
-  between them invents one. `ingest.stress.test.ts` replays a season and pins it with `it.fails`;
-  every phantom it makes is a departure in the last handful of slots. Fixing it needs a line drawn
-  from real board data, so do not tune it against that simulation's invented score spread.
+  between them invents one. `ingest.stress.test.ts` replays a season and pins it with `it.fails`.
+  Its scores now come from `fixtures/board-scores.json`, the score column of a real global board,
+  so the way players bunch up near the cut is real; its per-tick movement is still invented.
+  Measured on that board: every phantom is a departure whose last score sat within a handful of
+  points of the cut, while real renames sit anywhere from a few points to several hundred above
+  it, so the dividing line is how far a genuine new entrant can climb in one tick. That number
+  has to come from two real boards taken apart in time. Requiring the score to be one no other
+  player holds was tried and rejected on measurement, not taste: it removed all ten phantoms and
+  twenty-seven of the thirty real renames with them.
+- The board API returns exactly `rank`, `playerName` and `score` per entry, confirmed against a
+  real response; there is no identity field to lean on. The envelope carries `offset`, `limit`
+  and `total` (about 48k players at Infinite), but `offset` is ignored: asking for 1000 returns
+  the top of the board again, so the top 1000 really is a hard ceiling.
 - `runSnapshot` fetches the current month every run and the previous month exactly once, marking
   it `season_closed:<season>:<region>` in `meta` afterwards. The mark is only written once the
   current season has a standings row, which is the proof that the old month is really over; do not
