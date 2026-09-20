@@ -37,12 +37,16 @@
 - `accounts` must stay above `decks` and `trackers` in `schema.ts`; both carry a foreign key to it and the
   whole file runs top to bottom on connect.
 - `detectRenames` only pairs a departure and an arrival on an **exact** score match, unique on both
-  sides, and only when the departing name has left the board entirely and the arriving name is new
-  to the season. That last part is not optional: names like `PlayerName` are shared by many players,
-  `matchEntries` pairs those by closest score, and a shifting count leaves one unclaimed even though
-  the name is still on the board. Treating that as a departure invented renames onto strangers.
-  Loosening any of it trades missed renames for merged strangers, which is unrecoverable once the
-  histories are joined; widen it only against real board data, never a guessed threshold.
+  sides, only when the departing name has left the board and the arriving name is new to the season,
+  and **never when more than one player has held that name this season** (`sharedNames` in
+  `ingest.ts`, counting former names too, plus any name twice on the current board). None of it is
+  optional. Checking only the current board was tried and was not enough: a handful of players carry
+  the default name at a time and they churn, so it leaves the board outright every so often, and in
+  that tick one of them going looked exactly like the single owner of a unique name walking away.
+  The count is one or more than one, so there is no threshold to tune. The cost is that a rename
+  away from a shared default name is never recognised, which is unavoidable: nothing says which of
+  them left. Loosening any of this trades missed renames for merged strangers, which is
+  unrecoverable once the histories are joined; widen it only against real board data.
 - Rename detection still has an open hole at the cut line: a player pushed off the board and a
   different player entering carry the same signature as a rename, and an exact score collision
   between them invents one. `ingest.stress.test.ts` replays a season and pins it with `it.fails`;
