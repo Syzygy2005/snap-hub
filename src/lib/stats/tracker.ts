@@ -9,6 +9,8 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 export interface Tracker {
   id: number;
   name: string;
+  /** The Discord account this key belongs to, or null for a key made while signed out. */
+  account_id?: number | null;
 }
 
 export type CreateTrackerResult = { ok: true; token: string; tracker: Tracker } | { ok: false; error: string; status: number };
@@ -81,7 +83,7 @@ export async function authenticate(request: Request): Promise<Tracker | null> {
   const token = /^Bearer\s+(shk_[\w-]{20,})$/.exec(header.trim())?.[1];
   if (!token) return null;
   const db = await getDb();
-  const [row] = await db.query<Tracker>(`select id, name from trackers where token_hash = $1`, [sha256(token)]);
+  const [row] = await db.query<Tracker>(`select id, name, account_id from trackers where token_hash = $1`, [sha256(token)]);
   return row ?? null;
 }
 
@@ -103,6 +105,22 @@ export async function recordGame(
   const accountHash = sha256(`snaphub:${accountId || `tracker-${tracker.id}`}`);
 
   const db = await getDb();
+
+  // What this account calls itself, recorded whether or not the game itself is new. It is the
+  // only direct evidence of a rename the site can get, and it costs one upsert.
+  if (g.playerName) {
+    await db.query(
+      `insert into snap_names (account_hash, name, first_seen, last_seen, games, account_id)
+       values ($1, $2, $3, $3, 1, $4)
+       on conflict (account_hash, name) do update set
+         last_seen = greatest(snap_names.last_seen, excluded.last_seen),
+         first_seen = least(snap_names.first_seen, excluded.first_seen),
+         games = snap_names.games + 1,
+         account_id = coalesce(excluded.account_id, snap_names.account_id)`,
+      [accountHash, g.playerName, now, tracker.account_id ?? null],
+    );
+  }
+
   const inserted = await db.query<{ id: number }>(
     `insert into tracked_games (tracker_id, account_hash, game_id, played_at, league, battle_mode, friendly, result,
                                 cubes, final_cube_value, snapped, opponent_snapped, conceded, turns, total_turns,

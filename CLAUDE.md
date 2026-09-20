@@ -87,6 +87,19 @@
   live in `news/types.ts` so the admin form can import them without pulling the database client
   into the browser bundle, the same split as `cards/types.ts`. Bodies render as text, never markup,
   and `cleanSourceUrl` keeps anything that is not http(s) out of an `href`.
+- A tracker key's identity is its token, not a name: `trackers.token_hash` is unique and
+  `trackers.name` is only a label, so two players sharing a display name never collide.
+  `trackers.account_id` is the Discord account the key belongs to, which is what makes stats
+  follow a person across devices. `tracked_games.account_hash` is a separate thing again, a
+  hash of the Snap account id used for dedupe. Display names matter only on the leaderboard,
+  which has no IDs at all.
+- `snap_names` records display names a tracker has seen one Snap account using, which is the
+  only direct evidence of a rename the site can get. It is **never applied automatically**: the
+  game file is uploaded by its own client and the Snap account id arrives in a header the
+  uploader sets, so anyone holding a key could describe an account that is not theirs, including
+  one they know only from having played against them. `otherNamesUsedWith` feeds a read-only
+  panel an admin sees on a player profile, next to merge, and a person decides. Keep it that way
+  unless there is a way to prove account ownership.
 - Admin is `ADMIN_DISCORD_IDS`, checked with `isAdmin` inside every admin route handler. Hiding a
   control in the UI is not the boundary; if a new admin action appears, it checks server side too.
 - Merging players is destructive and one-way, reachable from the profile page as an admin and as

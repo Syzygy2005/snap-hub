@@ -5,6 +5,8 @@ import { HistoryChart } from "@/components/history-chart";
 import { RelativeTime } from "@/components/relative-time";
 import { PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { PlayerAdmin } from "@/components/player-admin";
+import { TrackerEvidence } from "@/components/tracker-evidence";
+import { otherNamesUsedWith } from "@/lib/stats/identity";
 import { isAdmin } from "@/lib/auth/admin";
 import { currentAccount } from "@/lib/auth/session";
 import { isRegion, REGION_LABELS } from "@/lib/config";
@@ -30,12 +32,15 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
   const [player, account] = await Promise.all([load(id), currentAccount()]);
   if (!player) notFound();
   const admin = isAdmin(account);
+  // Only looked up for an admin: it is moderation evidence, not something a visitor is shown.
+  const sightings = admin && player ? await otherNamesUsedWith(player.name) : [];
 
   if (player.seasons.length === 0) {
     return (
       <>
         <PageHeader title={player.name.trim()} subtitle="No leaderboard appearances recorded." />
         {admin && <PlayerAdmin playerId={player.id} playerName={player.name} formerNames={player.formerNames} />}
+        {admin && <TrackerEvidence name={player.name} sightings={sightings} />}
       </>
     );
   }
@@ -98,6 +103,7 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
       </PageHeader>
 
       {admin && <PlayerAdmin playerId={player.id} playerName={player.name} formerNames={player.formerNames} />}
+      {admin && <TrackerEvidence name={player.name} sightings={sightings} />}
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat

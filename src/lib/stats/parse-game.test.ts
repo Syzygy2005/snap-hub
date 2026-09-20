@@ -128,6 +128,7 @@ describe("parseGameState", () => {
         totalTurns: 6,
         deckName: "My Thanos",
         deckCards: ["AntMan", "Thanos", "Wasp"],
+        playerName: "Me",
         opponentName: "Rival#123",
         opponentCards: ["Hulk", "Sunspot"],
         cardsDrawn: ["AntMan", "Thanos", "Wasp"],
