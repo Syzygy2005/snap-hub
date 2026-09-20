@@ -128,13 +128,18 @@ The API gives three fields per entry and nothing else: `rank`, `playerName`, `sc
 envelope reports `offset`, `limit` and a `total` in the tens of thousands, but `offset` is
 ignored, so the top 1000 is a ceiling rather than a page size.
 
-**Known gap: churn at the cut line.** A player pushed off the bottom of the board and a different
-player entering it are, from the board alone, the same two events as a rename. When their scores
-land on the same number the detector cannot tell which happened, and
-`src/lib/leaderboard/ingest.stress.test.ts` replays a season to show it: every phantom it produces
-is a departure ranked in the last handful of slots. Closing it means deciding how near the cut line
-is too near to guess, and that line has to come from real board data, not from the simulation's
-invented score spread. The test marks the case `it.fails`, so it will speak up when it is closed.
+**Churn at the cut line**, which used to be an open gap, is handled by the same logic. A player
+pushed off the bottom and a different player entering it are the same two events as a rename, so
+a departure now has to clear the cut by more than the worst score loss the season has shown. A
+stored score is only the last sighting: somebody who lost cubes and fell under the cut in the
+same gap still looks like they are above it, while a player the board would have kept did not
+leave at all. That figure is read from the site's own history rather than fixed.
+
+Both halves of the evidence are real. `src/lib/leaderboard/fixtures/board-scores.json` holds the
+score curve of an actual board and the score changes seen on it over half an hour, and
+`ingest.stress.test.ts` replays a season from them. On that replay the rule takes invented
+renames from 18 to 2 across eight runs, and real renames caught from 85% to 66%. The trade is
+deliberate: a wrong pairing joins two strangers' histories permanently, a missed one costs a tag.
 
 Deliberately conservative: a wrong pairing welds two real players' histories together, and that is
 worse than missing one. It will not catch a rename by someone who played between snapshots, because

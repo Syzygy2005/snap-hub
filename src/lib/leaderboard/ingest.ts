@@ -63,6 +63,8 @@ export async function ingestBoard(
         onBoard: new Set(entries.map((e) => e.name)),
         known: new Set(known.map((k) => k.name)),
         shared: await sharedNames(tx, season, region, entries),
+        cutScore: Math.min(...entries.map((e) => e.score)),
+        maxDrop: await largestDrop(tx, season, region),
       },
     );
     for (const r of renames) {
@@ -207,6 +209,26 @@ export async function ingestBoard(
       left: left.length,
     } as const;
   });
+}
+
+/**
+ * The largest score loss this season has actually shown, between one sighting of a player and
+ * the next. A departure's stored score is their last sighting, so it can sit well above the cut
+ * while the player really did fall under it: they lost cubes and dropped off in the same gap.
+ * Discounting by what a player can genuinely lose is what separates that from a rename.
+ *
+ * Read from the season's own history rather than fixed, so it reflects this board rather than
+ * the one it happened to be measured on. Empty history gives 0, which is simply the weaker rule.
+ */
+async function largestDrop(tx: Db, season: string, region: Region): Promise<number> {
+  const [row] = await tx.query<{ drop: number | null }>(
+    `select max(fell) as drop from (
+       select lag(score) over (partition by player_id order by taken_at) - score as fell
+         from history where season = $1 and region = $2 and rank is not null
+     ) steps where fell > 0`,
+    [season, region],
+  );
+  return Number(row?.drop ?? 0) || 0;
 }
 
 /**

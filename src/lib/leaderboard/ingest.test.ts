@@ -104,6 +104,7 @@ describe("renames", () => {
       [
         { rank: 1, name: "Steady", score: 9000 },
         { rank: 2, name: "PXL D. Rick", score: 4200 },
+        { rank: 3, name: "Tailender", score: 3000 },
       ],
       1000,
       start,
@@ -120,6 +121,7 @@ describe("renames", () => {
       [
         { rank: 1, name: "Steady", score: 9000 },
         { rank: 2, name: "PXL Rick", score: 4200 },
+        { rank: 3, name: "Tailender", score: 3000 },
       ],
       1000,
       later(1),
@@ -293,6 +295,7 @@ describe("a default name that churns", () => {
         { rank: 1, name: "Anchor", score: 9000 },
         { rank: 2, name: "PlayerName", score: 8600 },
         { rank: 3, name: "PlayerName", score: 8500 },
+        { rank: 4, name: "Tailender", score: 8000 },
       ],
       3000,
       t(0),
@@ -307,6 +310,7 @@ describe("a default name that churns", () => {
         { rank: 1, name: "Anchor", score: 9000 },
         { rank: 2, name: "PlayerName", score: 8600 },
         { rank: 3, name: "Newcomer", score: 8500 },
+        { rank: 4, name: "Tailender", score: 8000 },
       ],
       3000,
       t(1),
@@ -321,6 +325,7 @@ describe("a default name that churns", () => {
         { rank: 1, name: "Anchor", score: 9000 },
         { rank: 2, name: "Stranger", score: 8600 },
         { rank: 3, name: "Newcomer", score: 8500 },
+        { rank: 4, name: "Tailender", score: 8000 },
       ],
       3000,
       t(2),
@@ -344,6 +349,7 @@ describe("a default name that churns", () => {
       [
         { rank: 1, name: "Anchor", score: 9000 },
         { rank: 2, name: "PXL D. Rick", score: 8598 },
+        { rank: 3, name: "Tailender", score: 8000 },
       ],
       3000,
       ts(0),
@@ -355,6 +361,7 @@ describe("a default name that churns", () => {
       [
         { rank: 1, name: "Anchor", score: 9000 },
         { rank: 2, name: "PXL Rick", score: 8598 },
+        { rank: 3, name: "Tailender", score: 8000 },
       ],
       3000,
       ts(1),

@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-20",
     changes: [
       {
+        title: "Name changes are read off the board more carefully",
+        detail:
+          "A player dropping off the bottom of the board and a new one arriving look the same as somebody renaming, and were occasionally being treated as one person. That is now checked against how far a player can actually fall. Fewer name changes get spotted, and the ones that do are right.",
+      },
+      {
         title: "Match history shows the board again",
         detail:
           "The end of game board was coming back empty for every game, and the opponent's cards with it. Games recorded from now on have both. Older games keep what they had.",

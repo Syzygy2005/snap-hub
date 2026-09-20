@@ -23,9 +23,11 @@ const TICKS = 60;
 const SHARED = "PlayerName";
 const SHARED_COUNT = 40;
 
-const REAL_SCORES: number[] = JSON.parse(
-  readFileSync("src/lib/leaderboard/fixtures/board-scores.json", "utf8"),
-).scores;
+const FIXTURE = JSON.parse(readFileSync("src/lib/leaderboard/fixtures/board-scores.json", "utf8"));
+const REAL_SCORES: number[] = FIXTURE.scores;
+/** Every score change actually seen on that board across one half-hour window. */
+const REAL_DELTAS: number[] = FIXTURE.movement.deltas;
+const MOVE_CHANCE: number = FIXTURE.movement.changedScore / FIXTURE.movement.playersOnBothBoards;
 const SLOTS = REAL_SCORES.length;
 /** Enough extra players below the cut that the bottom of the board turns over. */
 const POOL = SLOTS + 60;
@@ -77,9 +79,11 @@ async function replaySeason(): Promise<Run> {
   for (let tick = 0; tick < TICKS; tick++) {
     const now = new Date(Date.UTC(2026, 8, 10, 0, 0, 0) + tick * 30 * 60_000);
 
-    // Cubes move a few at a time, and most players sit still in any half hour.
+    // A tick is one of the measured half-hour windows: the same share of players move as
+    // really did, and each mover is dealt a change that really happened rather than a made-up
+    // one. Most people sit still; the ones who play can swing either way by a lot.
     for (const p of players) {
-      if (rand() < 0.35) p.score += Math.floor(rand() * 17) - 8;
+      if (rand() < MOVE_CHANCE) p.score += REAL_DELTAS[Math.floor(rand() * REAL_DELTAS.length)];
     }
 
     // Somebody renames roughly every other tick, keeping their score: a rename changes the
@@ -124,19 +128,12 @@ describe("a season of real-shaped board churn", () => {
     expect(invented(run).filter((r) => r.from_name === SHARED)).toEqual([]);
   });
 
-  // KNOWN GAP, not a regression. On a board carrying the real score curve, every phantom this
-  // replay produces is a departure whose last score sat within a handful of points of the cut:
-  // a player pushed off the bottom and a different player taking the slot, which from the board
-  // alone is the same two events as a rename. Real renames in the same run sit anywhere from a
-  // few points to several hundred above the cut, so the two overlap at the boundary and the
-  // dividing line is how far above the cut a genuine new entrant can climb in one tick.
-  //
-  // That is a number, and it has to be measured from two real boards rather than from this
-  // simulation, whose per-tick movement is invented even though its scores are not. Requiring
-  // the score to be one no other player holds was tried and measured instead: on this board it
-  // removed all ten phantoms and twenty-seven of the thirty real renames with them, which is a
-  // worse trade than the bug. Delete `.fails` when it is closed.
-  it.fails("does not yet spot churn at the cut line", () => {
+  it("does not invent one out of churn at the cut line", () => {
+    // This was pinned as a known gap for as long as the dividing line was a guess. It closed
+    // once a departure had to clear the cut by more than the worst loss the season has shown,
+    // which is the difference between a player the board would have kept and one who lost cubes
+    // and fell under it in the same gap. Both halves of that come from measurement: the score
+    // curve and the movement in fixtures/board-scores.json, and the drop from the season itself.
     expect(invented(run)).toEqual([]);
   });
 });

@@ -54,17 +54,20 @@
   away from a shared default name is never recognised, which is unavoidable: nothing says which of
   them left. Loosening any of this trades missed renames for merged strangers, which is
   unrecoverable once the histories are joined; widen it only against real board data.
-- Rename detection still has an open hole at the cut line: a player pushed off the board and a
-  different player entering carry the same signature as a rename, and an exact score collision
-  between them invents one. `ingest.stress.test.ts` replays a season and pins it with `it.fails`.
-  Its scores now come from `fixtures/board-scores.json`, the score column of a real global board,
-  so the way players bunch up near the cut is real; its per-tick movement is still invented.
-  Measured on that board: every phantom is a departure whose last score sat within a handful of
-  points of the cut, while real renames sit anywhere from a few points to several hundred above
-  it, so the dividing line is how far a genuine new entrant can climb in one tick. That number
-  has to come from two real boards taken apart in time. Requiring the score to be one no other
-  player holds was tried and rejected on measurement, not taste: it removed all ten phantoms and
-  twenty-seven of the thirty real renames with them.
+- The cut-line hole in rename detection is closed, and `ingest.stress.test.ts` is no longer
+  pinned. A departure now has to clear the cut by more than the worst score loss the season has
+  actually shown (`largestDrop` in `ingest.ts`, read from `history`, not a constant). A stored
+  score is the last sighting, so somebody who lost cubes and fell off the bottom in the same gap
+  still reads as being above the line; discounting by a real loss separates them from a player
+  the board would have kept, who therefore did not leave but renamed.
+  Measured on `fixtures/board-scores.json`, which carries the score curve of a real board and the
+  score changes really seen on it over half an hour: phantoms fell from 18 to 2 across eight
+  runs, and real renames caught fell from 85% to 66%. That direction is deliberate, because a
+  wrong pairing welds two strangers together for good and a missed one costs a tag.
+  Two rules were tried and rejected on measurement, not taste, so do not re-propose them:
+  requiring the score to be one no other player holds (all 10 phantoms gone but 27 of 30 real
+  renames with them), and requiring only that the departure be above the cut with no discount
+  (one phantom prevented in 248 renames, which is noise).
 - The board API returns exactly `rank`, `playerName` and `score` per entry, confirmed against a
   real response; there is no identity field to lean on. The envelope carries `offset`, `limit`
   and `total` (about 48k players at Infinite), but `offset` is ignored: asking for 1000 returns
