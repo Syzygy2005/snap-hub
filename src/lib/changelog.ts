@@ -13,6 +13,10 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-20",
     changes: [
       {
+        title: "My Stats links to your leaderboard profile",
+        detail: "Once you have claimed a profile, My Stats points at it. Until then it says where to go.",
+      },
+      {
         title: "Claim your leaderboard profile",
         detail:
           "Sign in and press \u201cThis is me\u201d on your player page. Run the tracker under the same name and it confirms itself, otherwise it stays private until an admin confirms it.",
