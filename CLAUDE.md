@@ -115,6 +115,14 @@
   `npm run merge-players`. Both preview then apply, and both refuse when the two held a rank in the
   same snapshot; keep that check if the merge logic is ever touched. The route re-plans server side
   rather than trusting a plan from the client.
+- `src/app/leaderboard/movers/opengraph-image.tsx` draws the share card for Movers at request
+  time from the board, cached for 10 minutes to match the snapshot cadence. It deliberately
+  loads no font and no image file: Satori takes either, but a disk read there is the trap
+  `/api/tracker/download` fell into, where Next cannot see the dependency and it has to be
+  listed in `outputFileTracingIncludes`, and a broken unfurl fails quietly. Colours carry the
+  brand instead. Render it and look at it after any change; five rows overflowed 630px while
+  three looked perfect, and nothing but the picture says so. `clip` cuts long names because
+  Satori's `text-overflow: ellipsis` is unreliable.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

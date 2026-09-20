@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-20",
     changes: [
       {
+        title: "Sharing Movers shows the actual climbers",
+        detail:
+          "Post a link to Movers in Discord or anywhere else and the preview names the five players who climbed most in the last day, instead of showing a logo.",
+      },
+      {
         title: "My Stats links to your leaderboard profile",
         detail: "Once you have claimed a profile, My Stats points at it. Until then it says where to go.",
       },

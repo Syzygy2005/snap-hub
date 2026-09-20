@@ -5,7 +5,8 @@ builder, and win rate / cube rate stats from a PC tracker.
 
 - **Leaderboard**: the official top 1000, saved every 10 minutes. 24h rank and point changes, past seasons, and
   players who share a name kept apart.
-- **Movers**: climbers, fallers, new entries and drop-outs over 6h / 24h / 7d.
+- **Movers**: climbers, fallers, new entries and drop-outs over 6h / 24h / 7d. A link to it unfurls
+  with the day's biggest climbers drawn from the board, rather than a logo.
 - **Player pages**: rank and points chart, point changes, past seasons.
 - **Deck builder**: filter by cost, ability and series; energy curve; copy a code the game accepts; import codes
   (long or short format, or the text the game copies). Decks save to a named list in the browser, or share as a
