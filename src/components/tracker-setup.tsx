@@ -96,12 +96,12 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
         ) : (
           <form onSubmit={create} className="flex flex-wrap items-end gap-2">
             <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted sm:max-w-xs">
-              Display name
+              Name this key
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, 30))}
                 required
-                placeholder="Your Snap name"
+                placeholder="Gaming PC"
                 className="rounded-md border border-line bg-bg px-3 py-2 text-base text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:text-sm"
               />
             </label>

@@ -8,6 +8,8 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
 export interface Tracker {
   id: number;
+  /** A label for the key, so somebody with two PCs can tell them apart. Nothing reads it as
+   *  a Snap name: the key is identified by its token and belongs to a Discord account. */
   name: string;
   /** The Discord account this key belongs to, or null for a key made while signed out. */
   account_id?: number | null;
@@ -29,7 +31,7 @@ export async function createTracker(
     }
   }
   const name = typeof input.name === "string" ? input.name.trim().slice(0, 30) : "";
-  if (!name) return { ok: false, error: "Pick a display name.", status: 400 };
+  if (!name) return { ok: false, error: "Give this key a name.", status: 400 };
 
   const token = `shk_${randomBytes(24).toString("base64url")}`;
   const db = await getDb();

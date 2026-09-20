@@ -100,6 +100,15 @@
   one they know only from having played against them. `otherNamesUsedWith` feeds a read-only
   panel an admin sees on a player profile, next to merge, and a person decides. Keep it that way
   unless there is a way to prove account ownership.
+- `player_claims` links a Discord account to a player row, one each way. Nothing on the board
+  can check a claim, so an unverified one is shown to the claimant and to nobody else; it goes
+  public once a `snap_names` row on the same account matches the player's current name
+  (`verified_by = 'tracker'`) or an admin confirms it. The claiming route takes the account from
+  the session and never from the request. It carries a foreign key to `players`, so it is in the
+  reset script's truncate list and in `rollover.test.ts`'s; a claim does not survive a reset,
+  because the row it pointed at does not either.
+- The name on a tracker key is a label for the key ("Gaming PC"), not a Snap name. The form used
+  to say "Display name / Your Snap name", which read as though keys were identified by it.
 - Admin is `ADMIN_DISCORD_IDS`, checked with `isAdmin` inside every admin route handler. Hiding a
   control in the UI is not the boundary; if a new admin action appears, it checks server side too.
 - Merging players is destructive and one-way, reachable from the profile page as an admin and as
