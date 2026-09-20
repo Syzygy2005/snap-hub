@@ -98,9 +98,15 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   const players = list(get(state, "_players"));
   const items = list(get(result, "GameResultAccountItems"));
 
-  let localIndex = accountId
-    ? players.findIndex((p) => String(get(p, "PlayerInfo", "AccountId") ?? "") === accountId)
-    : -1;
+  // The file names its own client, so who is local does not depend on the uploader sending a
+  // header. It used to: without one the fallback below decided, and the fallback was reading a
+  // field that does not exist, so it always landed on players[0] and reported the local player
+  // as the opponent. An explicit account id still wins, for a file fetched some other way.
+  const clientAccount = String(get(remote, "ClientPlayerInfo", "AccountId") ?? "");
+  const byAccount = (wanted: string) =>
+    wanted ? players.findIndex((p) => String(get(p, "PlayerInfo", "AccountId") ?? "") === wanted) : -1;
+  let localIndex = byAccount(accountId ?? "");
+  if (localIndex < 0) localIndex = byAccount(clientAccount);
 
   // Only the local player's result entry carries a deck list; prefer an account match, then that.
   const withDeck = items.filter((it) => cardIds(get(it, "Deck", "Cards")).length > 0);
@@ -119,12 +125,22 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
     return { ok: false, reason: "missing-fields", detail: "No FinalCubeValue in the game result" };
   }
 
-  // Cards each side had at the three locations at the end of the game, kept per location
-  // so the board can be shown as it stood, then flattened for the whole-game card lists.
-  const zones = list(get(state, "_to")).map((loc) => [
-    unique(list(get(loc, "_player1Cards")).map(cardId)),
-    unique(list(get(loc, "_player2Cards")).map(cardId)),
-  ]);
+  // Cards each side had at the three locations at the end of the game, kept per location so
+  // the board can be shown as it stood, then flattened for the whole-game card lists. Every
+  // card carries an Owner pointing back at a player, which is what splits the two sides; a
+  // card whose owner resolves to neither is dropped rather than guessed at.
+  const locations = list(get(state, "_locations"));
+  const playerKeys = players.map(playerKey);
+  const zones = locations.map((loc) => {
+    const side: [string[], string[]] = [[], []];
+    for (const card of list(get(loc, "_cards"))) {
+      const id = cardId(card);
+      if (!id) continue;
+      const owner = playerKeys.indexOf(playerKey(get(card, "Owner")));
+      if (owner === 0 || owner === 1) side[owner].push(id);
+    }
+    return [unique(side[0]), unique(side[1])];
+  });
   const sides = [unique(zones.flatMap((z) => z[0])), unique(zones.flatMap((z) => z[1]))];
   if (localIndex < 0) {
     const overlap = (cards: string[]) => cards.filter((c) => deckCards.includes(c)).length;
@@ -137,11 +153,18 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   const isLoser = get(item, "IsLoser") === true;
   const outcome: ParsedGame["result"] = isWinner ? "win" : isLoser ? "loss" : "tie";
 
-  // LocationDefIdsAtEndOfGame comes in the same order as _to, so they pair by index. If a
-  // future game version stops lining them up, the cards still show, just without a name.
-  const locationIds = list(get(result, "LocationDefIdsAtEndOfGame")).map((l) =>
+  // Each location carries its own LocationDefId, so the name comes off the location the cards
+  // came from rather than from lining two lists up by index. LocationDefIdsAtEndOfGame is the
+  // fallback, and is still what a game with no locations in state reports.
+  const endOfGameIds = list(get(result, "LocationDefIdsAtEndOfGame")).map((l) =>
     typeof l === "string" && l ? l : null,
   );
+  const locationIds = locations.length
+    ? locations.map((loc, i) => {
+        const own = get(loc, "LocationDefId");
+        return typeof own === "string" && own ? own : (endOfGameIds[i] ?? null);
+      })
+    : endOfGameIds;
   const board: BoardZone[] = zones.map((z, i) => ({
     location: locationIds[i] ?? null,
     player: z[localIndex],
@@ -177,6 +200,15 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
       board,
     },
   };
+
+  /** Identifies a player object across $ref links, by account id and then entity id. */
+  function playerKey(v: Json): string {
+    const p = deref(v);
+    const account = get(p, "PlayerInfo", "AccountId");
+    if (typeof account === "string" && account) return `a:${account}`;
+    const entity = get(p, "EntityId");
+    return entity === null || entity === undefined ? "" : `e:${String(entity)}`;
+  }
 
   function truthy(v: Json): boolean {
     const cur = deref(v);

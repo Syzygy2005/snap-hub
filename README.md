@@ -16,6 +16,7 @@ builder, and win rate / cube rate stats from a PC tracker.
   a player noticing; the newest one also shows on the home page.
 - **Stats**: meta share, win rate and cube rate by deck archetype and by card (in deck / drawn / played), plus a
   private "My stats" page with match history, including how the three locations stood when each game ended.
+  The game file is parsed against a real, anonymised `GameState.json` kept as a fixture.
   Data comes from players running the PC tracker.
 
 ## Run it locally

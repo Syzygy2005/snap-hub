@@ -15,9 +15,16 @@
 - The schema is applied when the DB connection opens, so restart the dev server after changing `schema.ts`.
 - Stats tracker: `public/tracker/snaphub-tracker.ps1` must stay plain ASCII (Windows PowerShell 5.1 reads BOM-less
   scripts as ANSI). Test it end to end with a fake nvprod folder and `-Once -StateDir ... -ConfigDir ...`.
-- `parse-game.ts` has only been tested on synthetic files. When a real GameState.json turns up (tracker `-SaveRaw`),
-  add it as a fixture before changing field paths. The per-location board pairs `_to` with
-  `LocationDefIdsAtEndOfGame` by index; a real file would confirm that order.
+- `parse-game.ts` is checked against a real GameState.json, anonymised, at
+  `src/lib/stats/fixtures/real-game.json` (every GUID swapped for a stable fake, three display
+  names replaced, byte-order mark kept because real files carry one). It disagreed with the
+  synthetic fixtures on two counts, so trust the fixture over any field map: the end-of-game
+  board is `GameState._locations[i]._cards` with each card's `Owner` pointing back at a player,
+  not a `_to` array with `_player1Cards`/`_player2Cards`, and a location carries its own
+  `LocationDefId` (`LocationDefIdsAtEndOfGame` is only the fallback). Who is local comes from
+  `RemoteGame.ClientPlayerInfo.AccountId` inside the file; the `X-Snap-Account-Id` header is an
+  override, not a requirement, because without one the old fallback silently reported the
+  uploader as their own opponent. Add a second real file before widening any of this.
 - `/api/tracker/download` reads `public/tracker/snaphub-tracker.ps1` off disk at request time. Next.js can't infer
   that, so it's listed in `outputFileTracingIncludes`; moving or renaming the script means updating both.
 - Sign-in needs `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`; without them `discordConfig()` returns null

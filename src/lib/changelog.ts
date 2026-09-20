@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-20",
     changes: [
       {
+        title: "Match history shows the board again",
+        detail:
+          "The end of game board was coming back empty for every game, and the opponent's cards with it. Games recorded from now on have both. Older games keep what they had.",
+      },
+      {
         title: "Fixed the wrong \u201cnew name\u201d tag properly this time",
         detail:
           "Players were still being shown under a default name that was never theirs. A name only says who somebody is while one person is using it, so a name more than one player has used is no longer treated as anybody's in particular. The trade is that someone renaming away from a default name is not recognised at all, which beats pinning it on a stranger.",
