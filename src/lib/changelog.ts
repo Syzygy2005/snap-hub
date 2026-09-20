@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-20",
     changes: [
       {
+        title: "Claim your leaderboard profile",
+        detail:
+          "Sign in and press \u201cThis is me\u201d on your player page. Run the tracker under the same name and it confirms itself, otherwise it stays private until an admin confirms it.",
+      },
+      {
         title: "Name changes are read off the board more carefully",
         detail:
           "A player dropping off the bottom of the board and a new one arriving look the same as somebody renaming, and were occasionally being treated as one person. That is now checked against how far a player can actually fall. Fewer name changes get spotted, and the ones that do are right.",

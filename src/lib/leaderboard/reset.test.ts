@@ -67,6 +67,11 @@ describe("reset-leaderboard.sql", () => {
       new Date(t0.getTime() + 1800_000),
     );
 
+    // A claim on a real player row, so the check that claims go is not vacuous.
+    const [claimed] = await db.query<{ id: number }>(`select id from players limit 1`);
+    await db.query(`insert into player_claims (player_id, account_id) values ($1, $2)`, [claimed.id, account.id]);
+    expect(await count("player_claims")).toBe(1);
+
     expect(await count("players")).toBeGreaterThan(0);
     expect(await count("history")).toBeGreaterThan(0);
     expect(await count("player_names")).toBe(1);
@@ -82,7 +87,7 @@ describe("reset-leaderboard.sql", () => {
     expect(statements).toHaveLength(4); // begin, truncate, delete, commit
     for (const statement of statements) await db.query(statement);
 
-    for (const table of ["players", "player_names", "standings", "history", "snapshots"]) {
+    for (const table of ["players", "player_names", "player_claims", "standings", "history", "snapshots"]) {
       expect([table, await count(table)]).toEqual([table, 0]);
     }
     // cards_synced survives. last_snapshot and the season_closed marks must not, or the

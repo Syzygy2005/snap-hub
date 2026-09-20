@@ -4,8 +4,10 @@
 -- Read the notes below first. This cannot be undone.
 --
 -- WHAT GOES
---   players, player_names, standings, history, snapshots, and the "last updated" marker.
---   That is every rank, every point change and every profile the site has recorded.
+--   players, player_names, player_claims, standings, history, snapshots, and the "last
+--   updated" marker. That is every rank, every point change and every profile the site has
+--   recorded. Claims go with the player rows they point at, so anybody who claimed a profile
+--   has to claim it again afterwards; the rows they claimed no longer exist.
 --
 -- WHAT STAYS
 --   Accounts, sign-ins, decks and their owners, tracker keys, tracked games, the card list.
@@ -26,7 +28,7 @@
 
 begin;
 
-truncate table history, standings, player_names, players, snapshots restart identity;
+truncate table history, standings, player_names, player_claims, players, snapshots restart identity;
 
 -- "updated X ago" would otherwise outlive the data it describes, and the season_closed marks
 -- say a finished month's final board is already stored, which after this it is not: leaving

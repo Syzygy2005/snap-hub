@@ -26,7 +26,7 @@ function serve(byKey: Record<string, FetchResult>) {
 let db: Db;
 beforeEach(async () => {
   db = await getDb();
-  await db.query(`truncate table history, standings, player_names, players, snapshots restart identity`);
+  await db.query(`truncate table history, standings, player_names, player_claims, players, snapshots restart identity`);
   await db.query(`delete from meta`);
 });
 

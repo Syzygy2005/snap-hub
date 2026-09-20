@@ -211,6 +211,23 @@ create table if not exists snap_names (
 );
 create index if not exists snap_names_name_idx on snap_names (name);
 
+-- A signed-in person saying a leaderboard row is them. The board has no player IDs, so nothing
+-- here can be proved from it, and an unproved claim is worth exactly as much as the person
+-- making it. So a claim is private until something vouches for it: either a tracker on the same
+-- account has reported playing under that name, or an admin confirms it. Until then it shows to
+-- the claimant alone.
+create table if not exists player_claims (
+  player_id int primary key references players(id) on delete cascade,
+  account_id int not null references accounts(id) on delete cascade,
+  claimed_at timestamptz not null default now(),
+  verified_at timestamptz,
+  -- 'tracker' or 'admin', so it is clear afterwards which bar it cleared.
+  verified_by text
+);
+-- One profile per person: two rows for one player means a rename was missed, and a merge is
+-- the fix rather than a second claim.
+create unique index if not exists player_claims_account_idx on player_claims (account_id);
+
 create table if not exists meta (
   key text primary key,
   value jsonb not null,

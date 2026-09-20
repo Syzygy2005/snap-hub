@@ -83,6 +83,20 @@ does not change.
 Bodies are stored and rendered as text, never markup, and a source link has to parse as `http` or
 `https` before it reaches an `href`, so a mistaken paste is a rejected form rather than a live link.
 
+## Claiming a profile
+
+A signed-in person can say a leaderboard row is them. Nothing on the board can check that, so an
+unproved claim is shown to the claimant and to nobody else: saying you are the rank one player
+gets you a line on your own screen and nothing more.
+
+It goes public once something vouches for it. A tracker key on the same account that has reported
+playing under that name clears it on the spot, and an admin can clear any of them by hand. That
+bar is not cryptographic, since a game file comes from the player's own machine; it raises the
+cost, and an admin can remove any claim.
+
+One account holds one profile. Two rows for one player means a rename was missed, and the fix is
+a merge rather than a second claim.
+
 ## Moderation
 
 Sign in, then read your own Discord id off My stats; `ADMIN_DISCORD_IDS` wants exactly that value,
