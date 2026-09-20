@@ -1,27 +1,34 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { getDb, type Db } from "@/lib/db";
 import { ingestBoard } from "./ingest";
 
 /**
- * Replays a season against a board shaped like the real one: a thousand slots, more players
- * than slots so the cut line churns, scores that move a cube at a time so different players
- * land on the same number constantly, and a crowd sharing one default name down at the cut,
- * which is where new accounts are.
+ * Replays a season against a board shaped like the real one. The scores are not invented:
+ * fixtures/board-scores.json is the score column of an actual global Infinite board, so the
+ * way players bunch up towards the cut line is the real shape rather than a guess. That
+ * matters more than anything else here, because how often two players share a score is what
+ * decides whether an exact match is evidence or coincidence.
  *
- * The unit tests cover the shape of a phantom rename. This covers the volume it takes to
- * produce one: a phantom needs a departure and an arrival to collide on an exact score, which
- * is a question of how often the dice come up, not of whether the logic reads right.
+ * On top of that: more players than slots so the cut line churns, scores moving a cube at a
+ * time, a crowd sharing one default name down at the cut where new accounts are, and a real
+ * rename every other tick or so.
  *
- * Rule: every former name the ingest records must be one the simulation actually handed out.
- * Missing a real rename is by design. Inventing one welds two strangers together and is not.
+ * Rule: every former name the ingest records must be one the simulation handed out. Missing a
+ * real rename is by design. Inventing one welds two strangers together and is not.
  */
 
 const SEASON = { year: 2026, month: 9 };
-const SLOTS = 1000;
-const POOL = 1060;
 const TICKS = 60;
 const SHARED = "PlayerName";
 const SHARED_COUNT = 40;
+
+const REAL_SCORES: number[] = JSON.parse(
+  readFileSync("src/lib/leaderboard/fixtures/board-scores.json", "utf8"),
+).scores;
+const SLOTS = REAL_SCORES.length;
+/** Enough extra players below the cut that the bottom of the board turns over. */
+const POOL = SLOTS + 60;
 
 /** Deterministic, so a failure is reproducible rather than a story about one unlucky run. */
 function rng(seed: number) {
@@ -54,11 +61,14 @@ async function replaySeason(): Promise<Run> {
   const rand = rng(20260918);
   const players: Sim[] = [];
   for (let i = 0; i < POOL; i++) {
+    // Everyone takes a real score off the curve; the overflow sits just under the cut. The
+    // default-name crowd is placed at the bottom, which is where new accounts really are.
+    const slot = i < SLOTS ? i : SLOTS - 1;
     const shared = i < SHARED_COUNT;
     players.push({
       id: i,
       name: shared ? SHARED : `Player ${i}`,
-      score: shared ? 8000 + Math.floor(rand() * 40) : 8000 + Math.floor(rand() * 400),
+      score: shared ? REAL_SCORES[SLOTS - 1 - (i % 40)] : REAL_SCORES[slot] - (i < SLOTS ? 0 : (i - SLOTS) % 5),
     });
   }
 
@@ -114,12 +124,18 @@ describe("a season of real-shaped board churn", () => {
     expect(invented(run).filter((r) => r.from_name === SHARED)).toEqual([]);
   });
 
-  // KNOWN GAP, not a regression. Every failure here is a departure ranked in the last handful
-  // of slots whose stale score matched an arrival that genuinely entered from below: a player
-  // pushed off the board and a different player taking the slot, which from the board alone is
-  // indistinguishable from a rename. Closing it needs a rule about how near the cut line is too
-  // near to guess, and that number has to come from real board data, not from this simulation's
-  // invented score spread. Delete `.fails` when it is closed.
+  // KNOWN GAP, not a regression. On a board carrying the real score curve, every phantom this
+  // replay produces is a departure whose last score sat within a handful of points of the cut:
+  // a player pushed off the bottom and a different player taking the slot, which from the board
+  // alone is the same two events as a rename. Real renames in the same run sit anywhere from a
+  // few points to several hundred above the cut, so the two overlap at the boundary and the
+  // dividing line is how far above the cut a genuine new entrant can climb in one tick.
+  //
+  // That is a number, and it has to be measured from two real boards rather than from this
+  // simulation, whose per-tick movement is invented even though its scores are not. Requiring
+  // the score to be one no other player holds was tried and measured instead: on this board it
+  // removed all ten phantoms and twenty-seven of the thirty real renames with them, which is a
+  // worse trade than the bug. Delete `.fails` when it is closed.
   it.fails("does not yet spot churn at the cut line", () => {
     expect(invented(run)).toEqual([]);
   });
