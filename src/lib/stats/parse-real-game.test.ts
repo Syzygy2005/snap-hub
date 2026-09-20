@@ -45,6 +45,10 @@ describe("a real finished game", () => {
     expect(g.locations).toEqual(["Xandar", "Nidavellir", "CaveOfTheDragon"]);
   });
 
+  it("reads the uploader's own name, which is what a rename is seen through", () => {
+    expect(parse().playerName).toBe("LOCAL_PLAYER");
+  });
+
   it("knows which player is the uploader without being told", () => {
     // The file names its own client, so no X-Snap-Account-Id header is needed. Before this,
     // a missing header reported the uploader as their own opponent.

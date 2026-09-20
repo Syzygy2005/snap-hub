@@ -22,6 +22,8 @@ export interface ParsedGame {
   totalTurns: number | null;
   deckName: string | null;
   deckCards: string[];
+  /** The uploader's own display name, straight off their client info in the file. */
+  playerName: string | null;
   opponentName: string | null;
   opponentCards: string[];
   cardsDrawn: string[];
@@ -172,6 +174,7 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   }));
 
   const name = get(opponent, "PlayerInfo", "Name");
+  const clientName = get(remote, "ClientPlayerInfo", "Name");
   const deckName = get(item, "Deck", "Name");
   const league = get(result, "LeagueDefId");
 
@@ -192,6 +195,7 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
       totalTurns: toInt(get(result, "TotalTurns")),
       deckName: typeof deckName === "string" && deckName ? deckName.slice(0, 60) : null,
       deckCards,
+      playerName: typeof clientName === "string" && clientName ? clientName.slice(0, 40) : null,
       opponentName: typeof name === "string" && name ? name.slice(0, 40) : null,
       opponentCards: sides[opponentIndex],
       cardsDrawn: cardIds(get(remote, "ClientPlayerInfo", "CardsDrawn")),

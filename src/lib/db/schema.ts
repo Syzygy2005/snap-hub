@@ -191,6 +191,26 @@ create unique index if not exists tracked_games_dedupe_idx on tracked_games (gam
 create index if not exists tracked_games_time_idx on tracked_games (played_at desc);
 create index if not exists tracked_games_tracker_idx on tracked_games (tracker_id, played_at desc);
 
+-- Display names a tracker has seen one Snap account using. The leaderboard has no player IDs,
+-- so this is the only direct evidence of a rename the site can get; everything else is inference
+-- from scores. The account is whatever the uploader's client said it was, and a game file is
+-- client-supplied, so these rows are evidence for a person to weigh and never something applied
+-- to the public board on their own.
+create table if not exists snap_names (
+  account_hash text not null,
+  name text not null,
+  first_seen timestamptz not null default now(),
+  last_seen timestamptz not null default now(),
+  games int not null default 0,
+  -- The signed-in account whose key reported this, when there was one. A Discord account is
+  -- the only identity here that somebody had to prove; the Snap account id arrives in a header
+  -- the uploader sets. Null means the key belongs to nobody in particular, which is weaker
+  -- evidence rather than no evidence.
+  account_id int references accounts(id) on delete set null,
+  primary key (account_hash, name)
+);
+create index if not exists snap_names_name_idx on snap_names (name);
+
 create table if not exists meta (
   key text primary key,
   value jsonb not null,

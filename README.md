@@ -185,6 +185,23 @@ tables. Afterwards, kick the workflow from Actions rather than waiting for the n
 standings come back from the official API; the point history does not, because the API serves the
 board as it stands and not how it moved, so Movers stays empty until new snapshots pile up.
 
+## What a tracker knows about names
+
+A tracker key is identified by its token, not by a name, so two players called the same thing
+never collide; the key's `account_id` is the Discord account it belongs to, which is what makes
+stats follow a person between browsers. Display names only matter on the leaderboard, which has
+no player IDs at all.
+
+That makes the tracker the one place a rename can be seen directly rather than inferred. Every
+upload records the uploader's own display name against their Snap account in `snap_names`, so an
+account playing under one name and later another is a rename with dates on it.
+
+It is evidence, not proof, and it is never applied on its own. A game file comes from the
+player's own machine and the Snap account id travels in a header the uploader sets, so anyone
+with a key could describe an account that is not theirs, including one they know only from
+having played against them. An admin sees it on the player profile beside the merge and rename
+controls, and decides.
+
 ## Accounts
 
 Sign-in is Discord OAuth, hand-rolled in `src/lib/auth/` rather than pulled in, for the same reason the
