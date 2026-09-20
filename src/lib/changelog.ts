@@ -10,6 +10,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-20",
+    changes: [
+      {
+        title: "Fixed the wrong \u201cnew name\u201d tag properly this time",
+        detail:
+          "Players were still being shown under a default name that was never theirs. A name only says who somebody is while one person is using it, so a name more than one player has used is no longer treated as anybody's in particular. The trade is that someone renaming away from a default name is not recognised at all, which beats pinning it on a stranger.",
+      },
+    ],
+  },
+  {
     date: "2026-09-18",
     changes: [
       {

@@ -276,3 +276,92 @@ describe("shared names do not invent renames", () => {
     expect(n).toBe(0);
   });
 });
+
+describe("a default name that churns", () => {
+  const season = { year: 2027, month: 3 };
+  const t = (h: number) => new Date(Date.UTC(2027, 2, 1, h, 0, 0));
+
+  it("does not pin a shared default name on a stranger once it leaves the board", async () => {
+    // The board check alone was not enough. Only a few players carry the default name at a
+    // time and they churn, so it drops off the board completely every so often, and in that
+    // tick one person leaving and a stranger arriving on the same score looked like a rename.
+    await ingestBoard(
+      db,
+      season,
+      "global",
+      [
+        { rank: 1, name: "Anchor", score: 9000 },
+        { rank: 2, name: "PlayerName", score: 8600 },
+        { rank: 3, name: "PlayerName", score: 8500 },
+      ],
+      3000,
+      t(0),
+    );
+
+    // One of the two goes. The name is still on the board, so nothing is recorded.
+    await ingestBoard(
+      db,
+      season,
+      "global",
+      [
+        { rank: 1, name: "Anchor", score: 9000 },
+        { rank: 2, name: "PlayerName", score: 8600 },
+        { rank: 3, name: "Newcomer", score: 8500 },
+      ],
+      3000,
+      t(1),
+    );
+
+    // Now the last one goes too, and a stranger arrives holding that exact score.
+    await ingestBoard(
+      db,
+      season,
+      "global",
+      [
+        { rank: 1, name: "Anchor", score: 9000 },
+        { rank: 2, name: "Stranger", score: 8600 },
+        { rank: 3, name: "Newcomer", score: 8500 },
+      ],
+      3000,
+      t(2),
+    );
+
+    const recorded = await db.query(`select 1 from player_names pn
+       join standings s on s.player_id = pn.player_id and s.season = '2027-03'`);
+    expect(recorded).toEqual([]);
+
+    const board = await getBoard("2027-03", "global");
+    expect(board.rows.find((r) => r.name === "Stranger")!.renamedFrom).toBeNull();
+  });
+
+  it("still follows a rename on a name only one player ever used", async () => {
+    const solo = { year: 2027, month: 4 };
+    const ts = (h: number) => new Date(Date.UTC(2027, 3, 1, h, 0, 0));
+    await ingestBoard(
+      db,
+      solo,
+      "global",
+      [
+        { rank: 1, name: "Anchor", score: 9000 },
+        { rank: 2, name: "PXL D. Rick", score: 8598 },
+      ],
+      3000,
+      ts(0),
+    );
+    await ingestBoard(
+      db,
+      solo,
+      "global",
+      [
+        { rank: 1, name: "Anchor", score: 9000 },
+        { rank: 2, name: "PXL Rick", score: 8598 },
+      ],
+      3000,
+      ts(1),
+    );
+
+    const board = await getBoard("2027-04", "global");
+    const rick = board.rows.find((r) => r.name === "PXL Rick")!;
+    expect(rick.renamedFrom).toBe("PXL D. Rick");
+  });
+});

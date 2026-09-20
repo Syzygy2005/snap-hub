@@ -57,6 +57,7 @@ describe("detectRenames", () => {
   const clean = (departures: { name: string }[], arrivals: { name: string }[]) => ({
     onBoard: new Set(arrivals.map((a) => a.name)),
     known: new Set(departures.map((d) => d.name)),
+    shared: new Set<string>(),
   });
 
   it("pairs a departure and an arrival holding the same score", () => {
@@ -106,6 +107,7 @@ describe("detectRenames and names the board still holds", () => {
     const names = {
       onBoard: new Set(["PlayerName", "Somebody Real", "Other"]),
       known: new Set(["PlayerName", "Other"]),
+      shared: new Set<string>(),
     };
     expect(detectRenames(departures, arrivals, names)).toEqual([]);
   });
@@ -113,9 +115,47 @@ describe("detectRenames and names the board still holds", () => {
   it("still catches it once that name really has gone from the board", () => {
     const departures = [gone(7, "PlayerName", 8598)];
     const arrivals = [came(3, "Somebody Real", 8598)];
-    const names = { onBoard: new Set(["Somebody Real", "Other"]), known: new Set(["PlayerName", "Other"]) };
+    const names = { onBoard: new Set(["Somebody Real", "Other"]), known: new Set(["PlayerName", "Other"]), shared: new Set<string>() };
     expect(detectRenames(departures, arrivals, names)).toEqual([
       { index: 3, playerId: 7, from: "PlayerName", to: "Somebody Real" },
+    ]);
+  });
+
+  it("ignores a departure on a name more than one player has held, even once it has left the board", () => {
+    // The case that was still getting through: a handful of players carry the default name
+    // and they churn, so it leaves the board outright now and then. In that tick nothing on
+    // the board says it was ever shared, which is why the season's history has to.
+    const departures = [gone(7, "PlayerName", 8598)];
+    const arrivals = [came(3, "Stranger", 8598)];
+    const names = {
+      onBoard: new Set(["Stranger", "Other"]),
+      known: new Set(["PlayerName", "Other"]),
+      shared: new Set(["PlayerName"]),
+    };
+    expect(detectRenames(departures, arrivals, names)).toEqual([]);
+  });
+
+  it("ignores an arrival onto a name more than one player has held", () => {
+    const departures = [gone(7, "Departed", 8598)];
+    const arrivals = [came(3, "PlayerName", 8598)];
+    const names = {
+      onBoard: new Set(["PlayerName"]),
+      known: new Set(["Departed"]),
+      shared: new Set(["PlayerName"]),
+    };
+    expect(detectRenames(departures, arrivals, names)).toEqual([]);
+  });
+
+  it("still catches a rename on a name only one player ever had", () => {
+    const departures = [gone(7, "PXL D. Rick", 8598)];
+    const arrivals = [came(3, "PXL Rick", 8598)];
+    const names = {
+      onBoard: new Set(["PXL Rick", "Other"]),
+      known: new Set(["PXL D. Rick", "Other"]),
+      shared: new Set(["PlayerName"]),
+    };
+    expect(detectRenames(departures, arrivals, names)).toEqual([
+      { index: 3, playerId: 7, from: "PXL D. Rick", to: "PXL Rick" },
     ]);
   });
 
@@ -123,7 +163,7 @@ describe("detectRenames and names the board still holds", () => {
     // A name reappearing belongs to the player who had it, not to whoever just left.
     const departures = [gone(7, "Departed", 8598)];
     const arrivals = [came(3, "Returning", 8598)];
-    const names = { onBoard: new Set(["Returning"]), known: new Set(["Departed", "Returning"]) };
+    const names = { onBoard: new Set(["Returning"]), known: new Set(["Departed", "Returning"]), shared: new Set<string>() };
     expect(detectRenames(departures, arrivals, names)).toEqual([]);
   });
 });

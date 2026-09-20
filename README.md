@@ -111,9 +111,17 @@ name goes in `player_names`, which the leaderboard reads for a "new name" tag an
 in full.
 
 Both sides are also checked against the whole board: the departing name has to have left it, and the
-arriving name has to be new to the season. Names like `PlayerName` are shared by many players, and
-without that check a pairing artifact among them read as somebody leaving and stamped a former name
-onto a stranger.
+arriving name has to be new to the season.
+
+That was not enough on its own. A name is only evidence of who somebody is while one person holds
+it, so a name **more than one player has used this season**, counting names they have since renamed
+away from, is refused on both sides whether or not it is on the board at the time. Only a few
+players carry the default name at once and they churn, so it drops off the board completely on a
+regular basis, and in that tick one of them leaving looked exactly like the sole owner of a unique
+name walking away. It is a count of one against more than one, with nothing to tune.
+
+The cost is that somebody renaming away from a shared default name is never recognised. There is no
+way to tell which of them left, so the alternative is guessing between strangers.
 
 **Known gap: churn at the cut line.** A player pushed off the bottom of the board and a different
 player entering it are, from the board alone, the same two events as a rename. When their scores

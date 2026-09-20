@@ -59,7 +59,11 @@ export async function ingestBoard(
       ids.flatMap((id, i) =>
         id === null ? [{ index: i, name: entries[i].name, score: entries[i].score, rank: entries[i].rank }] : [],
       ),
-      { onBoard: new Set(entries.map((e) => e.name)), known: new Set(known.map((k) => k.name)) },
+      {
+        onBoard: new Set(entries.map((e) => e.name)),
+        known: new Set(known.map((k) => k.name)),
+        shared: await sharedNames(tx, season, region, entries),
+      },
     );
     for (const r of renames) {
       ids[r.index] = r.playerId;
@@ -203,6 +207,43 @@ export async function ingestBoard(
       left: left.length,
     } as const;
   });
+}
+
+/**
+ * Names that more than one player has carried this season, counting the names they have since
+ * renamed away from, together with any name sitting on the board twice right now.
+ *
+ * Default names are the reason this exists. Only a few players carry one at a time and they
+ * churn, so the name leaves the board outright every so often, and a tick where it is absent
+ * used to look exactly like the one person who owned it walking away.
+ */
+async function sharedNames(
+  tx: Db,
+  season: string,
+  region: Region,
+  entries: BoardEntry[],
+): Promise<Set<string>> {
+  const rows = await tx.query<{ name: string }>(
+    `select name from (
+       select p.name as name, s.player_id as player_id
+         from standings s join players p on p.id = s.player_id
+        where s.season = $1 and s.region = $2
+       union
+       select pn.name, s.player_id
+         from standings s join player_names pn on pn.player_id = s.player_id
+        where s.season = $1 and s.region = $2
+     ) held
+     group by name having count(distinct player_id) > 1`,
+    [season, region],
+  );
+  const shared = new Set(rows.map((r) => r.name));
+
+  const seen = new Set<string>();
+  for (const e of entries) {
+    if (seen.has(e.name)) shared.add(e.name);
+    seen.add(e.name);
+  }
+  return shared;
 }
 
 function groupIds(rows: { id: number; name: string }[]): Map<string, number[]> {

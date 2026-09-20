@@ -86,6 +86,11 @@ export interface BoardNames {
   onBoard: Set<string>;
   /** Every name already tracked this season, on the board or not. */
   known: Set<string>;
+  /**
+   * Names more than one player has held this season, current or former, plus any name
+   * appearing twice on this tick's board. A shared name does not identify anybody.
+   */
+  shared: Set<string>;
 }
 
 /**
@@ -98,10 +103,19 @@ export interface BoardNames {
  *
  * A real rename retires the old name from the board and brings a name nobody was using, so
  * both sides are checked against the whole board rather than taken at face value. Without
- * that, a name many players share is a trap: matchEntries pairs those by closest score, and
- * when the count shifts it leaves one of them unclaimed even though the name is still all
- * over the board. That unclaimed row is a pairing artifact, not somebody leaving, and
- * pairing it with a genuinely new arrival invented a rename out of nothing.
+ * that, a name several players share is a trap: matchEntries pairs those by closest score,
+ * and when the count shifts it leaves one of them unclaimed even though the name is still
+ * on the board. That unclaimed row is a pairing artifact, not somebody leaving.
+ *
+ * Checking this tick's board is not enough on its own. Only a handful of players carry the
+ * default name at a time and they churn, so it drops off the board completely on a regular
+ * basis, and in that tick nothing stopped it being read as one person leaving. A name more
+ * than one player has held this season cannot identify anybody, whether or not it happens to
+ * be on the board right now, so it is excluded on both sides. The count is one or more than
+ * one; there is no threshold to tune.
+ *
+ * The cost is that somebody renaming away from a shared default name is never recognised.
+ * That is unavoidable: there is no way to tell which of them left.
  *
  * Deliberately conservative, because a wrong guess welds two real players' histories
  * together: a score only counts when exactly one departure and exactly one arrival carry it.
@@ -114,6 +128,9 @@ export function detectRenames(departures: Departure[], arrivals: Arrival[], name
   departures = departures.filter((d) => !names.onBoard.has(d.name));
   // A name already tracked this season is not a new identity appearing.
   arrivals = arrivals.filter((a) => !names.known.has(a.name));
+  // A name more than one player has used identifies none of them, on the way in or out.
+  departures = departures.filter((d) => !names.shared.has(d.name));
+  arrivals = arrivals.filter((a) => !names.shared.has(a.name));
 
   const byScore = <T extends { score: number }>(rows: T[]) => {
     const map = new Map<number, T[]>();
