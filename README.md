@@ -68,6 +68,43 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
 
 Every push to GitHub redeploys the site on Vercel.
 
+## Tagging shared links
+
+Vercel Analytics reads UTM parameters straight off the landing URL, which is what fills the
+**UTM Parameters** tab next to Referrers. There is no code to write; the whole job is putting the
+same tag on the link every time you post it.
+
+Only `utm_source` is used. One parameter answers the only question worth asking here, which is
+where somebody came from. `utm_medium` and `utm_campaign` split the same visits across more rows
+without saying anything new at this size, and every extra field is another chance to spell it
+differently.
+
+The values, lowercase, no spaces, and no others without adding them here first:
+
+| `utm_source` | Where the link went |
+| --- | --- |
+| `reddit` | Any subreddit post or comment |
+| `discord` | Any Discord server |
+| `youtube` | Video description or pinned comment |
+| `twitter` | Twitter/X |
+| `bluesky` | Bluesky |
+
+`Reddit`, `reddit` and `r/marvelsnap` are three different rows in that tab, so a link tagged by
+hand at posting time is usually a link tagged wrong. Copy them from here:
+
+```
+<site>/?utm_source=reddit
+<site>/leaderboard?utm_source=reddit
+<site>/leaderboard/movers?utm_source=reddit
+<site>/decks/builder?utm_source=reddit
+<site>/stats/tracker?utm_source=reddit
+```
+
+Two things the tab will not tell you. The tag lands on the page somebody opened, so tag the page
+you are actually linking to and not the home page, or every source looks like it arrived at `/`.
+And the tag rides along when a visitor copies the address bar and shares it somewhere else, so a
+source can collect visits it did not send. Treat the numbers as rough shares, not counts.
+
 ## Game news
 
 `/news` carries balance updates and patches, as opposed to `/changelog`, which is changes to this
