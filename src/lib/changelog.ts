@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-21",
     changes: [
+      { title: "Smoother motion and quicker navigation", detail: "Card artwork follows your mouse more smoothly, with gentler transitions throughout the site. Header dropdowns put wiki pages, leaderboard movers, deck tools, and stats options within easy reach on desktop and mobile." },
       { title: "The leaderboard loads reliably again", detail: "Fixed a freshness timestamp error that could crash the leaderboard and home page even while standings continued updating." },
       { title: "A fresh identity for Snap Hub", detail: "A forest and jade palette, clearer typography, and a new hand-and-card emblem bring the site together. Explore a redesigned home page and subtle card interactions, with full reduced-motion support." },
       { title: "Explore the card and location wiki", detail: "Search released cards and locations, inspect their effects, and add cards to your current deck draft." },

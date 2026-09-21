@@ -17,6 +17,7 @@ test("navigation works on mobile and desktop", async ({ page, isMobile }) => {
     await expect(nav).not.toBeVisible();
     await page.getByText("Menu", { exact: true }).click();
   }
+  await nav.getByRole("button", { name: "Stats options" }).click();
   await nav.getByRole("link", { name: "My Stats", exact: true }).click();
   await expect(page).toHaveURL(/\/stats\/me/);
   if (isMobile) await expect(page.locator("details").filter({ has: page.getByText("Menu", { exact: true }) })).not.toHaveAttribute("open", "");
