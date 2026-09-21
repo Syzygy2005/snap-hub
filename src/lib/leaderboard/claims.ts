@@ -4,14 +4,10 @@ import { getDb } from "@/lib/db";
  * Linking a signed-in account to a leaderboard player row.
  *
  * The board has no player IDs, so there is nothing here to check a claim against: anybody
- * could say they are the rank one player. A claim is therefore private until something
- * vouches for it. A tracker on the same account that has reported playing under that name
- * clears it automatically, and an admin can clear any of them by hand. Until then only the
- * claimant sees it, so an unproved claim buys nothing worth taking.
- *
- * That bar is not cryptographic. A game file comes from the player's own machine, so a
- * determined person could forge the tracker side; it raises the cost rather than closing the
- * door, and an admin can remove any claim.
+ * could say they are the rank one player. Only an admin can confirm a claim for public
+ * display. Tracker names are client-controlled and non-unique, so they are supporting
+ * evidence for moderation, never proof of ownership. Until confirmation, only the claimant
+ * and admins may receive the claim, including in Client Component props.
  */
 
 export interface Claim {
@@ -46,8 +42,10 @@ const toClaim = (r: Row): Claim => ({
   accountId: r.account_id,
   username: r.username,
   claimedAt: r.claimed_at.toISOString(),
-  verifiedAt: r.verified_at ? r.verified_at.toISOString() : null,
-  verifiedBy: r.verified_by,
+  // Fail closed for legacy tracker confirmations too. Keep the stored evidence for admins,
+  // but every reader treats it as pending until an admin confirms it.
+  verifiedAt: r.verified_by === "admin" && r.verified_at ? r.verified_at.toISOString() : null,
+  verifiedBy: r.verified_by === "admin" && r.verified_at ? "admin" : null,
 });
 
 export async function claimForPlayer(playerId: number): Promise<Claim | null> {
@@ -60,6 +58,21 @@ export async function claimForAccount(accountId: number): Promise<Claim | null> 
   const db = await getDb();
   const [row] = await db.query<Row>(`${SELECT} where c.account_id = $1`, [accountId]);
   return row ? toClaim(row) : null;
+}
+
+/** The only claim fields the browser needs; account ids and claim dates stay server-side. */
+export type ClaimView = Pick<Claim, "username" | "verifiedAt">;
+
+/** Apply visibility before a claim crosses the Server/Client Component boundary. */
+export async function claimForViewer(
+  playerId: number,
+  accountId: number | null,
+  admin: boolean,
+): Promise<{ claim: ClaimView | null; mine: boolean }> {
+  const claim = await claimForPlayer(playerId);
+  const mine = accountId !== null && claim?.accountId === accountId;
+  if (!claim || (!claim.verifiedAt && !mine && !admin)) return { claim: null, mine: false };
+  return { claim: { username: claim.username, verifiedAt: claim.verifiedAt }, mine };
 }
 
 export type ClaimResult = { ok: true; claim: Claim } | { ok: false; error: string; status: number };
@@ -84,17 +97,9 @@ export async function claimPlayer(playerId: number, accountId: number): Promise<
     };
   }
 
-  // A tracker on this account that has played under this name is the one piece of evidence
-  // available without a person looking, so it clears the claim on the spot.
-  const [vouched] = await db.query<{ ok: number }>(
-    `select 1 as ok from snap_names where account_id = $1 and name = $2 limit 1`,
-    [accountId, player.name],
-  );
-
   await db.query(
-    `insert into player_claims (player_id, account_id, verified_at, verified_by)
-     values ($1, $2, $3, $4)`,
-    [playerId, accountId, vouched ? new Date() : null, vouched ? "tracker" : null],
+    `insert into player_claims (player_id, account_id) values ($1, $2)`,
+    [playerId, accountId],
   );
   const claim = await claimForPlayer(playerId);
   return claim ? { ok: true, claim } : { ok: false, error: "Could not save that claim.", status: 500 };
@@ -115,12 +120,13 @@ export async function releaseClaim(playerId: number, accountId: number | null): 
   return rows.length > 0;
 }
 
-/** Admin confirmation, for somebody who does not run the tracker. */
+/** Admin confirmation, including claims previously confirmed only by a tracker. */
 export async function verifyClaim(playerId: number, now = new Date()): Promise<Claim | null> {
   const db = await getDb();
   const rows = await db.query<{ player_id: number }>(
     `update player_claims set verified_at = $2, verified_by = 'admin'
-      where player_id = $1 and verified_at is null returning player_id`,
+      where player_id = $1 and (verified_at is null or verified_by is distinct from 'admin')
+      returning player_id`,
     [playerId, now],
   );
   if (!rows.length) return null;

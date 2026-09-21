@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Claim } from "@/lib/leaderboard/claims";
+import type { ClaimView } from "@/lib/leaderboard/claims";
 
 /**
  * "This is me" on a leaderboard profile.
  *
- * A claim nobody has vouched for is shown to the person who made it and to nobody else, so
- * saying you are the rank one player gets you a line on your own screen. It goes public once
- * a tracker on the same account has reported playing under that name, or once an admin says so.
- * Every one of those checks happens on the server; this only decides what to draw.
+ * The server sends pending claims only to their claimant and admins. Only admin-confirmed
+ * claims are public. This component receives a minimal view, never the underlying record.
  */
 export function PlayerClaim({
   playerId,
@@ -22,7 +20,7 @@ export function PlayerClaim({
 }: {
   playerId: number;
   playerName: string;
-  claim: Claim | null;
+  claim: ClaimView | null;
   signedIn: boolean;
   mine: boolean;
   admin: boolean;
@@ -76,7 +74,7 @@ export function PlayerClaim({
       <div className="mt-4 rounded-xl border border-gem-purple/40 bg-gem-purple/5 px-4 py-3">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-gem-purple">Admin</span>
         <p className="mt-1 text-sm">
-          <span className="font-medium">{claim.username}</span> says this is them. Nothing has vouched for it.
+          <span className="font-medium">{claim.username}</span> says this is them. Admin confirmation is required.
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
           <button type="button" onClick={() => call("PATCH")} disabled={busy} className={button}>
@@ -105,8 +103,8 @@ export function PlayerClaim({
           </p>
         ) : (
           <p className="text-muted">
-            You have claimed this profile. It stays between us until a tracker on your account reports
-            playing as <span className="text-ink">{playerName}</span>, or an admin confirms it.
+            You have claimed this profile. Only you and admins can see your claim until an admin confirms it.
+            A matching tracker name does not confirm ownership.
           </p>
         )}
         <button

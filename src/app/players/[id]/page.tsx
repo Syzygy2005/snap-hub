@@ -7,7 +7,7 @@ import { PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { PlayerAdmin } from "@/components/player-admin";
 import { TrackerEvidence } from "@/components/tracker-evidence";
 import { PlayerClaim } from "@/components/player-claim";
-import { claimForPlayer } from "@/lib/leaderboard/claims";
+import { claimForViewer } from "@/lib/leaderboard/claims";
 import { otherNamesUsedWith } from "@/lib/stats/identity";
 import { isAdmin } from "@/lib/auth/admin";
 import { currentAccount } from "@/lib/auth/session";
@@ -36,8 +36,7 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
   const admin = isAdmin(account);
   // Only looked up for an admin: it is moderation evidence, not something a visitor is shown.
   const sightings = admin && player ? await otherNamesUsedWith(player.name) : [];
-  const claim = await claimForPlayer(player.id);
-  const mine = !!account && claim?.accountId === account.id;
+  const { claim, mine } = await claimForViewer(player.id, account?.id ?? null, admin);
   const claimUi = (
     <PlayerClaim
       playerId={player.id}

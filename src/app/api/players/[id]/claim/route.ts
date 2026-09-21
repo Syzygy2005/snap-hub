@@ -33,7 +33,7 @@ export async function DELETE(_request: Request, ctx: RouteContext<"/api/players/
   return Response.json({ ok: removed }, { status: removed ? 200 : 404 });
 }
 
-/** Confirm somebody's claim, for a player who does not run the tracker. Admin only. */
+/** Confirm somebody's claim for public display. Admin only. */
 export async function PATCH(_request: Request, ctx: RouteContext<"/api/players/[id]/claim">) {
   const account = await currentAccount();
   if (!isAdmin(account)) return Response.json({ ok: false, error: "Not allowed" }, { status: 403 });

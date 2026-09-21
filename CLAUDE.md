@@ -100,11 +100,12 @@
   one they know only from having played against them. `otherNamesUsedWith` feeds a read-only
   panel an admin sees on a player profile, next to merge, and a person decides. Keep it that way
   unless there is a way to prove account ownership.
-- `player_claims` links a Discord account to a player row, one each way. Nothing on the board
-  can check a claim, so an unverified one is shown to the claimant and to nobody else; it goes
-  public once a `snap_names` row on the same account matches the player's current name
-  (`verified_by = 'tracker'`) or an admin confirms it. The claiming route takes the account from
-  the session and never from the request. It carries a foreign key to `players`, so it is in the
+- `player_claims` links a Discord account to a player row, one each way. Only an admin may
+  confirm it for public display; tracker-reported names are neither unique nor proof of ownership.
+  Legacy tracker confirmations are treated as pending by `toClaim`, and admins can confirm them
+  through the normal route. `claimForViewer` filters pending claims on the server and returns
+  only display fields: never pass a raw claim to a Client Component. The claiming route takes
+  the account from the session and never from the request. It carries a foreign key to `players`, so it is in the
   reset script's truncate list and in `rollover.test.ts`'s; a claim does not survive a reset,
   because the row it pointed at does not either.
 - The name on a tracker key is a label for the key ("Gaming PC"), not a Snap name. The form used
