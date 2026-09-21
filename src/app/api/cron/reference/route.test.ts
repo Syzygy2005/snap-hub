@@ -9,11 +9,16 @@ it("requires a secret in production and reports partial failure as a failed job"
   vi.stubEnv("CRON_SECRET","test-secret");
   expect((await GET(new Request("http://localhost/api/cron/reference"))).status).toBe(401);
   expect(syncReference).not.toHaveBeenCalled();
-  vi.mocked(syncReference).mockResolvedValueOnce({total:120,deckable:120}).mockRejectedValueOnce(new Error("upstream failure"));
+  vi.mocked(syncReference).mockResolvedValueOnce({total:120,deckable:120}).mockRejectedValueOnce(new Error("database details must stay private"));
   vi.spyOn(console,"error").mockImplementation(()=>{});
   const req=()=>new Request("http://localhost/api/cron/reference",{headers:{authorization:"Bearer test-secret"}});
   const failed=await GET(req()); expect(failed.status).toBe(503);
-  expect(await failed.json()).toEqual({ok:false,cards:"fulfilled",locations:"rejected"});
+  expect(await failed.json()).toEqual({ok:false,cards:"fulfilled",locations:"rejected",failures:[{kind:"locations",error:"Import failed; inspect the reference sync server log"}]});
+  vi.mocked(syncReference).mockRejectedValueOnce(new Error("Reference source returned HTTP 503")).mockResolvedValueOnce({total:120,deckable:120});
+  const upstream = await GET(req());
+  expect(upstream.status).toBe(503);
+  expect(await upstream.json()).toEqual({ok:false,cards:"rejected",locations:"fulfilled",failures:[{kind:"cards",error:"Reference source returned HTTP 503"}]});
   vi.mocked(syncReference).mockResolvedValue({total:120,deckable:120});
   const good=await GET(req());expect(good.status).toBe(200);expect(good.headers.get("cache-control")).toBe("no-store");
+  expect(await good.json()).toEqual({ok:true,cards:"fulfilled",locations:"fulfilled",failures:[]});
 });
