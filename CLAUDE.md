@@ -135,6 +135,11 @@
   callouts, which need the width: on a phone it cropped mid-word, repeated the header logo, and
   pushed the board below two screens. Screenshot the home page at 390px as well as desktop after
   touching that section; it looked fine at 1440 the whole time it was broken at 390.
+- `LeaderboardTable`'s `compact` means no search bar and no paging, not fewer columns: hiding
+  Best and Last played left three auto-width columns splitting 600px of slack, so the numbers
+  floated apart with a void between the name and the score. The Player column carries `w-full`
+  to take the slack instead. Anything whose text can wrap in that table needs
+  `whitespace-nowrap`; "over a day ago" wrapping made two rows half again as tall as the others.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
