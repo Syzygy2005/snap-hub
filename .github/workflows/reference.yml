@@ -47,6 +47,7 @@ jobs:
             200) jq -e '.ok == true' response.txt; exit $? ;;
             401) echo "::error::401: SITE_URL must be the public address under Vercel > Domains, and CRON_SECRET must match Vercel exactly (redeploy after changing it)." ;;
             404) echo "::error::404: SITE_URL is wrong. Copy it again from Vercel > Domains." ;;
+            503) echo "::error::Reference import failed. Check the per-source results and server logs; the previous dataset was retained." ;;
             500) echo "::error::500: the site hit an error. The reason is in the response above." ;;
             *) echo "::error::No usable response from the site. Check SITE_URL is your Vercel address." ;;
           esac

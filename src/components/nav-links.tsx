@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 const GROUPS = [
-  { href: "/wiki", label: "Wiki", children: [["/wiki", "Overview", "Start at the reference desk"], ["/wiki/cards", "Cards", "Find costs, power and abilities"], ["/wiki/locations", "Locations", "Explore effects and rarities"]] },
+  { href: "/wiki", label: "Wiki", children: [["/wiki", "Overview", "Start at the reference desk"], ["/wiki/cards", "Cards", "Find costs, power and abilities"], ["/wiki/locations", "Locations", "Explore effects and rarities"], ["/wiki/history", "History", "Browse official patch notes"]] },
   { href: "/leaderboard", label: "Leaderboard", children: [["/leaderboard", "Rankings", "See the Infinite leaderboard"], ["/leaderboard/movers", "Movers", "Follow the biggest rank changes"], ["/players", "Find a player", "Search player profiles"]] },
   { href: "/decks", label: "Decks", children: [["/decks", "Explore decks", "Discover community builds"], ["/decks/builder", "Deck Builder", "Create and refine your next deck"]] },
   { href: "/stats", label: "Stats", children: [["/stats", "Community stats", "Explore the shared game data"], ["/stats/me", "My Stats", "Review your own games"], ["/stats/tracker", "Tracker setup", "Connect your PC game tracker"]] },

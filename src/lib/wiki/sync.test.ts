@@ -67,7 +67,7 @@ describe("automatic reference imports", () => {
     vi.stubGlobal("fetch",vi.fn().mockImplementation(()=>Promise.resolve(feed(rows))));
     await syncReference("locations"); rows[0].ability="New location effect"; await syncReference("locations");
     expect((await entries("locations"))[0]).toMatchObject({rarity:"rare",ability:"New location effect"});
-    expect(await history("locations","Wiki0")).toHaveLength(1);
+    expect(await history("locations","Wiki0")).toMatchObject([{ before_data: { ability: "<span>On Reveal</span>: Draw a card." }, after_data: { ability: "New location effect" } }]);
     expect(()=>parseReference({success:{cards:[...rows,rows[0]]}},"locations")).toThrow("duplicate");
     expect(parseReference({success:{cards:[...rows,{...rows[0],carddefid:"",cid:342}]}},"locations").at(-1)?.def_id).toBe("SnapZoneLocation_342");
   });

@@ -6,10 +6,16 @@ test("energy bars interpolate additions and removals, with instant reduced motio
   const bar = curve.locator(".energy-bar").nth(1);
   await expect(bar).toHaveCSS("height", "0px");
   await bar.evaluate(el => {
-    el.addEventListener("transitionstart", () => {
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        el.setAttribute("data-observed-height", getComputedStyle(el).height);
-      }));
+    el.addEventListener("transitionstart", event => {
+      if ((event as TransitionEvent).propertyName !== "height") return;
+      const animation = el.getAnimations().find(a =>
+        a instanceof CSSTransition && a.transitionProperty === "height");
+      if (!animation?.effect) return;
+      // Sample the real transition at a deterministic midpoint, independent of frame timing.
+      animation.pause();
+      animation.currentTime = Number(animation.effect.getComputedTiming().duration) / 2;
+      el.setAttribute("data-observed-height", getComputedStyle(el).height);
+      animation.play();
     });
   });
   await page.getByRole("button", { name: "Test Card 1, cost 1, power 2", exact: true }).click();

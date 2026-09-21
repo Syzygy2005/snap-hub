@@ -31,3 +31,15 @@ test("failed wiki art remains readable",async({page})=>{
   await page.getByRole("img",{name:"Test Card 1",exact:true}).evaluate(img=>img.dispatchEvent(new Event("error")));
   await expect(page.getByRole("img",{name:"Test Card 1: artwork unavailable"})).toBeVisible();
 });
+
+test("wiki separates historical sources from observed changes", async ({ page }) => {
+  await page.goto("/wiki/locations/Asgard");
+  await expect(page.getByRole("heading", { name: "Reference facts", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Official patch-note mentions", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Observed changes", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Browse the official patch archive and other history sources" }).click();
+  await expect(page.getByRole("heading", { name: "Official patch archive", exact: true })).toBeVisible();
+  await expect(page.getByText(/\d+ official patch and balance articles indexed/)).toBeVisible();
+  await expect(page.locator('article a[href^="https://marvelsnap.com/"]').first()).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath("patch-archive.png") });
+});

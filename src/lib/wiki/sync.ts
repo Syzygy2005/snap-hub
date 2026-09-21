@@ -86,20 +86,21 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
         return [{ def_id: r.def_id, before_data: Object.fromEntries(tracked.map(key => [key, previous[key]])), after_data: Object.fromEntries(tracked.map(key => [key, r[key as keyof Imported]])) }];
       });
       await tx.query(`insert into reference_changes(kind, def_id, before_data, after_data)
-        select $1, x.def_id, x.before_data, x.after_data from jsonb_to_recordset($2::jsonb) as x(def_id text, before_data jsonb, after_data jsonb)`, [kind, JSON.stringify(changes)]);
+        select $1, x.def_id, x.before_data, x.after_data from jsonb_to_recordset($2::text::jsonb) as x(def_id text, before_data jsonb, after_data jsonb)`, [kind, JSON.stringify(changes)]);
+      // Send serialized JSON as text: postgres.js otherwise JSON-encodes the string again.
       const payload = JSON.stringify(records);
       if (kind === "cards") {
         await tx.query(`insert into cards(def_id, name, cost, power, ability, art, series, tags, deckable, reference_status)
           select def_id, name, cost, power, ability, art, series, tags, deckable, status
-          from jsonb_to_recordset($1::jsonb) as x(def_id text, name text, cost int, power int, ability text, art text, series text, tags text[], deckable bool, status text)
+          from jsonb_to_recordset($1::text::jsonb) as x(def_id text, name text, cost int, power int, ability text, art text, series text, tags text[], deckable bool, status text)
           on conflict(def_id) do update set name=excluded.name, cost=excluded.cost, power=excluded.power,
           ability=excluded.ability, art=excluded.art, series=excluded.series, tags=excluded.tags, deckable=excluded.deckable,
           reference_status=excluded.reference_status, updated_at=now()`, [payload]);
-        await tx.query(`insert into meta(key,value,updated_at) values ('cards_synced',$1::jsonb,now())
+        await tx.query(`insert into meta(key,value,updated_at) values ('cards_synced',$1::text::jsonb,now())
           on conflict(key) do update set value=excluded.value, updated_at=now()`, [JSON.stringify({ total: records.length })]);
       } else {
         await tx.query(`insert into locations(def_id,name,ability,art,rarity,status)
-          select def_id,name,ability,art,rarity,status from jsonb_to_recordset($1::jsonb) as x(def_id text,name text,ability text,art text,rarity text,status text)
+          select def_id,name,ability,art,rarity,status from jsonb_to_recordset($1::text::jsonb) as x(def_id text,name text,ability text,art text,rarity text,status text)
           on conflict(def_id) do update set name=excluded.name, ability=excluded.ability, art=excluded.art,
           rarity=excluded.rarity, status=excluded.status, updated_at=now()`, [payload]);
       }
