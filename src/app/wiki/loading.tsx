@@ -1,1 +1,2 @@
-export default function Loading() { return <p role="status" className="p-8 text-muted">Loading the reference library…</p>; }
+import { PageSkeleton } from "@/components/page-skeleton";
+export default function Loading() { return <PageSkeleton shape="cards" label="Loading the reference library" />; }

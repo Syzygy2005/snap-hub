@@ -28,6 +28,7 @@ test("header groups pages with keyboard and touch friendly disclosures", async (
   await wiki.click();
   await nav.getByRole("link", { name: "Locations", exact: true }).click();
   await expect(page).toHaveURL(/\/wiki\/locations$/);
+  await expect(page.getByRole("heading", { name: "Location atlas", exact: true })).toBeVisible();
   if (isMobile) await page.getByText("Menu", { exact: true }).click();
   await wiki.click();
   await expect(nav.getByRole("link", { name: "Locations", exact: true })).toHaveAttribute("aria-current", "page");
