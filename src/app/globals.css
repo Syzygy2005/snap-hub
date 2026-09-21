@@ -84,6 +84,8 @@ button:disabled { cursor: not-allowed; }
 .brand-panel { box-shadow: 0 8px 30px rgb(0 15 12 / .1); }
 .brand-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
 .brand-hero { position: relative; isolation: isolate; background: var(--color-ink); color: var(--color-bg); }
+.brand-hero :focus-visible { outline-color: var(--color-bg); outline-offset: 4px; }
+input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 1; }
 .brand-hero-art { background: radial-gradient(ellipse at 60% 40%, #245849, #102d29 75%); }
 .brand-hero-art::before, .brand-hero-art::after { content: ''; position: absolute; width: 280px; height: 380px; border: 1px solid #36d6a038; border-radius: 28px; transform: rotate(18deg); }
 .brand-hero-art::after { transform: rotate(-12deg); width: 240px; height: 330px; }

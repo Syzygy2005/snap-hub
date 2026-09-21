@@ -9,6 +9,9 @@ test("new identity stays usable on home, menus and share assets", async ({page,i
   expect(await page.locator('img[src*="banner.webp"], img[src*="wordmark.png"], img[src*="brand/icon.png"]').count()).toBe(0);
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link",{name:"Skip to content"})).toBeFocused();
+  const build = page.getByRole("link",{name:"Build a deck",exact:true});
+  await build.focus();
+  await expect(build).toHaveCSS("outline-color","rgb(16, 45, 41)");
   if (isMobile) {
     await page.getByText("Menu",{exact:true}).click();
     const menu=page.getByRole("navigation",{name:"Mobile navigation"});
