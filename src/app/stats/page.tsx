@@ -36,7 +36,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
         subtitle={
           <>
             From {stats.summary.games.toLocaleString()} tracked game{stats.summary.games === 1 ? "" : "s"} by{" "}
-            {stats.trackers} player{stats.trackers === 1 ? "" : "s"} · {WINDOW_LABELS[window]}
+            {stats.trackers} tracker key{stats.trackers === 1 ? "" : "s"} · {WINDOW_LABELS[window]}
           </>
         }
       >
@@ -80,7 +80,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
       ) : (
         <>
           <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat label="Games" value={stats.summary.games.toLocaleString()} hint={`${stats.trackers} tracked player(s)`} />
+            <Stat label="Games" value={stats.summary.games.toLocaleString()} hint={`${stats.trackers} contributing tracker key(s)`} />
             <Stat label="Deck archetypes" value={stats.archetypes.length} hint="decks sharing 9+ cards are grouped" />
             <Stat label="Tracked win rate" value={pct(stats.summary.winRate)} hint="near 50% once many players track" />
             <Stat label="Avg cube rate" value={signed(stats.summary.cubeRate)} hint="net cubes per game" />

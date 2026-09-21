@@ -114,6 +114,7 @@ describe("parseGameState", () => {
     expect(res).toEqual({
       ok: true,
       game: {
+        accountId: "acct-me",
         gameId: "game-abc",
         league: "Ranked",
         battleMode: false,

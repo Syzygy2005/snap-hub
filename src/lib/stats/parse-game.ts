@@ -8,6 +8,8 @@
 
 export interface ParsedGame {
   gameId: string;
+  /** Resolved local Snap identity, used only for hashing on ingest; never returned by the API. */
+  accountId: string | null;
   league: string | null;
   battleMode: boolean;
   friendly: boolean;
@@ -182,6 +184,7 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
     ok: true,
     game: {
       gameId: String(rawGameId),
+      accountId: String(get(players[localIndex], "PlayerInfo", "AccountId") ?? get(item, "AccountId") ?? clientAccount) || null,
       league: typeof league === "string" && league ? league : null,
       battleMode: get(result, "IsBattleMode") === true,
       friendly: get(result, "IsBattleFriendMode") === true,

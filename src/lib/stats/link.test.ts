@@ -10,6 +10,20 @@ const newKey = async (name: string, accountId?: number) => {
 };
 
 describe("linking tracker keys to an account", () => {
+  it("allows only one account to win simultaneous claims", async () => {
+    const a = await upsertAccount({ id: "race-a", username: "A", avatar: null });
+    const b = await upsertAccount({ id: "race-b", username: "B", avatar: null });
+    const tracker = await newKey("Contested key");
+    const results = await Promise.all([claimTracker(tracker, a.id), claimTracker(tracker, b.id)]);
+    expect(results.filter((r) => r.ok)).toHaveLength(1);
+    expect(results.find((r) => !r.ok)).toMatchObject({ status: 409 });
+    const winner = results[0].ok ? a : b;
+    const loser = results[0].ok ? b : a;
+    expect(await trackersForAccount(winner.id)).toHaveLength(1);
+    expect(await trackersForAccount(loser.id)).toHaveLength(0);
+    expect(await claimTracker(tracker, loser.id)).toMatchObject({ ok: false, status: 409 });
+  });
+
   it("a key made while signed in lands on the account already", async () => {
     const account = await upsertAccount({ id: "d-auto", username: "noah", avatar: null });
     const tracker = await newKey("Desktop", account.id);
