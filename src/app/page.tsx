@@ -39,7 +39,10 @@ export default async function Home(props: PageProps<"/">) {
     <>
       <SignInNotice reason={signin} />
 
-      <section className="relative -mt-6 mb-8 overflow-hidden border-b border-line sm:mt-0 sm:rounded-xl sm:border">
+      {/* The banner carries its own wordmark and feature callouts, which only fit on a wide
+          screen. On a phone it cropped mid-word, repeated the logo already in the header, and
+          pushed the board two screens down, so it is simply not drawn there. */}
+      <section className="relative -mt-6 mb-8 hidden overflow-hidden border-b border-line sm:mt-0 sm:block sm:rounded-xl sm:border">
         <h1 className="sr-only">
           {SITE_NAME}: {SITE_SLOGAN}
         </h1>
@@ -54,12 +57,17 @@ export default async function Home(props: PageProps<"/">) {
         />
       </section>
 
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
         <p className="max-w-2xl text-muted">
           <span className="block font-display text-sm font-bold uppercase tracking-[0.2em] text-accent">{SITE_TAGLINE}</span>
+          {/* One line on a phone. The three buttons underneath say the rest, and the board
+              below is the actual argument for staying. */}
           <span className="mt-2 block">
-            The Infinite leaderboard saved every 10 minutes, a deck builder that exports straight to the game, and
-            win rate and cube rate from real tracked games.
+            The Infinite leaderboard, saved every 10 minutes.
+            <span className="hidden sm:inline">
+              {" "}
+              A deck builder that exports straight to the game, and win rate and cube rate from real tracked games.
+            </span>
           </span>
         </p>
         <div className="flex flex-wrap gap-2">
