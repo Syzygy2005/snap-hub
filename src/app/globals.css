@@ -29,6 +29,10 @@
 
 :root {
   color-scheme: dark;
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-duration: 280ms;
+  --default-transition-duration: 280ms;
+  --default-transition-timing-function: cubic-bezier(.22, 1, .36, 1);
 }
 
 html,
@@ -89,18 +93,21 @@ input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 
 .brand-hero-art { background: radial-gradient(ellipse at 60% 40%, #245849, #102d29 75%); }
 .brand-hero-art::before, .brand-hero-art::after { content: ''; position: absolute; width: 280px; height: 380px; border: 1px solid #36d6a038; border-radius: 28px; transform: rotate(18deg); }
 .brand-hero-art::after { transform: rotate(-12deg); width: 240px; height: 330px; }
-.brand-tile, .brand-action, button { transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.brand-tile, .brand-action, button, a, summary, input, select, textarea { transition: color var(--motion-duration) ease, background-color var(--motion-duration) ease, border-color var(--motion-duration) ease, box-shadow var(--motion-duration) ease, transform var(--motion-duration) var(--motion-ease); }
 .brand-tile:focus-visible { border-color: var(--color-accent); box-shadow: 0 0 0 3px #36d6a025; }
 .brand-art { position: relative; isolation: isolate; }
-.brand-art-stage { transform: perspective(950px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); transition: transform 200ms ease-out; }
-.brand-art-sheen { position: absolute; pointer-events: none; inset: 0; border-radius: 16px; opacity: 0; background: radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 50%), #f3f2e92b, #36d6a010 35%, transparent 65%); transition: opacity 180ms; }
+.brand-art-stage { transform: perspective(950px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); /* Pointer interpolation owns this transform. */ }
+.brand-art-sheen { position: absolute; pointer-events: none; inset: 0; border-radius: 16px; opacity: 0; background: radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 50%), #f3f2e92b, #36d6a010 35%, transparent 65%); transition: opacity 350ms ease; }
 .brand-art[data-engaged=true] .brand-art-sheen { opacity: 1; }
-.brand-menu[open] > nav { animation: menu-enter 150ms ease-out; }
-.deck-choice[aria-pressed=true] > .selection-check { animation: selection-enter 180ms ease-out; }
+.brand-menu[open] > div { animation: menu-enter 280ms var(--motion-ease); }
+.nav-toggle svg { transition: transform var(--motion-duration) var(--motion-ease); }
+.nav-group[data-open=true] .nav-toggle svg { transform: rotate(180deg); }
+.nav-disclosure { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: grid-template-rows var(--motion-duration) var(--motion-ease), opacity 200ms ease, transform var(--motion-duration) var(--motion-ease), visibility var(--motion-duration); }
+.nav-group[data-open=true] > .nav-disclosure { grid-template-rows: 1fr; opacity: 1; visibility: visible; transform: translateY(0); }
+.deck-choice[aria-pressed=true] > .selection-check { animation: selection-enter 280ms var(--motion-ease); }
 @keyframes menu-enter { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes selection-enter { from { opacity: 0; transform: scale(.75); } to { opacity: 1; transform: scale(1); } }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .brand-tile { transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
   .brand-tile:hover { transform: translateY(-3px); border-color: #36d6a080; box-shadow: 0 12px 24px #001e1826; }
   .brand-action:active { transform: translateY(1px); }
   .deck-choice:hover img { transform: scale(1.025); }

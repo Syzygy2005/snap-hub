@@ -34,8 +34,10 @@ test("artwork motion resets and respects touch and reduced motion",async({page,i
     await art.hover({position:{x:15,y:15}});
     await expect(art).toHaveAttribute("data-engaged","true");
     expect(await title.boundingBox()).toEqual(before);
+    await expect.poll(() => art.evaluate(el => parseFloat((el as HTMLElement).style.getPropertyValue("--tilt-y")))).toBeLessThan(-1);
     await art.dispatchEvent("pointercancel",{pointerType:"mouse"});
     await expect(art).toHaveAttribute("data-engaged","false");
+    await expect.poll(() => art.evaluate(el => (el as HTMLElement).style.getPropertyValue("--tilt-y"))).toBe("0deg");
     await art.hover({position:{x:50,y:50}});
     await expect(art).toHaveAttribute("data-engaged","true");
   } else {
