@@ -86,9 +86,17 @@ export default async function Home(props: PageProps<"/">) {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      {/* items-start, or the grid stretches every panel to the tallest column: the board held
+          507px of rows inside a 959px bordered box, and the empty half read as a loading state. */}
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <Panel
-          title={season ? `Top 10 · ${seasonLabel(season)}` : "Top 10"}
+          title={
+            <>
+              Top <span className="lg:hidden">10</span>
+              <span className="hidden lg:inline">20</span>
+              {season ? ` · ${seasonLabel(season)}` : ""}
+            </>
+          }
           action={
             board?.meta.updatedAt ? (
               <span className="text-xs text-muted">
@@ -99,7 +107,7 @@ export default async function Home(props: PageProps<"/">) {
         >
           {board ? (
             <>
-              <LeaderboardTable rows={board.rows.slice(0, 10)} compact latestUpdate={board.meta.updatedAt} />
+              <LeaderboardTable rows={board.rows.slice(0, 20)} compact foldAt={10} latestUpdate={board.meta.updatedAt} />
               <div className="border-t border-line p-3 text-center">
                 <Link href="/leaderboard" className="text-sm font-semibold text-accent hover:underline">
                   Full top {board.rows.length.toLocaleString()} →

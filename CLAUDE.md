@@ -140,6 +140,17 @@
   floated apart with a void between the name and the score. The Player column carries `w-full`
   to take the slack instead. Anything whose text can wrap in that table needs
   `whitespace-nowrap`; "over a day ago" wrapping made two rows half again as tall as the others.
+- The home page grid carries `items-start`. Without it the grid stretches both columns to the
+  taller one, and the board panel drew a bordered box 959px tall around 507px of rows: 452px of
+  empty surface that reads as a half-loaded page. A `Panel` is a bordered box, so it must never
+  be a grid or flex child that can stretch. Measure the panel against its last child after
+  touching that layout; both times this went wrong it looked like a content problem and was a
+  layout one.
+- The home board passes 20 rows with `foldAt={10}`, so rows 11-20 are `hidden lg:table-row`.
+  `lg` is deliberate: it is the same breakpoint as the two-column grid, which is the only width
+  with a second column and therefore the only width with spare height to fill. The panel title
+  counts the same way, with a `lg:hidden` 10 and a `hidden lg:inline` 20, so it never claims a
+  number it is not showing. Change one of the three and change all three.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

@@ -13,11 +13,18 @@ export function LeaderboardTable({
   rows,
   compact = false,
   latestUpdate = null,
+  foldAt = null,
 }: {
   rows: BoardRow[];
   compact?: boolean;
   /** taken_at of the newest snapshot. A score that changed then moved in the last push. */
   latestUpdate?: string | null;
+  /**
+   * Rows from this index on are drawn only at `lg` and up. The home page has a second column
+   * beside the board there and nowhere else, so that is the only width with spare height to
+   * fill; below it the extra rows would just be more scrolling before anything else.
+   */
+  foldAt?: number | null;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -102,8 +109,13 @@ export function LeaderboardTable({
             </tr>
           </thead>
           <tbody>
-            {visible.map((r) => (
-              <tr key={r.id} className="border-t border-line/60 hover:bg-surface-2/60">
+            {visible.map((r, i) => (
+              <tr
+                key={r.id}
+                className={`border-t border-line/60 hover:bg-surface-2/60 ${
+                  foldAt !== null && i >= foldAt ? "hidden lg:table-row" : ""
+                }`}
+              >
                 <td className="num px-4 py-2">
                   <RankBadge rank={r.rank} />
                 </td>

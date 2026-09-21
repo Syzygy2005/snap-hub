@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-21",
     changes: [
       {
+        title: "Twenty players on the home page, and no more empty box",
+        detail:
+          "The top ten sat in a panel half of which was blank, because it was being stretched to match the column beside it. The panel is its own size now, and on a wide screen it uses the room for ten more players. Phones still show ten.",
+      },
+      {
         title: "The top ten reads like a leaderboard again",
         detail:
           "On a wide screen the numbers were spread across half a metre of empty table, and two rows stood taller than the rest. The columns now sit together, every row is the same height, and best rank and who is live show on the home page too.",
