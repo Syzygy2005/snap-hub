@@ -1,0 +1,53 @@
+name: Reference database sync
+
+# Independent hourly checks; workflow_dispatch can refresh after a patch.
+# Uses the same SITE_URL / CRON_SECRET secrets as the leaderboard workflow.
+# Scheduled workflows may be delayed or paused after 60 days of repository inactivity.
+concurrency:
+  group: reference-sync
+  cancel-in-progress: false
+permissions:
+  contents: read
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sync cards and locations
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          # Secrets pasted on a phone can carry spaces, line breaks or invisible characters: keep printable ASCII only.
+          site=$(printf '%s' "$SITE_URL" | LC_ALL=C tr -cd '\041-\176')
+          secret=$(printf '%s' "$CRON_SECRET" | LC_ALL=C tr -cd '\041-\176')
+          [ -n "$secret" ] && echo "::add-mask::$secret"
+
+          if [ -z "$site" ] || [ -z "$secret" ]; then
+            echo "::error::Add the SITE_URL and CRON_SECRET repository secrets (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          case "$site" in http://*|https://*) ;; *) site="https://$site" ;; esac
+          site="${site%/}"
+          if ! printf '%s' "$site" | grep -Eq '^https?://[A-Za-z0-9.-]+(:[0-9]+)?$'; then
+            echo "::error::SITE_URL must be just the site address, like https://snap-hub-abc123.vercel.app, with nothing after it."
+            exit 1
+          fi
+
+          status=$(curl --silent --show-error --max-time 120 --output response.txt --write-out "%{http_code}" \
+            -H "Authorization: Bearer ${secret}" "$site/api/cron/reference") || true
+          echo "HTTP ${status:-no response}"
+          head -c 4000 response.txt 2>/dev/null; echo
+          case "$status" in
+            200) jq -e '.ok == true' response.txt; exit $? ;;
+            401) echo "::error::401: SITE_URL must be the public address under Vercel > Domains, and CRON_SECRET must match Vercel exactly (redeploy after changing it)." ;;
+            404) echo "::error::404: SITE_URL is wrong. Copy it again from Vercel > Domains." ;;
+            500) echo "::error::500: the site hit an error. The reason is in the response above." ;;
+            *) echo "::error::No usable response from the site. Check SITE_URL is your Vercel address." ;;
+          esac
+          exit 1

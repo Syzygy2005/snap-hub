@@ -155,3 +155,8 @@
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
+
+- Reference imports run independently at `/api/cron/reference`; never hide failures inside a successful
+  leaderboard response. Cards/wiki/builder/stats share canonical card rows. Unreleased rows are not deckable.
+- Reference imports preserve known IDs and the last good dataset on validation failure. Do not weaken
+  missing-ID checks to accommodate a bad feed. Change history starts after the baseline, not retroactively.

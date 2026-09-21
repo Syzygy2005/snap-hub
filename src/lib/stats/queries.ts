@@ -174,6 +174,7 @@ export interface PersonalGame {
 }
 
 export interface PersonalStats {
+  locationInfo?: Record<string, string>;
   tracker: { id: number; name: string };
   window: StatWindow;
   summary: Summary;
@@ -207,6 +208,9 @@ export async function getPersonalStats(
     };
   }
   const [rows, allCards] = await Promise.all([loadGames({ window, trackerIds: subject.trackerIds }), getCards()]);
+  const db = await getDb();
+  const locations = await db.query<{def_id: string; name: string}>("select def_id,name from locations where status='released'");
+  const locationInfo = Object.fromEntries(locations.map(l => [l.def_id,l.name]));
   const byId = new Map(allCards.map((c) => [c.defId, c]));
   const games = rows.map(toStatsGame);
 
@@ -254,6 +258,7 @@ export async function getPersonalStats(
 
   return {
     tracker: { id: subject.id, name: subject.name },
+    locationInfo,
     window,
     summary: summarize(games),
     cubes: cubeDiscipline(

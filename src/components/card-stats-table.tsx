@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useMemo, useState } from "react";
 import type { CardStat } from "@/lib/stats/aggregate";
@@ -79,7 +80,7 @@ export function CardStatsTable({
                   <td className="px-4 py-1.5">
                     <span className="flex items-center gap-2">
                       <span className="w-9 shrink-0">{card && <CardArt card={card} />}</span>
-                      <span className="truncate font-medium">{card?.name ?? s.defId}</span>
+                      <span className="truncate font-medium">{card ? <Link className="hover:text-accent underline-offset-2 hover:underline" href={`/wiki/cards/${encodeURIComponent(s.defId)}`}>{card.name}</Link> : s.defId}</span>
                     </span>
                   </td>
                   <td className="num px-2 py-1.5 text-right">

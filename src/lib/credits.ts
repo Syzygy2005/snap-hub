@@ -35,9 +35,9 @@ export const DATA: Credit[] = [
     note: "The public leaderboard every snapshot on this site comes from.",
   },
   {
-    name: "Marvel Snap Zone card database",
+    name: "Marvel Snap Zone card and location databases",
     url: "https://marvelsnapzone.com/cards/",
-    note: "Card names, costs, power, abilities and card art used across the site.",
+    note: "Card names, costs, power, abilities, location effects, rarity and artwork used across the site.",
   },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DECK_SIZE, type Card } from "@/lib/cards/types";
 import { decodeDeckInput, encodeDeck, gameClipboardText } from "@/lib/decks/code";
@@ -34,6 +35,7 @@ const KEYWORDS: { label: string; test: (c: Card) => boolean }[] = [
 type Sort = "cost" | "power" | "name";
 
 interface Props {
+  addCard?: string | null;
   cards: Card[];
   initial?: { name: string; defIds: string[] } | null;
   importCode?: string | null;
@@ -104,12 +106,22 @@ function startingState(
   return { deck: [] as string[], name: "", status: null, savedId: null };
 }
 
-export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs }: Props) {
+export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, addCard }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(cards.map((c) => [c.defId, c])), [cards]);
 
   const [savedDecks, setSavedDecks] = useState<LocalDeck[]>(readLocalDecks);
-  const [start] = useState(() => startingState(cards, initial, importCode, openLocalId, savedDecks));
+  const [start] = useState(() => {
+    const restored = startingState(cards, initial, importCode, openLocalId, savedDecks);
+    if (!addCard) return restored;
+    const card = cards.find(c => c.defId === addCard);
+    const text = !card ? "That card is unavailable for deck building." : restored.deck.includes(addCard)
+      ? `${card.name} is already in your draft.` : restored.deck.length >= DECK_SIZE
+      ? "Your draft is full. Remove a card before adding another." : `Added ${card.name} to your draft.`;
+    const canAdd = !!card && !restored.deck.includes(addCard) && restored.deck.length < DECK_SIZE;
+    return { ...restored, deck: canAdd ? [...restored.deck, addCard] : restored.deck,
+      status: { tone: canAdd ? "ok" as const : "warn" as const, text } };
+  });
   const [deck, setDeck] = useState<string[]>(start.deck);
   const [name, setName] = useState(start.name);
   const [savedId, setSavedId] = useState<string | null>(start.savedId);
@@ -657,6 +669,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs }:
                 </div>
                 <p className="mt-1 text-xs leading-relaxed text-muted">
                   <AbilityText text={inspected.ability} />
+                  <Link className="mt-3 block text-accent underline" href={`/wiki/cards/${encodeURIComponent(inspected.defId)}`}>Open card reference →</Link>
                 </p>
               </div>
             </div>

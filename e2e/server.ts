@@ -14,6 +14,8 @@ async function main() {
   for (let i = 1; i <= 12; i++) {
     await db.query("insert into cards (def_id, name, cost, power, ability, art, series, deckable) values ($1, $2, $3, 2, '', '/brand/icon.png', '1', true)", [`TestCard${i}`, `Test Card ${i}`, i % 7]);
   }
+  await db.query("insert into locations(def_id,name,ability,art,rarity,status) values ('Asgard','Asgard','After turn 4, whoever is winning here draws 2 cards.','/brand/icon.png','common','released')");
+  await db.query("insert into cards(def_id,name,cost,power,ability,art,series,deckable,reference_status) values ('Upcoming','Upcoming Card',1,1,'','','1',false,'unreleased')");
   await db.close();
   const oauth = createServer((req, res) => {
     const url = new URL(req.url!, "http://127.0.0.1:3102");

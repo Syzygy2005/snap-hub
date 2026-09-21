@@ -22,7 +22,7 @@ export default async function BuilderPage(props: PageProps<"/decks/builder">) {
       <>
         <PageHeader title="Deck Builder" />
         <EmptyState title="Cards are still loading">
-          The card list syncs with the first snapshot after the server starts. Refresh in a few seconds.
+          The card list appears after the first successful reference update. Please check back shortly.
         </EmptyState>
       </>
     );
@@ -36,6 +36,7 @@ export default async function BuilderPage(props: PageProps<"/decks/builder">) {
       />
       <DeckBuilderLoader
         cards={cards}
+        addCard={param(sp, "add") ?? null}
         initial={saved ? { name: saved.name, defIds: saved.cards } : null}
         importCode={param(sp, "code") ?? null}
         openLocalId={param(sp, "local") ?? null}

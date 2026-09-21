@@ -333,7 +333,7 @@ Source: `https://marvelsnap.com/wp-json/api/v1/leaderboard?month=9&year=2026&reg
 History rows are written only when points change, a player enters or leaves the board, or their rank drifts and
 the last row is over 6 hours old.
 
-Cards come from Marvel Snap Zone's card list, synced every 12 hours; alternate-mode cards are hidden from the
+Cards come from Marvel Snap Zone's card list, checked hourly by the independent reference workflow; alternate-mode cards are hidden from the
 builder (`isDeckable` in `src/lib/cards/sync.ts`). Deck codes export as base64 of
 `{"Name":"…","Cards":[{"CardDefId":"AntMan"},…]}`.
 
@@ -395,3 +395,30 @@ public/tracker/        the PC tracker script
 
 Fan-made and non-commercial; not affiliated with or endorsed by Marvel, Second Dinner or Nuverse. MARVEL SNAP, Marvel
 characters and card art belong to their owners.
+
+### Automatically updated card and location wiki
+
+`/wiki` uses the same canonical card rows as the builder and stats. Marvel Snap Zone's public
+card and location feeds are checked independently of leaderboard snapshots by
+`.github/workflows/reference.yml` at 17 minutes past each hour. It uses the existing `SITE_URL`
+and `CRON_SECRET` repository secrets; both must match the deployed production environment.
+After deployment, run **Reference database sync** once from Actions to seed the library.
+`GET /api/cron/reference` requires the cron bearer token in production. Partial failures return
+503 so Actions fails visibly; the successful collection can still update. Workflow failures use
+GitHub's normal notification settings. Monitor that workflow; schedules may be delayed or
+paused by GitHub after 60 days without repository activity.
+
+Imports validate the whole collection, reject duplicate IDs, missing previously released IDs and malformed records,
+then transact data and history together. Removed released IDs require source investigation before the
+baseline is deliberately changed. No scheduled job deletes historical reference entries.
+Conditional Last-Modified requests reduce transfer; transient transport/server failures receive
+one bounded retry. Last attempt, successful check, content change and failure are stored separately.
+The wiki warns after three hours without success (or immediately after a failed import).
+Upstream publication time plus scheduler delay determines patch freshness; this is not an official
+real-time game API. Datamined/unreleased entries are hidden from the public reference and builder.
+History starts at the initial baseline, records observed name/stat/effect changes, and makes no
+claim to be a complete historical patch archive. Authored strategy guides are deferred.
+
+Data credit: [Marvel Snap Zone locations](https://marvelsnapzone.com/locations/), including
+source-reported rarity categories (not inferred spawn percentages). Visual redesign and pointer effects are deferred to a separate rebrand pass using the new
+jade/forest/cream identity, Manrope headings and Inter body text.

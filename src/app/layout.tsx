@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { canonicalOrigin } from "@/lib/site-origin";
 import Link from "next/link";
 import { Montserrat, Orbitron } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -12,9 +13,7 @@ const orbitron = Orbitron({ subsets: ["latin"], weight: ["600", "700", "800"], v
 export const metadata: Metadata = {
   title: { default: `${SITE_NAME} · ${SITE_SLOGAN}`, template: `%s · ${SITE_NAME}` },
   description: SITE_TAGLINE,
-  metadataBase: process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? new URL(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`)
-    : undefined,
+  metadataBase: new URL(canonicalOrigin(new Request("https://snap-hub.app"))),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
