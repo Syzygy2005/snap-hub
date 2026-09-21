@@ -10,6 +10,13 @@ test("wiki search, reference details and add to existing draft",async ({page})=>
   await expect(page).toHaveURL(/q=Test\+Card\+1/);
   await page.getByRole("heading",{name:"Test Card 1",exact:true}).click();
   await expect(page.getByRole("heading",{name:"Test Card 1",exact:true})).toBeVisible();
+  const variants = page.getByRole("region", {name:"Card variants"});
+  await expect(variants.getByText("Test Artist", {exact:true}).first()).toBeVisible();
+  await expect(variants.getByText("Preview Artist", {exact:true}).first()).toBeHidden();
+  await variants.getByText("Unreleased variants (1)", {exact:true}).click();
+  await expect(variants.getByText("Preview Artist", {exact:true}).first()).toBeVisible();
+  await variants.getByRole("img", {name:"Test Card 1 variant released-example",exact:true}).evaluate(img=>img.dispatchEvent(new Event("error")));
+  await expect(variants.getByRole("img", {name:"Test Card 1 variant released-example: artwork unavailable"})).toBeVisible();
   await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:test.info().outputPath("wiki-card.png"),fullPage:true});
   await page.getByRole("link",{name:"Add to builder"}).click();

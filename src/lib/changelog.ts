@@ -12,6 +12,8 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-21",
     changes: [
+      { title: "Explore card variants", detail: "Card wiki pages now include variant artwork, rarity and artist credits from Marvel Snap Zone. Released variants appear first, with unreleased previews tucked into their own section. The catalog updates with hourly card imports." },
+      { title: "Location appearance rates with real data", detail: "Location pages now show observed 30-day appearance rates from SnapVault, with tracked-game counts and a source link. Missing data stays hidden instead of filling the facts panel with empty values." },
       { title: "Reliable reference imports and historical sources", detail: "Fixed the production database error blocking card and location refreshes. Wiki pages now include historical card stats and effects, reference facts, and links to official patch notes, separate from changes observed by Snap Hub." },
       { title: "A more balanced home page", detail: "Latest decks now sit below the compact Top 10, with larger card previews. Movers and updates keep their own sidebar without stretching the leaderboard into empty space." },
       { title: "Polish in every detail", detail: "Richer navigation, consistent page introductions, branded empty states, calmer tables, and shaped loading placeholders. Deck energy bars now glide as you add and remove cards, with reduced-motion support throughout." },

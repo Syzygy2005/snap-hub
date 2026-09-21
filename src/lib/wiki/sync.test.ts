@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "@/lib/db";
 import { getCards } from "@/lib/cards/queries";
-import { entries, history, syncState } from "./queries";
+import { cardVariants, entries, history, syncState } from "./queries";
 import { parseReference, syncReference } from "./sync";
-const card = (i: number) => ({carddefid: `Wiki${i}`, name: `Hero ${i}`, type: "Character", status: "released", cost: 2, power: 3, ability: "<span>On Reveal</span>: Draw a card.", art: "https://example.com/art.webp", source: "Series 1", tags: [{tag:"Draw"}]});
+const card = (i: number) => ({carddefid: `Wiki${i}`, name: `Hero ${i}`, type: "Character", status: "released", cost: 2, power: 3, ability: "<span>On Reveal</span>: Draw a card.", art: "https://example.com/art.webp", source: "Series 1", tags: [{tag:"Draw"}], variants: []});
+const variant = {cid:101,vid:4831,art:"https://marvelsnapzone.com/wp-content/themes/blocksy-child/assets/media/cards/101_166025444242.webp?v=1090",variant_order:"01",status:"Released",rarity:"Rare",sketcher:"G-Angle",inker:"",colorist:"G-Angle",ReleaseDate:1651950000,CollectorsQualityDefId:""};
 const baseline = () => Array.from({length: 120},(_,i) => card(i));
 const feed = (cards: unknown[]) => new Response(JSON.stringify({success:{cards}}), {headers:{"Last-Modified":"Mon, 21 Sep 2026 12:00:00 GMT"}});
 beforeEach(async () => { const db = await getDb(); await db.query("truncate reference_changes, reference_sync, cards, locations"); });
@@ -28,6 +29,34 @@ describe("automatic reference imports", () => {
     expect(await history("cards","Wiki120")).toHaveLength(0);
     await syncReference("cards");
     expect(await history("cards","Wiki0")).toHaveLength(1);
+  });
+  it("backfills existing cards and refreshes variant catalogs without inventing balance changes", async () => {
+    const rows = baseline().map((c,i) => ({...c,cid:101+i,variants:i === 0 ? [variant] : []}));
+    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(feed(rows)));
+    vi.stubGlobal("fetch",fetcher);
+    await syncReference("cards");
+    expect(await cardVariants("Wiki0")).toMatchObject([{id:"4831",status:"released",artists:[{role:"Sketch",name:"G-Angle"},{role:"Color",name:"G-Angle"}]}]);
+    const db = await getDb();
+    await db.query("update cards set variants=null");
+    await syncReference("cards");
+    expect(fetcher.mock.calls[1][1].headers["If-Modified-Since"]).toBeUndefined();
+    expect(await cardVariants("Wiki0")).toHaveLength(1);
+    rows[0].variants.push({...variant,vid:4832,status:"Unreleased"});
+    await syncReference("cards");
+    expect(fetcher.mock.calls[2][1].headers["If-Modified-Since"]).toBeTruthy();
+    expect(await cardVariants("Wiki0")).toHaveLength(2);
+    expect(await history("cards","Wiki0")).toHaveLength(0);
+    const unchanged = (await syncState("cards"))?.changed_at;
+    await syncReference("cards");
+    expect((await syncState("cards"))?.changed_at).toEqual(unchanged);
+    const missing = rows.map((r,i) => i ? r : {...r,variants:undefined});
+    fetcher.mockResolvedValueOnce(feed(missing));
+    await expect(syncReference("cards")).rejects.toThrow("variant list");
+    expect(await cardVariants("Wiki0")).toHaveLength(2);
+    rows[0].variants[0] = {...variant,art:"javascript:alert(1)"};
+    await expect(syncReference("cards")).rejects.toThrow();
+    expect(await cardVariants("Wiki0")).toHaveLength(2);
+    expect((await getCards()).find(c=>c.defId==="Wiki0")?.power).toBe(3);
   });
   it("retains last good data and success time for partial, malformed and failed feeds", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(feed(baseline()));vi.stubGlobal("fetch",fetcher);
