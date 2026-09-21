@@ -5,6 +5,7 @@
 - Private account drafts use `account_decks`, never `decks`. Keep every read/update/delete scoped to
   the session account; unlisted public decks remain accessible by link. Public sharing is an explicit copy.
 - `board_checked:<season>:<region>` records only successful source checks, including unchanged boards.
+  Read its explicit `updated_at` timestamp, never `value.at`: JSONB may contain a string whose `.at` is a function.
   Do not use the last changed snapshot or the overall cron timestamp to claim a board is fresh.
 - Browser CI runs Playwright against a fresh local PGlite database and a test-only Discord stub.
   Ports 3101/3102 are reserved for that runner. No test authentication bypass belongs in production routes.
