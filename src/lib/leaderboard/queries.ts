@@ -317,8 +317,11 @@ export async function getLastSnapshot(): Promise<{ at: string } | null> {
 
 export async function lastBoardCheck(season: string, region: Region): Promise<string | null> {
   const db = await getDb();
-  const [row] = await db.query<{ value: { at: string } }>("select value from meta where key = $1", [`board_checked:${season}:${region}`]);
-  return row?.value.at ?? null;
+  // The successful-check writer sets updated_at explicitly, including unchanged boards.
+  // JSONB can contain a JSON string; reading value.at then returns String.prototype.at,
+  // which cannot cross the Server/Client Component boundary. Use the typed timestamp.
+  const [row] = await db.query<{ updated_at: Date }>("select updated_at from meta where key = $1", [`board_checked:${season}:${region}`]);
+  return row?.updated_at.toISOString() ?? null;
 }
 
 /** Removes one former-name record, for when a rename was detected that never happened. */

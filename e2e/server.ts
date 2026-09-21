@@ -4,6 +4,7 @@ import { mkdtemp, mkdir } from "node:fs/promises";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
+import { currentSeason, seasonKey } from "../src/lib/season";
 import { SCHEMA } from "../src/lib/db/schema";
 
 async function main() {
@@ -16,6 +17,15 @@ async function main() {
   }
   await db.query("insert into locations(def_id,name,ability,art,rarity,status) values ('Asgard','Asgard','After turn 4, whoever is winning here draws 2 cards.','/brand/emblem.svg','common','released')");
   await db.query("insert into cards(def_id,name,cost,power,ability,art,series,deckable,reference_status) values ('Upcoming','Upcoming Card',1,1,'','','1',false,'unreleased')");
+  const season = seasonKey(currentSeason());
+  const checked = new Date();
+  await db.query("insert into players(name) select 'Browser Player ' || i from generate_series(1,120) as i");
+  await db.query(`insert into standings(season,region,player_id,rank,score,best_rank,peak_score,first_seen,updated_at,score_changed_at,history_at)
+    select $1,'global',id,id,10000-id,id,10000-id,$2,$2,$2,$2 from players`,[season,checked]);
+  await db.query("insert into snapshots(season,region,taken_at,total_players,entries,changed) values ($1,'global',$2,120,120,120)",[season,checked]);
+  // A JSONB string reproduces the production metadata representation that broke rendering.
+  await db.query("insert into meta(key,value,updated_at) values ($1,to_jsonb($2::text),$3)",
+    [`board_checked:${season}:global`,JSON.stringify({at:checked.toISOString()}),checked]);
   await db.close();
   const oauth = createServer((req, res) => {
     const url = new URL(req.url!, "http://127.0.0.1:3102");
