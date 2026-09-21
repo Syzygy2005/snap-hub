@@ -172,3 +172,60 @@ export function cardStats(games: GameForStats[]): CardStat[] {
     })
     .sort((a, b) => b.games - a.games || a.defId.localeCompare(b.defId));
 }
+
+export interface CubeGame {
+  result: "win" | "loss" | "tie";
+  cubes: number;
+  snapped: boolean;
+  opponentSnapped: boolean;
+  conceded: boolean;
+}
+
+export interface Bleed {
+  games: number;
+  /** Cubes handed over, as a positive number, because "lost 4.2" reads better than "-4.2". */
+  cubes: number;
+  perGame: number | null;
+}
+
+export interface CubeDiscipline {
+  /** Games you raised the stakes in. */
+  snapped: Summary;
+  /** They raised and you did not, so you chose to see it. */
+  calledTheirSnap: Summary;
+  /** Nobody raised: the baseline your other numbers should be read against. */
+  quiet: Summary;
+  /** Losses you retreated out of. */
+  retreated: Bleed;
+  /** Losses you sat through to the end. The gap between these two is the whole point. */
+  playedOut: Bleed;
+  retreatRate: number | null;
+}
+
+const bleed = (games: CubeGame[]): Bleed => {
+  const cubes = games.reduce((n, g) => n + Math.max(0, -g.cubes), 0);
+  return { games: games.length, cubes, perGame: games.length ? cubes / games.length : null };
+};
+
+/**
+ * Where the cubes actually go.
+ *
+ * Win rate is the wrong headline for this game: you can win most of your matches and still
+ * lose cubes, because the skill is in raising and in walking away. All of it is already on
+ * every uploaded game and none of it was being read.
+ *
+ * The number worth looking at is the gap between what a retreat costs and what sitting
+ * through a loss costs. If the second is much bigger, the cubes are going somewhere a
+ * different decision would have kept them.
+ */
+export function cubeDiscipline(games: CubeGame[]): CubeDiscipline {
+  const losses = games.filter((g) => g.result === "loss");
+  return {
+    snapped: summarize(games.filter((g) => g.snapped)),
+    calledTheirSnap: summarize(games.filter((g) => g.opponentSnapped && !g.snapped)),
+    quiet: summarize(games.filter((g) => !g.snapped && !g.opponentSnapped)),
+    retreated: bleed(losses.filter((g) => g.conceded)),
+    playedOut: bleed(losses.filter((g) => !g.conceded)),
+    retreatRate: games.length ? games.filter((g) => g.conceded).length / games.length : null,
+  };
+}

@@ -123,6 +123,14 @@
   brand instead. Render it and look at it after any change; five rows overflowed 630px while
   three looked perfect, and nothing but the picture says so. `clip` cuts long names because
   Satori's `text-overflow: ellipsis` is unreliable.
+- `cubeDiscipline` in `stats/aggregate.ts` reads the columns the tracker has always written and
+  nothing looked at: `conceded` was inserted on every upload and read by no query at all, and
+  `snapped`/`opponent_snapped` were only shown per game. Anything else added to `tracked_games`
+  deserves the same check before adding a column for it.
+- Small samples use `LOW_SAMPLE` in `stats-ui.tsx`; do not invent a second threshold. The cube
+  panel only draws a conclusion when both sides clear it, and says which side is short, because
+  somebody who never retreats is exactly who the panel is for and also the slowest to collect
+  retreats.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

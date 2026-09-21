@@ -15,6 +15,9 @@ builder, and win rate / cube rate stats from a PC tracker.
   A deck shared while signed in carries the poster's name.
 - **What's new**: `/changelog`, written by hand in `src/lib/changelog.ts`. Add an entry when a change is worth
   a player noticing; the newest one also shows on the home page.
+- **Where your cubes go**: win rate and cube rate split by who raised the stakes, and what a retreat costs
+  against what sitting through a loss costs. Win rate is the wrong headline for this game; you can win most
+  of your matches and still finish down.
 - **Stats**: meta share, win rate and cube rate by deck archetype and by card (in deck / drawn / played), plus a
   private "My stats" page with match history, including how the three locations stood when each game ended.
   The game file is parsed against a real, anonymised `GameState.json` kept as a fixture.
