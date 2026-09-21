@@ -9,6 +9,7 @@ import { encodeDeck } from "@/lib/decks/code";
 import { formatRelative, useNow } from "./relative-time";
 import { BoardView, CardStrip, CubeRate, pct, ResultBadge, signed, WinRate } from "./stats-ui";
 import { EmptyState, Panel, Stat } from "./ui";
+import { CubeDisciplinePanel } from "./cube-discipline";
 
 type Window = "7d" | "30d" | "all";
 const WINDOWS: { key: Window; label: string }[] = [
@@ -236,6 +237,10 @@ export function MyStats() {
               value={<span className={s.netCubes >= 0 ? "text-up" : "text-down"}>{signed(s.netCubes, 0)}</span>}
             />
           </div>
+
+          <Panel title="Where your cubes go">
+            <CubeDisciplinePanel cubes={stats.cubes} />
+          </Panel>
 
           <Panel title="Cubes over time">
             <CubesChart points={stats.cubesOverTime} />

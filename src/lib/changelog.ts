@@ -10,6 +10,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-21",
+    changes: [
+      {
+        title: "See where your cubes actually go",
+        detail:
+          "My Stats now splits win rate and cube rate by who raised the stakes, and shows what a retreat costs you against what sitting through a loss costs. Your tracker was already recording all of it.",
+      },
+    ],
+  },
+  {
     date: "2026-09-20",
     changes: [
       {
