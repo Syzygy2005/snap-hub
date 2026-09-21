@@ -65,15 +65,18 @@ export type ClaimResult = { ok: true; tracker: Tracker } | { ok: false; error: s
  */
 export async function claimTracker(tracker: Tracker, accountId: number): Promise<ClaimResult> {
   const db = await getDb();
-  const [row] = await db.query<{ account_id: number | null }>(`select account_id from trackers where id = $1`, [
-    tracker.id,
-  ]);
-  if (!row) return { ok: false, error: "That tracker key no longer exists.", status: 404 };
-  if (row.account_id !== null && row.account_id !== accountId) {
-    return { ok: false, error: "That key is already on another account.", status: 409 };
-  }
-  await db.query(`update trackers set account_id = $1 where id = $2`, [accountId, tracker.id]);
-  return { ok: true, tracker };
+  // Check ownership in the write itself: two simultaneous claims must not overwrite each other.
+  const [claimed] = await db.query<Tracker>(
+    `update trackers set account_id = $1
+      where id = $2 and (account_id is null or account_id = $1)
+      returning id, name, account_id`,
+    [accountId, tracker.id],
+  );
+  if (claimed) return { ok: true, tracker: claimed };
+  const [exists] = await db.query<{ id: number }>(`select id from trackers where id = $1`, [tracker.id]);
+  return exists
+    ? { ok: false, error: "That key is already on another account.", status: 409 }
+    : { ok: false, error: "That tracker key no longer exists.", status: 404 };
 }
 
 export function trackerInviteRequired(): boolean {
@@ -104,7 +107,7 @@ export async function recordGame(
   const g = parsed.game;
 
   // Only a hash of the Snap account ID is kept. Without one, dedupe per tracker key.
-  const accountHash = sha256(`snaphub:${accountId || `tracker-${tracker.id}`}`);
+  const accountHash = sha256(`snaphub:${g.accountId || `tracker-${tracker.id}`}`);
 
   const db = await getDb();
 

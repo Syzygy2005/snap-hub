@@ -280,6 +280,9 @@ then add up across every key on the account, which is what makes them follow you
 already on another account is refused rather than moved, and deleting an account releases its keys instead
 of destroying the games.
 
+Linking checks ownership atomically, so simultaneous requests cannot move a key between accounts.
+Community stats count contributing tracker keys, not unique players; one person can use several keys.
+
 Sign-in runs on one address, `canonicalOrigin` in `src/lib/site-origin.ts`, rather than whichever hostname
 the visitor arrived at. Discord matches a redirect literally, so a site answering on both an apex and a
 `www` name, or on Vercel's per-deployment hostnames, would only ever have one of them registered. Cookies
@@ -296,6 +299,10 @@ stub locally without a Discord app. They are unset in production.
 it gzips the file and posts it to `/api/tracker/games` with the player's tracker key. The server parses it
 (`src/lib/stats/parse-game.ts`), keeps a summary, and discards the raw file. Setup instructions for players are
 on `/stats/tracker`.
+
+Upload deduplication hashes the local Snap account ID resolved by the parser, including the ID in the
+game file when the account header is absent or does not match a player. Only files with no usable
+account ID fall back to deduplication per tracker key. Existing stored hashes are not rewritten.
 
 Players don't run the script by hand. `/api/tracker/download` returns a zip holding the script, a
 `Start Snap Hub Tracker.cmd` that already carries the site address and their key, and a readme, so setup is

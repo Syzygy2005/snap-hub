@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-21",
     changes: [
       {
+        title: "More reliable tracker stats",
+        detail:
+          "Repeat uploads now use the game's account identity even without an account header. Linking a key cannot overwrite another account's claim, My Stats shows failed refreshes and actions, and community counts clearly label tracker keys rather than players.",
+      },
+      {
         title: "Profile claims stay private until reviewed",
         detail:
           "Only you and admins can see a pending claim. A matching tracker name no longer confirms ownership: an admin must review it first. Earlier tracker confirmations now await that review too.",

@@ -93,6 +93,10 @@
   follow a person across devices. `tracked_games.account_hash` is a separate thing again, a
   hash of the Snap account id used for dedupe. Display names matter only on the leaderboard,
   which has no IDs at all.
+- `claimTracker` checks ownership inside its UPDATE so simultaneous claims cannot steal a key.
+  Upload deduplication hashes the parser's resolved local account ID, including the file fallback;
+  a missing or invalid header must not create another identity for the same game.
+  Community counts label contributing tracker keys, since keys are not unique players.
 - `snap_names` records display names a tracker has seen one Snap account using, which is the
   only direct evidence of a rename the site can get. It is **never applied automatically**: the
   game file is uploaded by its own client and the Snap account id arrives in a header the

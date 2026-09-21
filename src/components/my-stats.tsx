@@ -109,7 +109,7 @@ export function MyStats() {
   if ((!activeKey && !account.signedIn && !stats) || (error && !stats)) {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        {error && <p className="rounded-md border border-down/40 bg-down/10 px-3 py-2 text-sm text-down">{error}</p>}
+        {error && <p role="alert" className="rounded-md border border-down/40 bg-down/10 px-3 py-2 text-sm text-down">{error}</p>}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -148,6 +148,15 @@ export function MyStats() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div role="alert" className="rounded-md border border-down/40 bg-down/10 px-3 py-2 text-sm text-down">
+          <p>{error}</p>
+          <p className="mt-1">Showing the last loaded stats.</p>
+          <button type="button" onClick={() => void refresh()} className="mt-2 font-semibold underline">
+            Refresh stats
+          </button>
+        </div>
+      )}
       {account.signedIn && activeKey && account.heldKeyLinked === false && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
           <p className="min-w-0 text-sm">
@@ -210,8 +219,8 @@ export function MyStats() {
               key={w.key}
               type="button"
               onClick={() => setWindow(w.key)}
-              aria-pressed={window === w.key}
-              className={`rounded-md px-3 py-1 font-medium ${window === w.key ? "bg-accent text-bg" : "text-muted hover:text-ink"}`}
+              aria-pressed={stats.window === w.key}
+              className={`rounded-md px-3 py-1 font-medium ${stats.window === w.key ? "bg-accent text-bg" : "text-muted hover:text-ink"}`}
             >
               {w.label}
             </button>
@@ -359,22 +368,26 @@ export function MyStats() {
         >
           Forget my key on this browser
         </button>
-        <button
+        {activeKey && <button
           type="button"
           onClick={async () => {
             if (!confirm("Delete your tracker key and every game it uploaded? This can't be undone.")) return;
-            const res = await fetch("/api/tracker/me", { method: "DELETE", headers: { authorization: `Bearer ${activeKey}` } });
-            if (res.ok) {
-              forgetTrackerKey();
-              location.reload();
-            } else {
-              setError("Couldn't delete your data. Try again.");
+            try {
+              const res = await fetch("/api/tracker/me", { method: "DELETE", headers: { authorization: `Bearer ${activeKey}` } });
+              if (res.ok) {
+                forgetTrackerKey();
+                location.reload();
+              } else {
+                setError("Couldn't delete your data. Try again.");
+              }
+            } catch {
+              setError("Couldn't delete your data. Check your connection and try again.");
             }
           }}
           className="text-down/80 hover:text-down"
         >
           Delete my key and all my games
-        </button>
+        </button>}
         <span className="text-faint">Win rate {pct(s.winRate)} over {s.games} games.</span>
       </div>
     </div>
