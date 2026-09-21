@@ -127,13 +127,14 @@ Bodies are stored and rendered as text, never markup, and a source link has to p
 ## Claiming a profile
 
 A signed-in person can say a leaderboard row is them. Nothing on the board can check that, so an
-unproved claim is shown to the claimant and to nobody else: saying you are the rank one player
-gets you a line on your own screen and nothing more.
+unproved claim is shown only to the claimant and admins. Other visitors receive no pending
+claim data, including in the page's Client Component props.
 
-It goes public once something vouches for it. A tracker key on the same account that has reported
-playing under that name clears it on the spot, and an admin can clear any of them by hand. That
-bar is not cryptographic, since a game file comes from the player's own machine; it raises the
-cost, and an admin can remove any claim.
+It goes public only after an admin confirms it. Tracker-reported names are client-controlled and
+not unique, so a matching name is supporting evidence, never automatic ownership verification.
+Earlier tracker-confirmed claims are treated as pending on every read until an admin confirms
+them; their stored records are preserved. Admin-confirmed claims remain public. The browser
+receives only the display name and confirmation date, not internal account IDs or claim dates.
 
 One account holds one profile. Two rows for one player means a rename was missed, and the fix is
 a merge rather than a second claim.

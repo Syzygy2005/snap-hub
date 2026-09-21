@@ -90,4 +90,23 @@ describe("releasing and confirming through the route", () => {
     // Confirming twice is not a thing.
     expect((await PATCH(req(), ctx("11"))).status).toBe(404);
   });
+
+  it("requires an admin to confirm a legacy tracker-verified claim", async () => {
+    await claimPlayer(11, other);
+    await db.query(`update player_claims set verified_at = now(), verified_by = 'tracker' where player_id = 11`);
+    who.mockResolvedValue(acct(other, "222"));
+    expect((await PATCH(req(), ctx("11"))).status).toBe(403);
+    expect((await claimForPlayer(11))?.verifiedAt).toBeNull();
+
+    who.mockResolvedValue(acct(noah, "111"));
+    expect((await PATCH(req(), ctx("11"))).status).toBe(200);
+    expect((await claimForPlayer(11))?.verifiedBy).toBe("admin");
+  });
+
+  it("will not confirm claims for a signed-out visitor", async () => {
+    await claimPlayer(11, other);
+    who.mockResolvedValue(null);
+    expect((await PATCH(req(), ctx("11"))).status).toBe(403);
+    expect((await claimForPlayer(11))?.verifiedAt).toBeNull();
+  });
 });

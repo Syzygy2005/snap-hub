@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-21",
     changes: [
       {
+        title: "Profile claims stay private until reviewed",
+        detail:
+          "Only you and admins can see a pending claim. A matching tracker name no longer confirms ownership: an admin must review it first. Earlier tracker confirmations now await that review too.",
+      },
+      {
         title: "The top ten reads like a leaderboard again",
         detail:
           "On a wide screen the numbers were spread across half a metre of empty table, and two rows stood taller than the rest. The columns now sit together, every row is the same height, and best rank and who is live show on the home page too.",

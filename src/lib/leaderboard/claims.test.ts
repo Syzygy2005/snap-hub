@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getDb, type Db } from "@/lib/db";
-import { claimForAccount, claimForPlayer, claimPlayer, releaseClaim, verifyClaim } from "./claims";
+import { claimForAccount, claimForPlayer, claimForViewer, claimPlayer, releaseClaim, verifyClaim } from "./claims";
 
 let db: Db;
 let noah: number;
@@ -32,13 +32,20 @@ describe("claiming a leaderboard profile", () => {
     expect(result.claim).toMatchObject({ playerName: "PXL Rick", username: "Noah", verifiedAt: null, verifiedBy: null });
   });
 
-  it("clears itself when a tracker on that account has played under the name", async () => {
+  it("stays pending even when the claimant's tracker reports the same name", async () => {
     await sighting(noah, "PXL Rick");
     const result = await claimPlayer(11, noah);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.claim.verifiedBy).toBe("tracker");
-    expect(result.claim.verifiedAt).not.toBeNull();
+    expect(result.claim).toMatchObject({ verifiedBy: null, verifiedAt: null });
+    const [stored] = await db.query(`select verified_at, verified_by from player_claims where player_id = 11`);
+    expect(stored).toMatchObject({ verified_at: null, verified_by: null });
+  });
+
+  it("does not promote a pending claim after a matching upload or another claim request", async () => {
+    await claimPlayer(11, noah);
+    await sighting(noah, "PXL Rick");
+    expect(await claimPlayer(11, noah)).toMatchObject({ ok: true, claim: { verifiedBy: null, verifiedAt: null } });
   });
 
   it("does not clear itself on somebody else's tracker sighting", async () => {
@@ -71,6 +78,22 @@ describe("claiming a leaderboard profile", () => {
 });
 
 describe("releasing and confirming", () => {
+  it.each(["tracker", "unknown", null])("requires admin confirmation for legacy verification by %s", async (method) => {
+    await claimPlayer(11, noah);
+    await db.query(`update player_claims set verified_at = now(), verified_by = $1 where player_id = 11`, [method]);
+    expect(await claimForPlayer(11)).toMatchObject({ verifiedAt: null, verifiedBy: null });
+    expect(await claimForAccount(noah)).toMatchObject({ verifiedAt: null, verifiedBy: null });
+    expect(await claimForViewer(11, null, false)).toEqual({ claim: null, mine: false });
+    expect(await claimForViewer(11, other, true)).toEqual({
+      claim: { username: "Noah", verifiedAt: null }, mine: false,
+    });
+
+    const confirmed = await verifyClaim(11);
+    expect(confirmed?.verifiedBy).toBe("admin");
+    expect(confirmed?.verifiedAt).not.toBeNull();
+    expect(await verifyClaim(11)).toBeNull();
+  });
+
   it("lets the owner release theirs and nobody else's", async () => {
     await claimPlayer(11, noah);
     expect(await releaseClaim(11, other)).toBe(false);
@@ -103,5 +126,37 @@ describe("releasing and confirming", () => {
     await claimPlayer(11, noah);
     await db.query(`delete from players where id = 11`);
     expect(await claimForAccount(noah)).toBeNull();
+  });
+});
+
+describe("claim data sent to the browser", () => {
+  it("does not send a pending claim to anonymous visitors or another signed-in account", async () => {
+    await claimPlayer(11, noah);
+    for (const viewer of [null, other]) {
+      expect(await claimForViewer(11, viewer, false)).toEqual({ claim: null, mine: false });
+    }
+  });
+
+  it("sends only the display fields to the claimant and an admin", async () => {
+    await claimPlayer(11, noah);
+    expect(await claimForViewer(11, noah, false)).toEqual({
+      claim: { username: "Noah", verifiedAt: null }, mine: true,
+    });
+    expect(await claimForViewer(11, other, true)).toEqual({
+      claim: { username: "Noah", verifiedAt: null }, mine: false,
+    });
+  });
+
+  it("makes only admin-confirmed display fields public", async () => {
+    await claimPlayer(11, noah);
+    const now = new Date("2026-09-21T12:00:00Z");
+    await verifyClaim(11, now);
+    expect(await claimForViewer(11, null, false)).toEqual({
+      claim: { username: "Noah", verifiedAt: now.toISOString() }, mine: false,
+    });
+  });
+
+  it("returns no claim when the profile is unclaimed", async () => {
+    expect(await claimForViewer(11, noah, false)).toEqual({ claim: null, mine: false });
   });
 });
