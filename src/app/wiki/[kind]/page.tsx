@@ -1,3 +1,4 @@
+import { PageHeader, EmptyState } from "@/components/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -19,8 +20,7 @@ export default async function Gallery(props: PageProps<"/wiki/[kind]">) {
   const result = filterEntries(all,sp);
   const options = (field: "cost" | "power" | "series" | "rarity") => [...new Set(all.filter(e => e.status === "released").map(e => String(e[field])))].sort((a,b) => field === "cost" || field === "power" ? Number(a)-Number(b) : a.localeCompare(b));
   return <>
-    <h1 className="font-display text-3xl font-bold">{kind === "cards" ? "Card library" : "Location atlas"}</h1>
-    <p className="mt-2 text-muted">Released {kind}, with the latest available reference data.</p>
+    <PageHeader title={kind === "cards" ? "Card library" : "Location atlas"} subtitle={`Released ${kind}, with the latest available reference data.`} />
     <ReferenceStatus kind={kind} />
     <form className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-line bg-surface p-4" action={`/wiki/${kind}`}>
       <label className="min-w-0 grow text-xs">Search name or effect<input name="q" defaultValue={value(sp,"q")} className="mt-1 block w-full rounded border border-line bg-bg p-2 text-sm" placeholder="Try move, destroy, or a name" /></label>
@@ -36,7 +36,7 @@ export default async function Gallery(props: PageProps<"/wiki/[kind]">) {
       <p className="my-2 text-xs text-accent">{kind === "cards" ? `${e.cost} Energy · ${e.power} Power` : e.rarity}</p>
       <p className="text-xs leading-relaxed text-muted"><AbilityText text={e.ability} /></p>
     </Link>)}</div>
-    {!result.total && <p className="rounded border border-line p-8 text-muted">{all.length ? "No matches. Try fewer filters or a different search." : "The reference library is awaiting its first successful update."}</p>}
+    {!result.total && <EmptyState title={all.length ? "No matches yet" : "The library is warming up"}>{all.length ? <><p>Try fewer filters or a different search.</p><Link href={`/wiki/${kind}`} className="mt-4 inline-block text-accent underline">Clear filters</Link></> : "The reference library is awaiting its first successful update."}</EmptyState>}
     <nav aria-label="Wiki pages" className="mt-8 flex justify-between text-sm text-accent">{result.page > 1 ? <Link href={pageHref(`/wiki/${kind}`,sp,result.page-1)}>← Previous</Link> : <span />}{result.page < result.pages && <Link href={pageHref(`/wiki/${kind}`,sp,result.page+1)}>Next →</Link>}</nav>
   </>;
 }

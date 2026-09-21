@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { BrandGlyph } from "./brand";
 import type { ReactNode } from "react";
 
 export function PageHeader({ title, subtitle, children }: { title: string; subtitle?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="page-intro mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-line/60 pb-6">
       <div className="min-w-0">
-        <h1 className="font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">{title}</h1>
+        <h1 className="font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{title}</h1>
         {subtitle && <div className="mt-2 text-sm text-muted">{subtitle}</div>}
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
@@ -123,8 +124,9 @@ export function PlayerName({
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-line px-6 py-12 text-center">
-      <p className="font-display text-lg font-bold uppercase tracking-wide">{title}</p>
+    <div className="empty-state rounded-xl border border-line bg-surface/40 px-6 py-12 text-center">
+      <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-accent/20 bg-accent/5"><BrandGlyph size={48} /></div>
+      <p className="font-display text-xl font-bold tracking-tight">{title}</p>
       {children && <div className="mx-auto mt-2 max-w-md text-sm text-muted">{children}</div>}
     </div>
   );

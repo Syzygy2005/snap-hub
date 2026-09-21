@@ -5,12 +5,22 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 const GROUPS = [
-  { href: "/wiki", label: "Wiki", children: [["/wiki", "Overview"], ["/wiki/cards", "Cards"], ["/wiki/locations", "Locations"]] },
-  { href: "/leaderboard", label: "Leaderboard", children: [["/leaderboard", "Rankings"], ["/leaderboard/movers", "Movers"], ["/players", "Find a player"]] },
-  { href: "/decks", label: "Decks", children: [["/decks", "Explore decks"], ["/decks/builder", "Deck Builder"]] },
-  { href: "/stats", label: "Stats", children: [["/stats", "Community stats"], ["/stats/me", "My Stats"], ["/stats/tracker", "Tracker setup"]] },
+  { href: "/wiki", label: "Wiki", children: [["/wiki", "Overview", "Start at the reference desk"], ["/wiki/cards", "Cards", "Find costs, power and abilities"], ["/wiki/locations", "Locations", "Explore effects and rarities"]] },
+  { href: "/leaderboard", label: "Leaderboard", children: [["/leaderboard", "Rankings", "See the Infinite leaderboard"], ["/leaderboard/movers", "Movers", "Follow the biggest rank changes"], ["/players", "Find a player", "Search player profiles"]] },
+  { href: "/decks", label: "Decks", children: [["/decks", "Explore decks", "Discover community builds"], ["/decks/builder", "Deck Builder", "Create and refine your next deck"]] },
+  { href: "/stats", label: "Stats", children: [["/stats", "Community stats", "Explore the shared game data"], ["/stats/me", "My Stats", "Review your own games"], ["/stats/tracker", "Tracker setup", "Connect your PC game tracker"]] },
   { href: "/news", label: "News", children: [] },
 ];
+
+function NavIcon({ section }: { section: string }) {
+  const paths: Record<string, string> = {
+    Wiki: "M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4z M13 7a3 3 0 0 1 3-3h5v15h-4a4 4 0 0 0-4 2",
+    Leaderboard: "M8 3h8v5a4 4 0 0 1-8 0z M8 5H4v2a4 4 0 0 0 4 4 M16 5h4v2a4 4 0 0 1-4 4 M12 12v7 M8 21h8 M10 19h4",
+    Decks: "M8 3h12v16H8z M5 6H3v15h12v-2",
+    Stats: "M4 14h3v7H4z M10 9h3v12h-3z M16 3h3v18h-3z",
+  };
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[section]} /></svg>;
+}
 
 function Navigation({ mobile, closeMobile }: { mobile?: boolean; closeMobile: () => void }) {
   const pathname = usePathname();
@@ -49,13 +59,13 @@ function Navigation({ mobile, closeMobile }: { mobile?: boolean; closeMobile: ()
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>}
         </div>
-        {group.children.length > 0 && <div id={panelId} inert={!shown} className={`nav-disclosure ${mobile ? "" : "absolute left-0 top-full z-50 min-w-52 pt-2"}`}>
+        {group.children.length > 0 && <div id={panelId} inert={!shown} className={`nav-disclosure ${mobile ? "" : "absolute left-0 top-full z-50 w-72 pt-2"}`}>
           <div className="overflow-hidden">
             <div className={`flex flex-col gap-1 rounded-lg border border-line p-2 ${mobile ? "my-1 bg-surface/50" : "bg-bg shadow-xl"}`}>
-              {group.children.map(([href, label]) => <Link key={href} href={href}
+              {group.children.map(([href, label, description]) => <Link key={href} href={href} aria-label={label}
                 aria-current={pathname === href ? "page" : undefined}
                 onClick={() => { close(); closeMobile(); }}
-                className={`rounded-md px-3 py-2.5 text-sm hover:bg-surface-2 hover:text-ink ${pathname === href ? "bg-surface text-accent" : "text-muted"}`}>{label}</Link>)}
+                className={`flex items-start gap-3 rounded-md px-3 py-3 text-sm hover:bg-surface-2 hover:text-ink ${pathname === href ? "bg-surface text-accent" : "text-muted"}`}><span className="mt-0.5 text-accent"><NavIcon section={group.label} /></span><span><span className="block font-semibold">{label}</span><span className="mt-0.5 block text-xs leading-relaxed text-muted">{description}</span></span></Link>)}
             </div>
           </div>
         </div>}

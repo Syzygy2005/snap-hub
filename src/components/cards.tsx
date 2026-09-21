@@ -51,11 +51,12 @@ export function EnergyCurve({ cards, className = "" }: { cards: Pick<Card, "cost
     <div className={className}>
       <div className="flex h-20 items-end gap-1.5" role="img" aria-label={`Energy curve: ${counts.map((n, i) => `${n} at ${i === 6 ? "6+" : i}`).join(", ")}`}>
         {counts.map((n, i) => (
-          <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-            <span className="num text-[11px] text-muted">{n || ""}</span>
+          <div key={i} className="relative h-16 flex-1">
+            <span className="curve-count num absolute inset-x-0 mb-1 text-center text-[11px] text-muted" style={{ bottom: `${(n / max) * 100}%` }}>{n || ""}</span>
             <div
-              className="w-full rounded-t bg-gradient-to-t from-accent-deep to-accent"
-              style={{ height: `${(n / max) * 100}%`, minHeight: n ? 4 : 0 }}
+              className="energy-bar absolute bottom-0 w-full rounded-t bg-gradient-to-t from-accent-deep to-accent"
+              data-count={n}
+              style={{ height: `${(n / max) * 100}%` }}
             />
           </div>
         ))}
