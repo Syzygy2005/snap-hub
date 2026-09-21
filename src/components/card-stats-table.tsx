@@ -47,7 +47,7 @@ export function CardStatsTable({
           className="min-w-0 flex-1 basis-full rounded-md border border-line bg-bg px-3 py-1.5 text-base placeholder:text-faint focus:border-accent focus:outline-none sm:max-w-xs sm:basis-auto sm:text-sm"
         />
         <label className="flex items-center gap-2 text-xs text-muted">
-          <input type="checkbox" checked={hideLow} onChange={(e) => setHideLow(e.target.checked)} className="accent-[#ffd600]" />
+          <input type="checkbox" checked={hideLow} onChange={(e) => setHideLow(e.target.checked)} className="accent-accent" />
           Hide cards with under {LOW_SAMPLE} games
         </label>
         <span className="num ml-auto text-xs text-faint">{rows.length} cards</span>

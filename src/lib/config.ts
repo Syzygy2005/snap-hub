@@ -1,6 +1,6 @@
 export const SITE_NAME = "Snap Hub";
 export const SITE_SLOGAN = "Build / Track / Compete";
-export const SITE_TAGLINE = "Your Snap. Your stats. All in one place.";
+export const SITE_TAGLINE = "Play. Collect. Improve. Belong.";
 
 // Marvel Snap's API accepts these region values, but as of Sept 2026 only "global"
 // returns data (the others error server-side). Extra regions are tried when listed in

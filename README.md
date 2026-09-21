@@ -356,9 +356,10 @@ retains failure screenshots/traces for seven days. Unit tests remain `npm test`.
 
 ## Brand
 
-Colors, fonts (Montserrat, Orbitron) and logos come from `brand/brand-sheet.png`. `node scripts/build-brand.mjs`
-cuts the icon, wordmark, banner, favicon and link-preview image out of it. If you get full-size logo files, drop
-them into `public/brand/` instead.
+The current identity follows the supplied Jade League rebrand guide: forest, jade and cream,
+with Manrope headings and Inter body text. `src/lib/brand.ts` owns the vector geometry;
+`node scripts/build-brand.mjs` regenerates the SVG exports. Next renders social and Apple icons
+from that same geometry. The previous raster brand sheet is historical, not the current source.
 
 ## Credits
 
@@ -375,7 +376,7 @@ shaped.
   [snapscripts](https://github.com/snaptools2023/snapscripts), [Snap Extract](https://github.com/switchfire6/snap-extract),
   [marvelsnapdeck](https://github.com/barkingloudly/marvelsnapdeck),
   [marvel-snap-deckstrings](https://github.com/9j/marvel-snap-deckstrings), [DeckCodes.chat](https://deckcodes.chat/about)
-- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, sharp, Vitest, Playwright, jsdom, Montserrat and Orbitron (Google
+- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, sharp, Vitest, Playwright, jsdom, Manrope and Inter (Google
   Fonts); hosted on Vercel, Supabase and GitHub Actions
 - **Made with AI**: code written with [Claude Code](https://claude.com/claude-code) (Anthropic); logo and brand sheet
   generated with ChatGPT (OpenAI)
@@ -420,5 +421,19 @@ History starts at the initial baseline, records observed name/stat/effect change
 claim to be a complete historical patch archive. Authored strategy guides are deferred.
 
 Data credit: [Marvel Snap Zone locations](https://marvelsnapzone.com/locations/), including
-source-reported rarity categories (not inferred spawn percentages). Visual redesign and pointer effects are deferred to a separate rebrand pass using the new
-jade/forest/cream identity, Manrope headings and Inter body text.
+source-reported rarity categories (not inferred spawn percentages). The Jade League rebrand applies the jade/forest/cream identity, Manrope headings and Inter body text.
+
+### Jade League visual identity
+
+The September 2026 rebrand follows the supplied Snap Hub guide: jade `#36D6A0`, forest
+`#102D29`, cream `#F3F2E9`, surface `#19413A`, muted `#A8D0B5`. Manrope headings and
+Inter body text are self-hosted through Next's font loader. Shared tokens live in `globals.css`;
+semantic rank, win/loss and chart colors remain distinct. The hand-and-card SVG is a scalable
+adaptation of the supplied reference sheet, not an extracted original vector master.
+`src/lib/brand.ts` supplies `components/brand.tsx`; run `node scripts/build-brand.mjs`
+to update `public/brand/emblem.svg` and `app/icon.svg` from that same geometry. App icons and social previews replace the previous gauntlet identity.
+
+Pointer tilt is restricted to featured artwork with a fine mouse pointer. It updates at most
+once per animation frame, resets on exit or cancellation, and responds immediately when reduced
+motion is enabled. Dense galleries use a small hover lift; figures and effect text stay still.
+Touch uses the same controls with visible focus/selection states. No animation runs continuously.

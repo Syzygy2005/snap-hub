@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { canonicalOrigin } from "@/lib/site-origin";
 import Link from "next/link";
-import { Montserrat, Orbitron } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SiteHeader } from "@/components/site-header";
 import { SITE_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/config";
 import "./globals.css";
 
-const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
-const orbitron = Orbitron({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-orbitron" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: `${SITE_NAME} · ${SITE_SLOGAN}`, template: `%s · ${SITE_NAME}` },
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${orbitron.variable}`}>
+    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
       <body className="flex min-h-dvh flex-col">
         <a
           href="#main-content"

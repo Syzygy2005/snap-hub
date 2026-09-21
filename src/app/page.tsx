@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BrandGlyph } from "@/components/brand";
+import { InteractiveArt } from "@/components/interactive-art";
 import { CardArt } from "@/components/cards";
 import { LeaderboardTable, RankBadge } from "@/components/leaderboard-table";
 import { RelativeTime } from "@/components/relative-time";
@@ -7,7 +9,7 @@ import { latestRelease } from "@/lib/changelog";
 import { KIND_LABELS, latestNews } from "@/lib/news/queries";
 import { SignInNotice } from "@/components/signin-notice";
 import { formatReleaseDate } from "@/components/changelog-date";
-import { SITE_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/config";
+
 import { getCards } from "@/lib/cards/queries";
 import { listDecks } from "@/lib/decks/queries";
 import { getBoard, getMovers, listSeasons, lastBoardCheck } from "@/lib/leaderboard/queries";
@@ -41,52 +43,24 @@ export default async function Home(props: PageProps<"/">) {
     <>
       <SignInNotice reason={signin} />
 
-      {/* The banner carries its own wordmark and feature callouts, which only fit on a wide
-          screen. On a phone it cropped mid-word, repeated the logo already in the header, and
-          pushed the board two screens down, so it is simply not drawn there. */}
-      <section className="relative -mt-6 mb-8 hidden overflow-hidden border-b border-line sm:mt-0 sm:block sm:rounded-xl sm:border">
-        <h1 className="sr-only">
-          {SITE_NAME}: {SITE_SLOGAN}
-        </h1>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/brand/banner.webp"
-          alt=""
-          width={1312}
-          height={348}
-          fetchPriority="high"
-          className="h-44 w-full object-cover object-[28%_50%] sm:h-auto sm:object-center"
-        />
-      </section>
-
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
-        <p className="max-w-2xl text-muted">
-          <span className="block font-display text-sm font-bold uppercase tracking-[0.2em] text-accent">{SITE_TAGLINE}</span>
-          {/* One line on a phone. The three buttons underneath say the rest, and the board
-              below is the actual argument for staying. */}
-          <span className="mt-2 block">
-            The Infinite leaderboard, saved every 10 minutes.
-            <span className="hidden sm:inline">
-              {" "}
-              A deck builder that exports straight to the game, and win rate and cube rate from real tracked games.
-            </span>
-          </span>
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {FEATURES.map((f, i) => (
-            <Link
-              key={f.href}
-              href={f.href}
-              className={`group rounded-md border px-4 py-2 transition-colors ${
-                i === 0 ? "border-accent bg-accent text-bg hover:bg-accent-strong" : "border-line hover:border-accent"
-              }`}
-            >
-              <span className="block text-xs font-bold uppercase tracking-wider">{f.title}</span>
-              <span className={`block text-[11px] ${i === 0 ? "text-bg/70" : "text-muted"}`}>{f.blurb}</span>
-            </Link>
-          ))}
+      <section className="brand-hero mb-5 grid overflow-hidden rounded-xl border border-line md:grid-cols-[1.4fr_1fr]">
+        <div className="p-5 sm:p-8 lg:p-10">
+          <p className="brand-eyebrow text-bg/75">Snap Hub <span className="mx-2 text-accent-deep">/</span> Build. Track. Compete.</p>
+          <h1 className="mt-4 max-w-xl font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">Build your next<br className="hidden sm:block" /> winning deck.</h1>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-bg/80 sm:text-base">Explore the cards. Learn from your games. Find your place on the leaderboard.</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/decks/builder" className="brand-action rounded-lg bg-bg px-5 py-3 text-sm font-bold text-ink hover:bg-surface">Build a deck <span className="ml-3 text-accent" aria-hidden>↗</span></Link>
+            <Link href="/wiki" className="brand-action rounded-lg border border-bg/30 px-5 py-3 text-sm font-semibold text-bg hover:bg-bg/5">Explore the wiki</Link>
+          </div>
         </div>
-      </div>
+        <div className="brand-hero-art relative hidden items-center justify-center overflow-hidden p-8 md:flex" aria-hidden="true">
+          <InteractiveArt className="relative z-10 w-56"><BrandGlyph size={224} /></InteractiveArt>
+          <p className="absolute bottom-5 text-[10px] font-semibold uppercase tracking-[.24em] text-muted">Play / Collect / Improve / Belong</p>
+        </div>
+      </section>
+      <nav aria-label="Explore Snap Hub" className="mb-8 grid grid-cols-3 gap-2 sm:gap-4">
+        {FEATURES.map((f,i) => <Link key={f.href} href={f.href} className="brand-tile rounded-lg border border-line bg-surface/60 p-3 sm:p-4"><span className="mb-2 hidden text-[10px] font-medium tracking-widest text-accent sm:block">0{i+1} /</span><span className="block font-display text-xs font-bold sm:text-base">{f.title}</span><span className="mt-1 hidden text-xs text-muted sm:block">{f.blurb}</span></Link>)}
+      </nav>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <Panel
