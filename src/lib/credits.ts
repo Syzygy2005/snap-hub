@@ -95,7 +95,7 @@ export const TOOLS: Credit[] = [
   { name: "Vitest", url: "https://vitest.dev", note: "Tests (MIT)" },
   { name: "Playwright", url: "https://playwright.dev", note: "Browser regression tests (Apache-2.0)" },
   { name: "jsdom", url: "https://github.com/jsdom/jsdom", note: "Component interaction tests (MIT)" },
-  { name: "Montserrat & Orbitron", url: "https://fonts.google.com", note: "Fonts via Google Fonts (SIL Open Font License)" },
+  { name: "Manrope & Inter", url: "https://fonts.google.com", note: "Fonts via Google Fonts (SIL Open Font License)" },
   { name: "Vercel, Supabase & GitHub Actions", url: "https://vercel.com", note: "Hosting, database and the 30-minute snapshot job" },
   {
     name: "Claude Code",

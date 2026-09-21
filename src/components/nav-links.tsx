@@ -28,7 +28,7 @@ export function NavLinks() {
             href={l.href}
             onClick={() => { if (menu.current) menu.current.open = false; }}
             aria-current={active ? "page" : undefined}
-            className={`relative whitespace-nowrap px-2.5 py-2 font-semibold uppercase tracking-wider text-[12px] transition-colors after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 ${
+            className={`relative whitespace-nowrap px-2 py-2 text-[13px] font-semibold transition-colors after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 ${
               active ? "text-accent after:bg-accent" : "text-muted hover:text-ink"
             }`}
           >
@@ -39,8 +39,8 @@ export function NavLinks() {
     </>
   );
   return <>
-    <nav aria-label="Main navigation" className="hidden flex-wrap items-center gap-0.5 lg:flex">{links}</nav>
-    <details ref={menu} className="relative ml-auto lg:hidden" onKeyDown={(event) => {
+    <nav aria-label="Main navigation" className="hidden flex-wrap items-center gap-0.5 xl:flex">{links}</nav>
+    <details ref={menu} className="brand-menu relative ml-auto xl:hidden" onKeyDown={(event) => {
       if (event.key === "Escape" && menu.current) {
         menu.current.open = false;
         menu.current.querySelector("summary")?.focus();

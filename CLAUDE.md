@@ -143,10 +143,11 @@
   panel only draws a conclusion when both sides clear it, and says which side is short, because
   somebody who never retreats is exactly who the panel is for and also the slowest to collect
   retreats.
-- The home page banner is `sm:` and up only. It carries its own wordmark and the three feature
-  callouts, which need the width: on a phone it cropped mid-word, repeated the header logo, and
-  pushed the board below two screens. Screenshot the home page at 390px as well as desktop after
-  touching that section; it looked fine at 1440 the whole time it was broken at 390.
+- Home uses a responsive cream/forest hero, not a raster banner. Keep decorative artwork hidden
+  below md and verify 390px screenshots so the mobile hero never crops or pushes content offscreen.
+- The Jade League rebrand uses Manrope/Inter and a hand-and-card emblem; keep app icons, share images,
+  and SVG exports consistent with components/brand.tsx. Pointer effects belong on featured art only,
+  never on readable statistics; honor reduced motion and pointer cancellation.
 - `LeaderboardTable`'s `compact` means no search bar and no paging, not fewer columns: hiding
   Best and Last played left three auto-width columns splitting 600px of slack, so the numbers
   floated apart with a void between the name and the score. The Player column carries `w-full`

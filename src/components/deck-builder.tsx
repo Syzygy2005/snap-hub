@@ -405,13 +405,13 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, a
                     onFocus={() => setInspect(c.defId)}
                     aria-pressed={picked}
                     aria-label={`${c.name}, cost ${c.cost}, power ${c.power}${picked ? ", in deck" : ""}`}
-                    className={`group relative block w-full rounded-lg p-1 transition ${
+                    className={`deck-choice group relative block w-full rounded-lg p-1 transition ${
                       picked ? "bg-accent/15 ring-2 ring-accent" : "hover:bg-surface-2"
                     } ${!picked && full ? "opacity-50" : ""}`}
                   >
-                    <CardArt card={c} eager={i < 18} className="transition-transform group-hover:scale-[1.03]" />
+                    <CardArt card={c} eager={i < 18} className="transition-transform" />
                     {picked && (
-                      <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-accent text-bg shadow">
+                      <span className="selection-check absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-accent text-bg shadow">
                         <svg viewBox="0 0 12 12" className="h-3 w-3" aria-hidden>
                           <path d="M2.5 6.5 5 9l4.5-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         </svg>

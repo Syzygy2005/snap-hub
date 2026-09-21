@@ -1,35 +1,30 @@
 @import "tailwindcss";
 
-/* Palette and type from the Snap Hub brand sheet (brand/brand-sheet.png). */
+/* Jade League identity. Semantic colors stay readable on every forest surface. */
 @theme inline {
-  --color-bg: #0a0a0f; /* Background Dark */
-  --color-surface: #1a1a1f; /* Surface */
-  --color-surface-2: #212128;
-  --color-surface-3: #2b2b33;
-  --color-line: #2c2c35;
-  --color-ink: #f5f7fa; /* Text Primary */
-  --color-muted: #a1a7b3; /* Text Secondary */
-  --color-faint: #6b7180;
-
-  --color-accent: #ffd600; /* Primary Yellow: buttons, highlights, icons */
-  --color-accent-strong: #ffe14d;
-  --color-accent-deep: #b8860b; /* Dark Gold: gradients, hover */
-  --color-gold: #ffd600;
-
-  --color-gem-purple: #a855f7;
-  --color-gem-blue: #3b82f6;
-  --color-up: #22c55e; /* Gem Green */
-  --color-down: #ef4444; /* Gem Red */
-
-  /* "Sharp corners and clean lines" */
-  --radius-sm: 2px;
-  --radius: 3px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-
-  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-orbitron), var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --color-bg: #102d29;
+  --color-surface: #19413a;
+  --color-surface-2: #204c43;
+  --color-surface-3: #214d42;
+  --color-line: #396457;
+  --color-ink: #f3f2e9;
+  --color-muted: #a8d0b5;
+  --color-faint: #acc8b9;
+  --color-accent: #36d6a0;
+  --color-accent-strong: #67e5ba;
+  --color-accent-deep: #248a6a;
+  --color-gold: #e4cc8d;
+  --color-gem-purple: #c5b5e8;
+  --color-gem-blue: #a3d6e5;
+  --color-up: #7ce5ae;
+  --color-down: #ffa798;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -45,7 +40,7 @@ body {
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  background-image: radial-gradient(1100px 420px at 80% -140px, rgb(255 214 0 / 0.07), transparent 70%);
+  background-image: radial-gradient(1100px 420px at 80% -140px, rgb(54 214 160 / 0.06), transparent 70%);
   background-repeat: no-repeat;
   min-height: 100dvh;
 }
@@ -55,7 +50,7 @@ body {
 }
 
 ::selection {
-  background: rgb(255 214 0 / 0.35);
+  background: rgb(54 214 160 / 0.3);
 }
 
 :focus-visible {
@@ -68,7 +63,7 @@ body {
   scrollbar-color: var(--color-surface-3) transparent;
 }
 
-/* The diagonal yellow slashes from the banner, used sparingly on dividers. */
+/* Small brand dividers, separate from data/status colors. */
 .brand-slashes {
   background-image: repeating-linear-gradient(
     -55deg,
@@ -79,4 +74,37 @@ body {
 
 .brand-rule {
   background: linear-gradient(90deg, transparent, var(--color-accent) 20%, var(--color-accent) 80%, transparent);
+}
+
+button, a, summary, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), summary, select { cursor: pointer; }
+input, select, textarea { accent-color: var(--color-accent); }
+button, a, summary { touch-action: manipulation; }
+button:disabled { cursor: not-allowed; }
+.brand-panel { box-shadow: 0 8px 30px rgb(0 15 12 / .1); }
+.brand-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.brand-hero { position: relative; isolation: isolate; background: var(--color-ink); color: var(--color-bg); }
+.brand-hero-art { background: radial-gradient(ellipse at 60% 40%, #245849, #102d29 75%); }
+.brand-hero-art::before, .brand-hero-art::after { content: ''; position: absolute; width: 280px; height: 380px; border: 1px solid #36d6a038; border-radius: 28px; transform: rotate(18deg); }
+.brand-hero-art::after { transform: rotate(-12deg); width: 240px; height: 330px; }
+.brand-tile, .brand-action, button { transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.brand-tile:focus-visible { border-color: var(--color-accent); box-shadow: 0 0 0 3px #36d6a025; }
+.brand-art { position: relative; isolation: isolate; }
+.brand-art-stage { transform: perspective(950px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); transition: transform 200ms ease-out; }
+.brand-art-sheen { position: absolute; pointer-events: none; inset: 0; border-radius: 16px; opacity: 0; background: radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 50%), #f3f2e92b, #36d6a010 35%, transparent 65%); transition: opacity 180ms; }
+.brand-art[data-engaged=true] .brand-art-sheen { opacity: 1; }
+.brand-menu[open] > nav { animation: menu-enter 150ms ease-out; }
+.deck-choice[aria-pressed=true] > .selection-check { animation: selection-enter 180ms ease-out; }
+@keyframes menu-enter { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes selection-enter { from { opacity: 0; transform: scale(.75); } to { opacity: 1; transform: scale(1); } }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .brand-tile { transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+  .brand-tile:hover { transform: translateY(-3px); border-color: #36d6a080; box-shadow: 0 12px 24px #001e1826; }
+  .brand-action:active { transform: translateY(1px); }
+  .deck-choice:hover img { transform: scale(1.025); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 0s !important; scroll-behavior: auto !important; }
+  .brand-art-stage, .brand-tile, .brand-action, .deck-choice img { transform: none !important; }
+  .brand-art-sheen { display: none; }
 }

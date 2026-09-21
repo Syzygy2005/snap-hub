@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { syncState } from "@/lib/wiki/queries";
 import type { Kind } from "@/lib/wiki/sync";
 export async function ReferenceStatus({ kind }: { kind: Kind }) {
@@ -10,4 +9,4 @@ export async function ReferenceStatus({ kind }: { kind: Kind }) {
     {(stale || state?.error) && <p className="mt-1 text-accent">Updates are delayed. Showing the last available reference data.</p>}
   </aside>;
 }
-export function WikiTabs() { return <nav aria-label="Wiki sections" className="mb-6 flex gap-5 border-b border-line pb-3 text-sm font-semibold"><Link href="/wiki">Overview</Link><Link href="/wiki/cards">Cards</Link><Link href="/wiki/locations">Locations</Link></nav>; }
+export { WikiTabs } from "./wiki-tabs";

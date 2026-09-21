@@ -5,7 +5,7 @@ export function PageHeader({ title, subtitle, children }: { title: string; subti
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="font-display text-2xl font-extrabold uppercase leading-tight tracking-wide sm:text-4xl">{title}</h1>
+        <h1 className="font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">{title}</h1>
         {subtitle && <div className="mt-2 text-sm text-muted">{subtitle}</div>}
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
@@ -25,10 +25,10 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section className={`rounded-xl border border-line bg-surface/80 ${className}`}>
+    <section className={`brand-panel rounded-xl border border-line bg-surface/80 ${className}`}>
       {(title || action) && (
         <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-          {title && <h2 className="border-l-2 border-accent pl-2.5 text-sm font-semibold uppercase tracking-[0.14em]">{title}</h2>}
+          {title && <h2 className="font-display text-sm font-bold tracking-wide">{title}</h2>}
           {action}
         </div>
       )}

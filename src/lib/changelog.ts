@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-21",
     changes: [
+      { title: "A fresh identity for Snap Hub", detail: "A forest and jade palette, clearer typography, and a new hand-and-card emblem bring the site together. Explore a redesigned home page and subtle card interactions, with full reduced-motion support." },
       { title: "Explore the card and location wiki", detail: "Search released cards and locations, inspect their effects, and add cards to your current deck draft." },
       { title: "Reference data stays up to date", detail: "Independent hourly checks refresh card stats, text and locations automatically. Failed imports keep the last good data, and the wiki shows freshness and observed balance changes." },
       {
