@@ -28,6 +28,8 @@ export const INSPIRATION: Credit[] = [
 ];
 
 export const DATA: Credit[] = [
+  { name: "Official MARVEL SNAP patch notes", by: "Second Dinner", url: "https://marvelsnap.com/news/", note: "The historical patch-article index links to official sources; it records mentions, not inferred balance changes." },
+  { name: "SNAP.FAN card history", url: "https://snap.fan/cards/history/2026/", note: "Historical card stats and effect versions, fetched per card and cached daily; coverage and dates reflect the source." },
   {
     name: "MARVEL SNAP Infinite leaderboard",
     by: "Second Dinner / Nuverse",
@@ -86,6 +88,7 @@ export const RESEARCH: Credit[] = [
 ];
 
 export const TOOLS: Credit[] = [
+  { name: "parse5", url: "https://github.com/inikulin/parse5", note: "Safe HTML parsing for historical card tables (MIT)" },
   { name: "Next.js", url: "https://nextjs.org", note: "Web framework (MIT)" },
   { name: "React", url: "https://react.dev", note: "UI library (MIT)" },
   { name: "Tailwind CSS", url: "https://tailwindcss.com", note: "Styling (MIT)" },

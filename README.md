@@ -437,3 +437,25 @@ Pointer tilt is restricted to featured artwork with a fine mouse pointer. It upd
 once per animation frame, resets on exit or cancellation, and responds immediately when reduced
 motion is enabled. Dense galleries use a small hover lift; figures and effect text stay still.
 Touch uses the same controls with visible focus/selection states. No animation runs continuously.
+
+
+### Official patch index and reference imports
+
+The wiki links cards and locations to historical mentions in official MARVEL SNAP articles.
+This index is not a complete balance timeline: articles can mention a card in commentary or bug fixes,
+and matching uses current names, so older names and missing sitemap articles can be missed.
+Dates are only assigned when an explicit date/year is present in the title or URL.
+Current imported stats remain separate from this historical index.
+
+Data credits: [official MARVEL SNAP news](https://marvelsnap.com/news/),
+[SNAP.FAN card history](https://snap.fan/cards/history/2026/) and
+[Marvel Snap Zone history](https://marvelsnapzone.com/card-history/?past=all).
+SNAP.FAN card-history tables are fetched on demand and cached for 24 hours. Only validated dates, numeric stats, and plain-text descriptions are rendered with [parse5](https://github.com/inikulin/parse5) (MIT); no source HTML is rendered. Failed or changed source pages show an unavailable state without failing the current reference. Marvel Snap Zone history is an external research link.
+Rebuild the checked-in official index with
+`node scripts/index-official-patches.mjs <cards-feed.json> <locations-feed.json>`
+using complete downloaded canonical source envelopes. A failed download leaves the previous index intact.
+No article bodies are redistributed. The page displays its indexing date.
+
+Reference bulk writes cast serialized JSON through text before jsonb to avoid double encoding in
+postgres.js. CI runs the reference sync suite against PostgreSQL 17 as well as PGlite.
+The hourly reference workflow reports per-source failure categories and retains the last good data.
