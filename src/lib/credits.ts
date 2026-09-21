@@ -28,6 +28,7 @@ export const INSPIRATION: Credit[] = [
 ];
 
 export const DATA: Credit[] = [
+  { name: "SnapVault location statistics", url: "https://www.snapvault.app/locations", note: "Observed location appearance rates from tracked Ranked and Conquest games over the last 30 days, refreshed hourly. These are empirical rates, not base spawn probabilities." },
   { name: "Official MARVEL SNAP patch notes", by: "Second Dinner", url: "https://marvelsnap.com/news/", note: "The historical patch-article index links to official sources; it records mentions, not inferred balance changes." },
   { name: "SNAP.FAN card history", url: "https://snap.fan/cards/history/2026/", note: "Historical card stats and effect versions, fetched per card and cached daily; coverage and dates reflect the source." },
   {
@@ -37,9 +38,9 @@ export const DATA: Credit[] = [
     note: "The public leaderboard every snapshot on this site comes from.",
   },
   {
-    name: "Marvel Snap Zone card and location databases",
+    name: "Marvel Snap Zone cards, variants and locations",
     url: "https://marvelsnapzone.com/cards/",
-    note: "Card names, costs, power, abilities, location effects, rarity and artwork used across the site.",
+    note: "Card names, costs, power, abilities, location effects and rarity, plus variant artwork, release metadata and individual artist credits used across the wiki.",
   },
 ];
 

@@ -1,9 +1,15 @@
+import { parseVariants, type CardVariant } from "./variants";
 import { getDb } from "@/lib/db";
 import { cleanAbility, toRecord } from "@/lib/cards/sync";
 
 export type Kind = "cards" | "locations";
 export const sourceUrl = (kind: Kind) => `https://marvelsnapzone.com/getinfo/?searchtype=${kind}&searchcardstype=true`;
-type Imported = { def_id: string; name: string; ability: string; art: string; status: string; rarity: string; cost: number; power: number; series: string; tags: string[]; deckable: boolean };
+type Imported = { def_id: string; name: string; ability: string; art: string; status: string; rarity: string; cost: number; power: number; series: string; tags: string[]; deckable: boolean; variants: CardVariant[] };
+
+// JSONB normalizes object-key order; cosmetic data should compare by value.
+const stableValue = (value: unknown) => JSON.stringify(value, (_key, item) =>
+  item && typeof item === "object" && !Array.isArray(item)
+    ? Object.fromEntries(Object.keys(item).sort().map(key => [key,item[key]])) : item);
 
 /** Validate the complete envelope before touching live reference data. */
 export function parseReference(body: unknown, kind: Kind): Imported[] {
@@ -26,10 +32,13 @@ export function parseReference(body: unknown, kind: Kind): Imported[] {
     if (kind === "cards" && (!Number.isSafeInteger(r.cost) || !Number.isSafeInteger(r.power) ||
       typeof r.source !== "string" || !Array.isArray(r.tags) || r.tags.some(t => !t || typeof t.tag !== "string"))) throw new Error("Invalid card stats or tags");
     if (kind === "locations" && r.rarity !== undefined && typeof r.rarity !== "string") throw new Error("Invalid location rarity");
+    if (kind === "cards" && !Array.isArray(r.variants)) throw new Error("Invalid variant list");
+    if (kind === "cards" && (r.variants as unknown[]).length && !Number.isSafeInteger(r.cid)) throw new Error("Invalid variant parent");
     const card = kind === "cards" ? toRecord(r as unknown as Parameters<typeof toRecord>[0]) : null;
     return { def_id: r.carddefid, name: r.name, ability: cleanAbility(r.ability), art: r.art,
       status: String(r.status), rarity: String(r.rarity || "unknown"), cost: card?.cost ?? 0, power: card?.power ?? 0,
-      series: card?.series ?? "", tags: card?.tags ?? [], deckable: card?.deckable ?? false };
+      series: card?.series ?? "", tags: card?.tags ?? [], deckable: card?.deckable ?? false,
+      variants: kind === "cards" ? parseVariants(r.variants, typeof r.cid === "number" ? r.cid : undefined) : [] };
   });
 }
 
@@ -54,7 +63,9 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
     on conflict(kind) do update set attempted_at = now()`, [kind]);
   try {
     const [state] = await db.query<{ last_modified: string | null; succeeded_at: Date | null; ids: string[] }>(`select * from reference_sync where kind = $1`, [kind]);
-    const response = await download(kind, state?.succeeded_at ? state.last_modified : null);
+    // An existing successful import may predate variants. Force one full response to backfill it.
+    const needsVariants = kind === "cards" && (await db.query("select 1 from cards where variants is null limit 1")).length > 0;
+    const response = await download(kind, state?.succeeded_at && !needsVariants ? state.last_modified : null);
     if (response.status === 304) {
       if (!state?.succeeded_at || !state.ids.length) throw new Error("Source returned no baseline data");
       await db.query(`update reference_sync set succeeded_at = now(), error = null where kind = $1`, [kind]);
@@ -90,12 +101,12 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
       // Send serialized JSON as text: postgres.js otherwise JSON-encodes the string again.
       const payload = JSON.stringify(records);
       if (kind === "cards") {
-        await tx.query(`insert into cards(def_id, name, cost, power, ability, art, series, tags, deckable, reference_status)
-          select def_id, name, cost, power, ability, art, series, tags, deckable, status
-          from jsonb_to_recordset($1::text::jsonb) as x(def_id text, name text, cost int, power int, ability text, art text, series text, tags text[], deckable bool, status text)
+        await tx.query(`insert into cards(def_id, name, cost, power, ability, art, series, tags, deckable, reference_status, variants)
+          select def_id, name, cost, power, ability, art, series, tags, deckable, status, variants
+          from jsonb_to_recordset($1::text::jsonb) as x(def_id text, name text, cost int, power int, ability text, art text, series text, tags text[], deckable bool, status text, variants jsonb)
           on conflict(def_id) do update set name=excluded.name, cost=excluded.cost, power=excluded.power,
           ability=excluded.ability, art=excluded.art, series=excluded.series, tags=excluded.tags, deckable=excluded.deckable,
-          reference_status=excluded.reference_status, updated_at=now()`, [payload]);
+          reference_status=excluded.reference_status, variants=excluded.variants, updated_at=now()`, [payload]);
         await tx.query(`insert into meta(key,value,updated_at) values ('cards_synced',$1::text::jsonb,now())
           on conflict(key) do update set value=excluded.value, updated_at=now()`, [JSON.stringify({ total: records.length })]);
       } else {
@@ -104,10 +115,10 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
           on conflict(def_id) do update set name=excluded.name, ability=excluded.ability, art=excluded.art,
           rarity=excluded.rarity, status=excluded.status, updated_at=now()`, [payload]);
       }
-      const compared = kind === "cards" ? ["name","cost","power","ability","art","series","tags","deckable"] : ["name","ability","art","rarity","status"];
+      const compared = kind === "cards" ? ["name","cost","power","ability","art","series","tags","deckable","variants"] : ["name","ability","art","rarity","status"];
       const changed = records.some(r => {
         const previous = before.get(r.def_id);
-        return !previous || compared.some(key => JSON.stringify(previous[key]) !== JSON.stringify(r[key as keyof Imported])) ||
+        return !previous || compared.some(key => stableValue(previous[key]) !== stableValue(r[key as keyof Imported])) ||
           (kind === "cards" && previous.reference_status !== r.status);
       });
       await tx.query(`update reference_sync set succeeded_at=now(), error=null, last_modified=$2, ids=$3::text[],

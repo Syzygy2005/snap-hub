@@ -244,6 +244,8 @@ create table if not exists meta (
 );
 
 alter table cards add column if not exists reference_status text not null default 'released';
+-- NULL means the existing card predates the variant import; [] means no source variants.
+alter table cards add column if not exists variants jsonb;
 create table if not exists locations (
   def_id text primary key, name text not null, ability text not null, art text not null,
   rarity text not null, status text not null, updated_at timestamptz not null default now()

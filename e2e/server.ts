@@ -15,6 +15,11 @@ async function main() {
   for (let i = 1; i <= 12; i++) {
     await db.query("insert into cards (def_id, name, cost, power, ability, art, series, deckable) values ($1, $2, $3, 2, '', '/brand/emblem.svg', '1', true)", [`TestCard${i}`, `Test Card ${i}`, i % 7]);
   }
+  await db.query("update cards set variants='[]'::jsonb");
+  await db.query("update cards set variants=$1::text::jsonb where def_id='TestCard1'", [JSON.stringify([
+    {id:"released-example",art:"/brand/emblem.svg",order:"01",status:"released",rarity:"Rare",artists:[{role:"Sketch",name:"Test Artist"}],releaseDate:"2026-09-01",collectorQuality:null},
+    {id:"upcoming-example",art:"/brand/emblem.svg",order:"02",status:"unreleased",rarity:"Super Rare",artists:[{role:"Color",name:"Preview Artist"}],releaseDate:null,collectorQuality:null},
+  ])]);
   await db.query("insert into locations(def_id,name,ability,art,rarity,status) values ('Asgard','Asgard','After turn 4, whoever is winning here draws 2 cards.','/brand/emblem.svg','common','released')");
   await db.query("insert into cards(def_id,name,cost,power,ability,art,series,deckable,reference_status) values ('Upcoming','Upcoming Card',1,1,'','','1',false,'unreleased')");
   const season = seasonKey(currentSeason());

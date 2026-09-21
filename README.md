@@ -363,6 +363,9 @@ from that same geometry. The previous raster brand sheet is historical, not the 
 
 ## Credits
 
+[SnapVault location statistics](https://www.snapvault.app/locations) supply observed appearance rates: the share of tracked Ranked and Conquest games containing a location over the source’s last 30 days. The wiki shows numerator, sample size and source, refreshes hourly on view, and hides the field if a location has no valid statistics or the source fails. These rates can include location-changing effects and featured events; they are not base spawn probabilities. The read-only adapter uses public page data, exact game IDs and validated counts, independently of canonical reference imports.
+
+
 Snap Hub is built on other people's work. The full list, with links, is on the site at `/credits`
 (`src/lib/credits.ts`). None of the community projects' code is copied; they showed what data exists and how it's
 shaped.
@@ -438,6 +441,18 @@ once per animation frame, resets on exit or cancellation, and responds immediate
 motion is enabled. Dense galleries use a small hover lift; figures and effect text stay still.
 Touch uses the same controls with visible focus/selection states. No animation runs continuously.
 
+
+### Card variants
+
+The existing Marvel Snap Zone card envelope includes variants under each exact card ID.
+Hourly imports persist a validated JSONB catalog on the card row, including artwork URLs,
+release status, rarity, named artist roles, collector quality and known source dates.
+The wiki reads that local catalog; no extra source request is required to open a gallery.
+Unreleased previews are collapsed separately. No category names are inferred from artwork,
+and placeholder dates remain unknown. Credits link to the [variant database](https://marvelsnapzone.com/variants/).
+Existing rows start with a NULL catalog, which forces one unconditional import to backfill
+variants even when the upstream Last-Modified value has not changed. Subsequent imports
+resume conditional requests. Cosmetic updates do not create card balance-history records.
 
 ### Official patch index and reference imports
 

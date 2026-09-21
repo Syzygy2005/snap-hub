@@ -1,3 +1,4 @@
+import type { CardVariant } from "./variants";
 import { getDb } from "@/lib/db";
 import type { Kind } from "./sync";
 export interface Entry { def_id: string; name: string; ability: string; art: string; status: string; cost: number | null; power: number | null; series: string; tags: string[]; deckable: boolean; rarity: string }
@@ -16,4 +17,11 @@ export async function history(kind: Kind, id: string) {
   const db = await getDb();
   return db.query<{ id: number; before_data: Record<string,string | number>; after_data: Record<string,string | number>; detected_at: Date }>(
     `select id,before_data,after_data,detected_at from reference_changes where kind=$1 and def_id=$2 order by detected_at desc, id desc`, [kind,id]);
+}
+
+export async function cardVariants(id: string): Promise<CardVariant[] | null> {
+  const db = await getDb();
+  const [row] = await db.query<{ variants: CardVariant[] | null }>(
+    "select variants from cards where def_id=$1 and reference_status='released'", [id]);
+  return row?.variants ?? null;
 }

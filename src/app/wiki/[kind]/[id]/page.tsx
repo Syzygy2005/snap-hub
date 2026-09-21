@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { LocationRate } from "@/components/location-rate";
+import { CardVariants } from "@/components/card-variants";
 import { CardHistory } from "@/components/card-history";
 import { officialMentions, PATCH_ARCHIVE } from "@/lib/wiki/patches";
 import Link from "next/link";
@@ -37,16 +39,17 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
     </div>
     <section className="my-8 rounded-xl border border-line bg-surface/40 p-5">
       <h2 className="mb-3 text-xl font-bold">Reference facts</h2>
-      <dl className="grid gap-4 text-sm sm:grid-cols-3">
+      <dl className="grid gap-4 text-sm sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
         <div><dt className="text-muted">Reference ID</dt><dd className="mt-1 break-all font-medium">{e.def_id}</dd></div>
         <div><dt className="text-muted">{kind === "cards" ? "Collection series" : "Source rarity"}</dt><dd className="mt-1 font-medium">{kind === "cards" ? e.series || "Not specified" : e.rarity}</dd></div>
-        <div><dt className="text-muted">{kind === "cards" ? "Standard deck building" : "Appearance rate"}</dt><dd className="mt-1 font-medium">{kind === "cards" ? e.deckable ? "Available" : "Unavailable / other mode" : "Not provided by the source"}</dd></div>
+        {kind === "cards" ? <div><dt className="text-muted">Standard deck building</dt><dd className="mt-1 font-medium">{e.deckable ? "Available" : "Unavailable / other mode"}</dd></div> : <Suspense fallback={null}><LocationRate id={id} /></Suspense>}
       </dl>
       {e.tags.length > 0 && <p className="mt-4 text-sm text-muted">Source tags: {e.tags.join(", ")}</p>}
     </section>
     <ReferenceStatus kind={kind} />
     {e.def_id.startsWith("SnapZoneLocation_") && <p className="text-xs text-muted">This source entry has no game identifier. Its reference link uses the provider’s stable ID; match-history linking is unavailable.</p>}
     {kind === "cards" && <section className="my-8"><h2 className="mb-3 text-xl font-bold">Public decks with {e.name}</h2>{decks.length ? <div className="flex flex-wrap gap-3">{decks.map(d => <Link className="brand-tile rounded border border-line bg-surface p-4" href={`/decks/${d.id}`} key={d.id}>{d.name}</Link>)}</div> : <p className="text-sm text-muted">No public decks found yet.</p>}</section>}
+    {kind === "cards" && <Suspense fallback={<p role="status" className="my-8 text-sm text-muted">Loading card variants…</p>}><CardVariants id={id} name={e.name} /></Suspense>}
     {kind === "cards" && <Suspense fallback={<p role="status" className="my-8 text-sm text-muted">Loading historical card versions…</p>}><CardHistory id={id} /></Suspense>}
     <section className="my-8">
       <h2 className="mb-3 text-xl font-bold">Official patch-note mentions</h2>
