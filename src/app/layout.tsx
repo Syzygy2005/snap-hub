@@ -21,8 +21,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${montserrat.variable} ${orbitron.variable}`}>
       <body className="flex min-h-dvh flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-3 focus:font-semibold focus:text-bg"
+        >
+          Skip to content
+        </a>
         <SiteHeader />
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-16 pt-6 sm:px-6">{children}</main>
+        <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 scroll-mt-48 px-4 pb-16 pt-6 sm:px-6">{children}</main>
         <footer className="border-t border-line">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-xs leading-relaxed text-faint sm:flex-row sm:items-start sm:justify-between sm:px-6">
             <p className="max-w-3xl">
