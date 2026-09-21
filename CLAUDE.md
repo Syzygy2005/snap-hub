@@ -2,6 +2,13 @@
 
 # Snap Hub notes
 
+- Private account drafts use `account_decks`, never `decks`. Keep every read/update/delete scoped to
+  the session account; unlisted public decks remain accessible by link. Public sharing is an explicit copy.
+- `board_checked:<season>:<region>` records only successful source checks, including unchanged boards.
+  Do not use the last changed snapshot or the overall cron timestamp to claim a board is fresh.
+- Browser CI runs Playwright against a fresh local PGlite database and a test-only Discord stub.
+  Ports 3101/3102 are reserved for that runner. No test authentication bypass belongs in production routes.
+
 - Dev server runs on port 3100 (`npm run dev`); port 3000 is used by another app on this machine.
 - No `DATABASE_URL` locally → PGlite in `.data/pglite`. PGlite is single-process: don't run scripts that open
   the database while the dev server is running; hit `/api/cron/snapshot` instead (`npm run snapshot`).

@@ -85,6 +85,16 @@ create table if not exists accounts (
   last_seen_at timestamptz not null default now()
 );
 
+-- Private drafts never enter the public/unlisted decks table.
+create table if not exists account_decks (
+  id text primary key,
+  owner_id int not null references accounts(id) on delete cascade,
+  name text not null,
+  cards text[] not null,
+  updated_at timestamptz not null default now()
+);
+create index if not exists account_decks_owner_idx on account_decks (owner_id, updated_at desc);
+
 -- Only a hash of the session token is stored, the same way tracker keys are held, so the
 -- table is useless to anyone who reads it and a session can be revoked by deleting a row.
 create table if not exists sessions (

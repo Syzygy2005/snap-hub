@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { loadTrackerKey, saveTrackerKey } from "@/lib/stats/client-key";
+import { TrackerStatus } from "./tracker-status";
 
 const subscribeNoop = () => () => {};
 
@@ -187,6 +188,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
       </Step>
 
       <Step n={4} title="Play">
+        {activeKey && <TrackerStatus key={activeKey} token={activeKey} />}
         <p className="text-sm text-muted">
           After each game the window shows the result, like <code className="text-up">WIN +4 cubes | My Deck vs Someone</code>.
           Your games appear in <Link href="/stats/me" className="text-accent hover:underline">My stats</Link> and count towards

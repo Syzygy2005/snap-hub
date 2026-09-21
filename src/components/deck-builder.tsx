@@ -18,6 +18,7 @@ import {
 } from "@/lib/decks/local";
 import { AbilityText, CardArt, COST_BUCKETS, EnergyCurve } from "./cards";
 import { RelativeTime } from "./relative-time";
+import { AccountDecks } from "./account-decks";
 
 const KEYWORDS: { label: string; test: (c: Card) => boolean }[] = [
   { label: "On Reveal", test: (c) => /on reveal/i.test(c.ability) },
@@ -235,8 +236,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs }:
     }
   };
 
-  // Saved decks live in this browser only. There are no accounts, so "private" means it
-  // never reaches the server, not a flag on a row the server could still read.
+  // Browser saves remain local; account decks are managed separately below.
   const openDeck = savedId ? savedDecks.find((d) => d.id === savedId) : undefined;
   const deckName = name.trim() || UNTITLED;
   const unsaved = openDeck ? !sameCards(openDeck.cards, deck) || openDeck.name !== deckName : deck.length > 0;
@@ -552,9 +552,12 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs }:
                 aria-expanded={myOpen}
                 className="rounded-lg border border-line px-3 py-2 text-sm font-semibold text-muted hover:text-ink"
               >
-                My decks <span className="num">{savedDecks.length}</span>
+                Browser decks <span className="num">{savedDecks.length}</span>
               </button>
             )}
+            <AccountDecks signedIn={postAs !== null} name={name} cards={deck} onLoad={(d) => {
+              setDeck(d.cards.filter((id) => byId.has(id))); setName(d.name); setSavedId(null);
+            }} />
             {myOpen && savedDecks.length > 0 && (
               <ul className="col-span-2 space-y-1">
                 {savedDecks.map((d) => (

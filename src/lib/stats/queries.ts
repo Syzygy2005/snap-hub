@@ -108,6 +108,7 @@ function nameArchetypes(archetypes: Archetype[], byId: Map<string, Card>): Named
 }
 
 export interface MetaStats {
+  latestGameAt: string | null;
   window: StatWindow;
   league: string | null;
   leagues: { league: string; games: number }[];
@@ -145,6 +146,7 @@ export async function getMetaStats(window: StatWindow, league: string | null): P
     league,
     leagues,
     trackers: new Set(rows.map((r) => r.tracker_id)).size,
+    latestGameAt: rows[0]?.played_at.toISOString() ?? null,
     summary: summarize(games),
     archetypes,
     cards,
