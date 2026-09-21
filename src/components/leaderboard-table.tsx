@@ -90,11 +90,15 @@ export function LeaderboardTable({
             <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
               <th className="w-16 px-4 py-2 font-medium">Rank</th>
               <th className="w-16 px-2 py-2 font-medium">24h</th>
-              <th className="px-2 py-2 font-medium">Player</th>
+              {/* Takes the slack, so the numeric columns shrink to their content and sit together
+                  on the right instead of the spare width being split three ways. */}
+              <th className="w-full px-2 py-2 font-medium">Player</th>
               <th className="py-2 pl-2 pr-4 text-right font-medium sm:pr-2">Points</th>
-              <th className="hidden px-2 py-2 text-right font-medium sm:table-cell">24h pts</th>
-              {!compact && <th className="hidden px-2 py-2 text-right font-medium md:table-cell">Best</th>}
-              {!compact && <th className="hidden px-4 py-2 text-right font-medium lg:table-cell">Last played</th>}
+              <th className="hidden whitespace-nowrap px-2 py-2 text-right font-medium sm:table-cell">24h pts</th>
+              <th className="hidden px-2 py-2 text-right font-medium md:table-cell">Best</th>
+              <th className="hidden whitespace-nowrap px-4 py-2 text-right font-medium lg:table-cell">
+                Last played
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -113,11 +117,10 @@ export function LeaderboardTable({
                 <td className="hidden px-2 py-2 text-right text-xs sm:table-cell">
                   <ScoreDelta past={r.pastScore} now={r.score} />
                 </td>
-                {!compact && (
-                  <td className="num hidden px-2 py-2 text-right text-muted md:table-cell">#{r.bestRank}</td>
-                )}
-                {!compact && (
-                  <td className="hidden px-4 py-2 text-right text-xs text-muted lg:table-cell">
+                <td className="num hidden px-2 py-2 text-right text-muted md:table-cell">#{r.bestRank}</td>
+                {/* "over a day ago" wrapped onto two lines, so those rows stood half again as
+                    tall as the rest and the whole panel grew with them. */}
+                <td className="hidden whitespace-nowrap px-4 py-2 text-right text-xs text-muted lg:table-cell">
                     {latestUpdate && r.scoreChangedAt === latestUpdate ? (
                       <span
                         title="Score moved in the most recent update"
@@ -129,10 +132,9 @@ export function LeaderboardTable({
                     ) : now === null ? (
                       ""
                     ) : (
-                      formatLastMoved(r.scoreChangedAt, now)
-                    )}
-                  </td>
-                )}
+                    formatLastMoved(r.scoreChangedAt, now)
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

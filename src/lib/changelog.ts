@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-21",
     changes: [
       {
+        title: "The top ten reads like a leaderboard again",
+        detail:
+          "On a wide screen the numbers were spread across half a metre of empty table, and two rows stood taller than the rest. The columns now sit together, every row is the same height, and best rank and who is live show on the home page too.",
+      },
+      {
         title: "The board is the first thing you see on a phone",
         detail:
           "The banner repeated the logo already at the top of the screen and pushed the leaderboard two screens down. It is gone on phones, so the top ten is there when the page opens.",

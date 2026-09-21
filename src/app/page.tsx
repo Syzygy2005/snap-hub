@@ -99,7 +99,7 @@ export default async function Home(props: PageProps<"/">) {
         >
           {board ? (
             <>
-              <LeaderboardTable rows={board.rows.slice(0, 10)} compact />
+              <LeaderboardTable rows={board.rows.slice(0, 10)} compact latestUpdate={board.meta.updatedAt} />
               <div className="border-t border-line p-3 text-center">
                 <Link href="/leaderboard" className="text-sm font-semibold text-accent hover:underline">
                   Full top {board.rows.length.toLocaleString()} →
