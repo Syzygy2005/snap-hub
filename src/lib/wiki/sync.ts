@@ -87,6 +87,14 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
       const before = new Map(old.map(row => [row.def_id, row]));
       if (!current.succeeded_at && old.some(row => (row.reference_status ?? row.status) === "released" && !ids.includes(row.def_id)))
         throw new Error("Reference baseline omitted existing IDs; retained last good data");
+      if (kind === "cards") {
+        const previousVariants = old.reduce((total,row) => total + (Array.isArray(row.variants) ? row.variants.length : 0), 0);
+        const importedVariants = records.reduce((total,row) => total + row.variants.length, 0);
+        if (importedVariants < previousVariants * .8 || records.some(row => {
+          const saved = before.get(row.def_id)?.variants;
+          return Array.isArray(saved) && saved.length > 0 && row.variants.length === 0;
+        })) throw new Error("Suspicious drop in variant catalog; retained last good data");
+      }
       const released = records.filter(r => r.status === "released");
       const previousReleased = old.filter(row => (row.reference_status ?? row.status) === "released").length;
       if (released.length < previousReleased * .8) throw new Error("Suspicious drop in released entries; retained last good data");

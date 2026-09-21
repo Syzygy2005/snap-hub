@@ -49,6 +49,9 @@ describe("automatic reference imports", () => {
     const unchanged = (await syncState("cards"))?.changed_at;
     await syncReference("cards");
     expect((await syncState("cards"))?.changed_at).toEqual(unchanged);
+    fetcher.mockResolvedValueOnce(feed(rows.map(r => ({...r,variants:[]}))));
+    await expect(syncReference("cards")).rejects.toThrow("variant catalog");
+    expect(await cardVariants("Wiki0")).toHaveLength(2);
     const missing = rows.map((r,i) => i ? r : {...r,variants:undefined});
     fetcher.mockResolvedValueOnce(feed(missing));
     await expect(syncReference("cards")).rejects.toThrow("variant list");
