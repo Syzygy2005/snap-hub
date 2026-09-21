@@ -62,7 +62,8 @@ export default async function Home(props: PageProps<"/">) {
         {FEATURES.map((f,i) => <Link key={f.href} href={f.href} className="brand-tile rounded-lg border border-line bg-surface/60 p-3 sm:p-4"><span className="mb-2 hidden text-[10px] font-medium tracking-widest text-accent sm:block">0{i+1} /</span><span className="block font-display text-xs font-bold sm:text-base">{f.title}</span><span className="mt-1 hidden text-xs text-muted sm:block">{f.blurb}</span></Link>)}
       </nav>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-6">
         <Panel
           title={season ? `Top 10 · ${seasonLabel(season)}` : "Top 10"}
           action={
@@ -88,7 +89,36 @@ export default async function Home(props: PageProps<"/">) {
           )}
         </Panel>
 
-        <div className="space-y-6">
+          <Panel title="Latest decks" action={<Link href="/decks" className="text-xs font-semibold text-accent hover:underline">All decks</Link>}>
+            {decks.length ? (
+              <ul>
+                {decks.map((d) => (
+                  <li key={d.id} className="border-t border-line/60 first:border-t-0">
+                    <Link href={`/decks/${d.id}`} className="block px-4 py-3 hover:bg-surface-2/60">
+                      <div className="truncate font-medium">{d.name}</div>
+                      <div className="mt-1.5 grid grid-cols-6 gap-1 sm:grid-cols-12">
+                        {d.cards.map((id) => {
+                          const c = byId.get(id);
+                          return c ? <CardArt key={id} card={c} /> : null;
+                        })}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-4 py-6 text-sm text-muted">
+                No decks yet.{" "}
+                <Link href="/decks/builder" className="text-accent hover:underline">
+                  Share the first one
+                </Link>
+                .
+              </p>
+            )}
+          </Panel>
+        </div>
+
+        <div className="min-w-0 space-y-6">
           <Panel
             title="Climbing today"
             action={
@@ -118,33 +148,7 @@ export default async function Home(props: PageProps<"/">) {
             )}
           </Panel>
 
-          <Panel title="Latest decks">
-            {decks.length ? (
-              <ul>
-                {decks.map((d) => (
-                  <li key={d.id} className="border-t border-line/60 first:border-t-0">
-                    <Link href={`/decks/${d.id}`} className="block px-4 py-3 hover:bg-surface-2/60">
-                      <div className="truncate font-medium">{d.name}</div>
-                      <div className="mt-1.5 grid grid-cols-12 gap-0.5">
-                        {d.cards.map((id) => {
-                          const c = byId.get(id);
-                          return c ? <CardArt key={id} card={c} /> : null;
-                        })}
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-4 py-6 text-sm text-muted">
-                No decks yet.{" "}
-                <Link href="/decks/builder" className="text-accent hover:underline">
-                  Share the first one
-                </Link>
-                .
-              </p>
-            )}
-          </Panel>
+
 
           {news && (
             <Panel

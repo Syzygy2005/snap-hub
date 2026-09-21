@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-21",
     changes: [
+      { title: "A more balanced home page", detail: "Latest decks now sit below the compact Top 10, with larger card previews. Movers and updates keep their own sidebar without stretching the leaderboard into empty space." },
       { title: "Polish in every detail", detail: "Richer navigation, consistent page introductions, branded empty states, calmer tables, and shaped loading placeholders. Deck energy bars now glide as you add and remove cards, with reduced-motion support throughout." },
       { title: "Smoother motion and quicker navigation", detail: "Card artwork follows your mouse more smoothly, with gentler transitions throughout the site. Header dropdowns put wiki pages, leaderboard movers, deck tools, and stats options within easy reach on desktop and mobile." },
       { title: "The leaderboard loads reliably again", detail: "Fixed a freshness timestamp error that could crash the leaderboard and home page even while standings continued updating." },
