@@ -61,6 +61,17 @@ describe("the previous month is fetched once and then left alone", () => {
 });
 
 describe("the turn of the month", () => {
+  it("records unchanged successful checks but never advances freshness on a failed fetch", async () => {
+    const { lastBoardCheck } = await import("./queries");
+    serve({ "2026-09": board(["Alpha"]), "2026-08": board(["Carol"]) });
+    await runSnapshot(sept);
+    const later = new Date(sept.getTime() + 600_000);
+    await runSnapshot(later);
+    expect(await lastBoardCheck("2026-09", "global")).toBe(later.toISOString());
+    serve({ "2026-09": { ok: false, reason: "error", detail: "offline" } });
+    await runSnapshot(new Date(later.getTime() + 600_000));
+    expect(await lastBoardCheck("2026-09", "global")).toBe(later.toISOString());
+  });
   it("does not close the old month until the new one has a board", async () => {
     // September tracked all month, August already closed.
     serve({ "2026-09": board(["Alpha", "Bravo"]), "2026-08": board(["Carol"]) });

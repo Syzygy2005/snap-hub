@@ -2,28 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRef } from "react";
 
 const LINKS = [
   { href: "/leaderboard", label: "Leaderboard", match: (p: string) => p === "/leaderboard" || p.startsWith("/players") },
   { href: "/leaderboard/movers", label: "Movers", match: (p: string) => p.startsWith("/leaderboard/movers") },
   { href: "/decks/builder", label: "Deck Builder", match: (p: string) => p.startsWith("/decks/builder") },
   { href: "/decks", label: "Decks", match: (p: string) => p === "/decks" || /^\/decks\/(?!builder)/.test(p) },
-  { href: "/stats", label: "Stats", match: (p: string) => p.startsWith("/stats") },
+  { href: "/stats", label: "Stats", match: (p: string) => p === "/stats" || p.startsWith("/stats/tracker") },
+  { href: "/stats/me", label: "My Stats", match: (p: string) => p.startsWith("/stats/me") },
   { href: "/news", label: "News", match: (p: string) => p.startsWith("/news") },
 ];
 
 export function NavLinks() {
   const pathname = usePathname();
-  return (
-    // The scrollbar is hidden, so on a narrow screen the last links were sliced mid-letter with
-    // nothing to say they were there. The fade is the only affordance left once the bar is gone.
-    <nav className="-mx-1 flex items-center gap-0.5 overflow-x-auto text-sm [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] sm:[mask-image:none]">
+  const menu = useRef<HTMLDetailsElement>(null);
+  const links = (
+    <>
       {LINKS.map((l) => {
         const active = l.match(pathname);
         return (
           <Link
             key={l.href}
             href={l.href}
+            onClick={() => { if (menu.current) menu.current.open = false; }}
             aria-current={active ? "page" : undefined}
             className={`relative whitespace-nowrap px-2.5 py-2 font-semibold uppercase tracking-wider text-[12px] transition-colors after:absolute after:inset-x-2.5 after:-bottom-px after:h-0.5 ${
               active ? "text-accent after:bg-accent" : "text-muted hover:text-ink"
@@ -33,6 +35,18 @@ export function NavLinks() {
           </Link>
         );
       })}
-    </nav>
+    </>
   );
+  return <>
+    <nav aria-label="Main navigation" className="hidden flex-wrap items-center gap-0.5 lg:flex">{links}</nav>
+    <details ref={menu} className="relative ml-auto lg:hidden" onKeyDown={(event) => {
+      if (event.key === "Escape" && menu.current) {
+        menu.current.open = false;
+        menu.current.querySelector("summary")?.focus();
+      }
+    }}>
+      <summary className="cursor-pointer rounded-md border border-line px-3 py-2 text-sm font-semibold">Menu</summary>
+      <nav aria-label="Mobile navigation" className="absolute right-0 top-full z-50 mt-2 flex w-64 max-w-[calc(100vw-2rem)] flex-col rounded-lg border border-line bg-bg p-2 shadow-xl">{links}</nav>
+    </details>
+  </>;
 }

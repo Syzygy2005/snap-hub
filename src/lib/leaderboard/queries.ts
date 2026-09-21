@@ -315,6 +315,12 @@ export async function getLastSnapshot(): Promise<{ at: string } | null> {
   return row?.value ?? null;
 }
 
+export async function lastBoardCheck(season: string, region: Region): Promise<string | null> {
+  const db = await getDb();
+  const [row] = await db.query<{ value: { at: string } }>("select value from meta where key = $1", [`board_checked:${season}:${region}`]);
+  return row?.value.at ?? null;
+}
+
 /** Removes one former-name record, for when a rename was detected that never happened. */
 export async function deleteFormerName(playerId: number, nameId: number): Promise<boolean> {
   const db = await getDb();

@@ -4,7 +4,8 @@ import { RelativeTime } from "@/components/relative-time";
 import { EmptyState, PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { REGION_LABELS } from "@/lib/config";
 import { boardHref, resolveBoardParams } from "@/lib/leaderboard/params";
-import { getBoard } from "@/lib/leaderboard/queries";
+import { getBoard, lastBoardCheck } from "@/lib/leaderboard/queries";
+import { DataFreshness } from "@/components/data-freshness";
 import { currentSeason, seasonKey, seasonLabel } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
 
   const { meta, rows } = await getBoard(season, region, 24);
   const live = season === seasonKey(currentSeason());
+  const checkedAt = await lastBoardCheck(season, region);
   const cutoff = rows.at(-1);
 
   return (
@@ -65,6 +67,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
         )}
       </PageHeader>
 
+      <DataFreshness checkedAt={checkedAt} archived={!live} />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="#1 right now" value={rows[0]?.name.trim() ?? "—"} hint={`${rows[0]?.score.toLocaleString() ?? 0} points`} />
         <Stat

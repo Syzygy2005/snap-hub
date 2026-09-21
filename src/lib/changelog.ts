@@ -13,6 +13,18 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-21",
     changes: [
       {
+        title: "Your private decks, on every device",
+        detail: "Sign in to save and update private deck drafts on your account. Browser saves still work, and publishing a public or unlisted copy remains your choice.",
+      },
+      {
+        title: "Know when your tracker is working",
+        detail: "Setup now confirms the first upload, shows the last successful upload, and offers troubleshooting. Leaderboards show delayed source checks, and stats show upload freshness and small samples.",
+      },
+      {
+        title: "Every destination fits on mobile",
+        detail: "A mobile menu replaces the hidden scrolling links, with My Stats directly in navigation. Browser checks now cover the main journeys before changes ship.",
+      },
+      {
         title: "Clearer recovery when something goes wrong",
         detail:
           "Failed page loads now offer a retry, sign-out failures show a message instead of failing silently, and keyboard users can skip straight past the header to the page content.",

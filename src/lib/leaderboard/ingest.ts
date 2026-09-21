@@ -285,7 +285,13 @@ async function fetchAndIngest(db: Db, ref: SeasonRef, region: Region, now: Date)
   const result = await fetchBoard(ref, region);
   if (!result.ok) return { season: seasonKey(ref), region, status: result.reason, detail: result.detail };
   try {
-    return await ingestBoard(db, ref, region, result.entries, result.total, now);
+    const summary = await ingestBoard(db, ref, region, result.entries, result.total, now);
+    if (summary.status === "updated" || summary.status === "unchanged") {
+      await db.query(`insert into meta (key, value, updated_at) values ($1, $2, $3)
+        on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at`,
+        [`board_checked:${seasonKey(ref)}:${region}`, JSON.stringify({ at: now.toISOString() }), now]);
+    }
+    return summary;
   } catch (err) {
     return { season: seasonKey(ref), region, status: "error", detail: String(err) };
   }

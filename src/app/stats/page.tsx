@@ -6,6 +6,7 @@ import { EmptyState, PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { encodeDeck } from "@/lib/decks/code";
 import { param } from "@/lib/leaderboard/params";
 import { getMetaStats, STAT_WINDOWS, type StatWindow } from "@/lib/stats/queries";
+import { RelativeTime } from "@/components/relative-time";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Meta Stats" };
@@ -69,6 +70,11 @@ export default async function StatsPage(props: PageProps<"/stats">) {
         )}
       </div>
 
+      <p className="mb-4 text-sm text-muted">
+        {stats.latestGameAt ? <>Latest included upload: <RelativeTime iso={stats.latestGameAt} />. </> : "No uploads in this selection. "}
+        These are tracker contributions, not all Marvel Snap games.
+        {stats.summary.games > 0 && stats.summary.games < LOW_SAMPLE && ` Small sample: fewer than ${LOW_SAMPLE} games. Treat rates as early signals.`}
+      </p>
       {stats.summary.games === 0 ? (
         <EmptyState title="No tracked games yet">
           Stats come from players running the Snap Hub tracker on PC.{" "}

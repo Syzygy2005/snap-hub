@@ -10,9 +10,10 @@ import { formatReleaseDate } from "@/components/changelog-date";
 import { SITE_NAME, SITE_SLOGAN, SITE_TAGLINE } from "@/lib/config";
 import { getCards } from "@/lib/cards/queries";
 import { listDecks } from "@/lib/decks/queries";
-import { getBoard, getMovers, listSeasons } from "@/lib/leaderboard/queries";
+import { getBoard, getMovers, listSeasons, lastBoardCheck } from "@/lib/leaderboard/queries";
+import { DataFreshness } from "@/components/data-freshness";
 import { param } from "@/lib/leaderboard/params";
-import { seasonLabel } from "@/lib/season";
+import { seasonLabel, seasonKey, currentSeason } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ export default async function Home(props: PageProps<"/">) {
   const latest = latestRelease();
   const news = await latestNews();
   const [season] = await listSeasons("global");
+  const checkedAt = season ? await lastBoardCheck(season, "global") : null;
   const [board, movers, decks, cards] = await Promise.all([
     season ? getBoard(season, "global", 24) : null,
     season ? getMovers(season, "global", 24, 6) : null,
@@ -97,6 +99,7 @@ export default async function Home(props: PageProps<"/">) {
             ) : null
           }
         >
+          <DataFreshness checkedAt={checkedAt} archived={!!season && season !== seasonKey(currentSeason())} />
           {board ? (
             <>
               <LeaderboardTable rows={board.rows.slice(0, 10)} compact latestUpdate={board.meta.updatedAt} />

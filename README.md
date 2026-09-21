@@ -337,6 +337,23 @@ Cards come from Marvel Snap Zone's card list, synced every 12 hours; alternate-m
 builder (`isDeckable` in `src/lib/cards/sync.ts`). Deck codes export as base64 of
 `{"Name":"…","Cards":[{"CardDefId":"AntMan"},…]}`.
 
+## Private account decks and browser checks
+
+The builder offers browser-only saves and signed-in private account drafts (1–12 cards). Private
+drafts live in `account_decks`, separate from public/unlisted shares. Every private API operation
+requires a session and scopes its query to that account. Deleting an account removes its private
+drafts. Sharing creates a separate public or unlisted copy; updating a draft does not change that copy.
+
+Tracker setup checks only the key held by the browser and reports its last successful upload. It
+does not claim to detect a running tracker. Leaderboard freshness uses a per-season, per-region
+successful source check, including unchanged responses; failures never advance it. After 30 minutes
+(three scheduled checks), the UI labels updates delayed. Archived seasons are labeled separately.
+
+Run `npm run build`, `npx playwright install chromium`, then `npm run test:e2e` for desktop/mobile
+browser tests. The runner creates a fresh `.data/e2e-*` database and a local Discord stub, using ports
+3101 and 3102. It never uses production credentials or writes to production. CI runs these tests and
+retains failure screenshots/traces for seven days. Unit tests remain `npm test`.
+
 ## Brand
 
 Colors, fonts (Montserrat, Orbitron) and logos come from `brand/brand-sheet.png`. `node scripts/build-brand.mjs`
@@ -358,7 +375,7 @@ shaped.
   [snapscripts](https://github.com/snaptools2023/snapscripts), [Snap Extract](https://github.com/switchfire6/snap-extract),
   [marvelsnapdeck](https://github.com/barkingloudly/marvelsnapdeck),
   [marvel-snap-deckstrings](https://github.com/9j/marvel-snap-deckstrings), [DeckCodes.chat](https://deckcodes.chat/about)
-- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, sharp, Vitest, Montserrat and Orbitron (Google
+- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, sharp, Vitest, Playwright, jsdom, Montserrat and Orbitron (Google
   Fonts); hosted on Vercel, Supabase and GitHub Actions
 - **Made with AI**: code written with [Claude Code](https://claude.com/claude-code) (Anthropic); logo and brand sheet
   generated with ChatGPT (OpenAI)
