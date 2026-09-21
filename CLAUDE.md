@@ -131,6 +131,10 @@
   panel only draws a conclusion when both sides clear it, and says which side is short, because
   somebody who never retreats is exactly who the panel is for and also the slowest to collect
   retreats.
+- The home page banner is `sm:` and up only. It carries its own wordmark and the three feature
+  callouts, which need the width: on a phone it cropped mid-word, repeated the header logo, and
+  pushed the board below two screens. Screenshot the home page at 390px as well as desktop after
+  touching that section; it looked fine at 1440 the whole time it was broken at 390.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

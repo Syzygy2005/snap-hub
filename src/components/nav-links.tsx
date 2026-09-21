@@ -15,7 +15,9 @@ const LINKS = [
 export function NavLinks() {
   const pathname = usePathname();
   return (
-    <nav className="-mx-1 flex items-center gap-0.5 overflow-x-auto text-sm [scrollbar-width:none]">
+    // The scrollbar is hidden, so on a narrow screen the last links were sliced mid-letter with
+    // nothing to say they were there. The fade is the only affordance left once the bar is gone.
+    <nav className="-mx-1 flex items-center gap-0.5 overflow-x-auto text-sm [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] sm:[mask-image:none]">
       {LINKS.map((l) => {
         const active = l.match(pathname);
         return (
