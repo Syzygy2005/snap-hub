@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-21",
     changes: [
       {
+        title: "Clearer recovery when something goes wrong",
+        detail:
+          "Failed page loads now offer a retry, sign-out failures show a message instead of failing silently, and keyboard users can skip straight past the header to the page content.",
+      },
+      {
         title: "More reliable tracker stats",
         detail:
           "Repeat uploads now use the game's account identity even without an account header. Linking a key cannot overwrite another account's claim, My Stats shows failed refreshes and actions, and community counts clearly label tracker keys rather than players.",

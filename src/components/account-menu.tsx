@@ -9,6 +9,7 @@ export function AccountMenu({ account, enabled }: { account: Account | null; ena
   const pathname = usePathname();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Nothing to offer until the Discord app is configured, so don't advertise a dead end.
   if (!enabled) return null;
@@ -27,7 +28,7 @@ export function AccountMenu({ account, enabled }: { account: Account | null; ena
 
   const src = avatarUrl(account.discordId, account.avatar);
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="flex shrink-0 flex-wrap items-center gap-2">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" width={24} height={24} className="h-6 w-6 rounded-full" />
@@ -42,17 +43,22 @@ export function AccountMenu({ account, enabled }: { account: Account | null; ena
         disabled={busy}
         onClick={async () => {
           setBusy(true);
+          setError(null);
           try {
-            await fetch("/api/auth/signout", { method: "POST" });
+            const res = await fetch("/api/auth/signout", { method: "POST" });
+            if (!res.ok) throw new Error("Sign-out failed");
             router.refresh();
+          } catch {
+            setError("Couldn't sign out. Please try again.");
           } finally {
             setBusy(false);
           }
         }}
         className="text-xs text-faint hover:text-down disabled:opacity-50"
       >
-        Sign out
+        {busy ? "Signing out…" : "Sign out"}
       </button>
+      {error && <p role="alert" className="basis-full text-xs text-down">{error}</p>}
     </div>
   );
 }
