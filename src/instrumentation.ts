@@ -22,6 +22,16 @@ export function register() {
     }
   };
 
+  const reference = async () => {
+    try {
+      const res = await fetch(`http://localhost:${port}/api/cron/reference`, {
+        headers: process.env.CRON_SECRET ? { authorization: `Bearer ${process.env.CRON_SECRET}` } : {},
+      });
+      console.log(`[reference] ${res.status}`);
+    } catch (error) { console.warn("[reference] failed:", error); }
+  };
+  setTimeout(reference, 7_000);
+  setInterval(reference, 60 * 60 * 1000);
   setTimeout(run, 5_000);
   setInterval(run, 30 * 60 * 1000);
 }

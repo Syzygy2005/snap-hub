@@ -77,7 +77,7 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
             <li key={c.defId} className="rounded-xl border border-line bg-surface/80 p-2">
               <CardArt card={c} eager />
               <div className="mt-1 px-1">
-                <div className="truncate text-sm font-semibold">{c.name}</div>
+                <Link className="block truncate text-sm font-semibold hover:text-accent" href={`/wiki/cards/${encodeURIComponent(c.defId)}`}>{c.name}</Link>
                 <p className="mt-0.5 line-clamp-3 text-[11px] leading-snug text-muted">
                   <AbilityText text={c.ability} />
                 </p>

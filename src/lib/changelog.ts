@@ -12,6 +12,8 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-21",
     changes: [
+      { title: "Explore the card and location wiki", detail: "Search released cards and locations, inspect their effects, and add cards to your current deck draft." },
+      { title: "Reference data stays up to date", detail: "Independent hourly checks refresh card stats, text and locations automatically. Failed imports keep the last good data, and the wiki shows freshness and observed balance changes." },
       {
         title: "Your private decks, on every device",
         detail: "Sign in to save and update private deck drafts on your account. Browser saves still work, and publishing a public or unlisted copy remains your choice.",

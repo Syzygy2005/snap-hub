@@ -15,7 +15,7 @@ export async function getCards(opts: { deckableOnly?: boolean } = {}): Promise<C
     deckable: boolean;
   }>(
     `select def_id, name, cost, power, ability, art, series, tags, deckable
-       from cards ${opts.deckableOnly ? "where deckable" : ""}
+       from cards ${opts.deckableOnly ? "where deckable and reference_status = 'released'" : ""}
       order by cost, name`,
   );
   return rows.map((r) => ({

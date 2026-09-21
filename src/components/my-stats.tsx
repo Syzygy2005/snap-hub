@@ -345,7 +345,7 @@ export function MyStats() {
                   </div>
                   {openBoard === g.id && (
                     <div className="border-t border-line/40 px-4 py-3">
-                      <BoardView zones={g.board} info={stats.cardInfo} />
+                      <BoardView zones={g.board} info={stats.cardInfo} locations={stats.locationInfo} />
                     </div>
                   )}
                 </li>

@@ -1,0 +1,33 @@
+import { test, expect } from "@playwright/test";
+test("wiki search, reference details and add to existing draft",async ({page})=>{
+  await page.goto("/decks/builder?add=TestCard2");
+  await expect(page.getByText("Added Test Card 2 to your draft.")).toBeVisible();
+  await page.goto("/wiki/cards");
+  await expect(page.getByText("Updates are delayed.", {exact:false})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Upcoming Card",exact:true})).toHaveCount(0);
+  await page.getByLabel("Search name or effect").fill("Test Card 1");
+  await page.getByRole("button",{name:"Search",exact:true}).click();
+  await expect(page).toHaveURL(/q=Test\+Card\+1/);
+  await page.getByRole("heading",{name:"Test Card 1",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Test Card 1",exact:true})).toBeVisible();
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:test.info().outputPath("wiki-card.png"),fullPage:true});
+  await page.getByRole("link",{name:"Add to builder"}).click();
+  await expect(page.getByText("Added Test Card 1 to your draft.")).toBeVisible();
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem("snaphub:deck-draft")!).deck)).toEqual(["TestCard2","TestCard1"]);
+  await page.reload();
+  await expect(page.getByText("Test Card 1 is already in your draft.")).toBeVisible();
+  await page.goto("/wiki/locations");
+  await page.getByRole("heading",{name:"Asgard",exact:true}).click();
+  await expect(page.getByText("After turn 4, whoever is winning here draws 2 cards.",{exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:test.info().outputPath("wiki-location.png"),fullPage:true});
+  await page.goto("/wiki/cards/Upcoming");
+  await expect(page.getByText("Nothing here",{exact:true})).toBeVisible();
+});
+test("failed wiki art remains readable",async({page})=>{
+  await page.goto("/wiki/cards/TestCard1");
+  await page.getByRole("img",{name:"Test Card 1",exact:true}).evaluate(img=>img.dispatchEvent(new Event("error")));
+  await expect(page.getByRole("img",{name:"Test Card 1: artwork unavailable"})).toBeVisible();
+});

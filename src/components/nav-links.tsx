@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useRef } from "react";
 
 const LINKS = [
+  { href: "/wiki", label: "Wiki", match: (p: string) => p.startsWith("/wiki") },
   { href: "/leaderboard", label: "Leaderboard", match: (p: string) => p === "/leaderboard" || p.startsWith("/players") },
   { href: "/leaderboard/movers", label: "Movers", match: (p: string) => p.startsWith("/leaderboard/movers") },
   { href: "/decks/builder", label: "Deck Builder", match: (p: string) => p.startsWith("/decks/builder") },

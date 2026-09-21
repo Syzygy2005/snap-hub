@@ -242,4 +242,19 @@ create table if not exists meta (
   value jsonb not null,
   updated_at timestamptz not null default now()
 );
+
+alter table cards add column if not exists reference_status text not null default 'released';
+create table if not exists locations (
+  def_id text primary key, name text not null, ability text not null, art text not null,
+  rarity text not null, status text not null, updated_at timestamptz not null default now()
+);
+create table if not exists reference_sync (
+  kind text primary key, attempted_at timestamptz, succeeded_at timestamptz,
+  changed_at timestamptz, error text, last_modified text, ids text[] not null default '{}'
+);
+create table if not exists reference_changes (
+  id bigserial primary key, kind text not null, def_id text not null,
+  before_data jsonb not null, after_data jsonb not null, detected_at timestamptz not null default now()
+);
+create index if not exists reference_changes_entry on reference_changes(kind, def_id, detected_at desc);
 `;

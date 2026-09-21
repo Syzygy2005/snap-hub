@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Card } from "@/lib/cards/types";
 import type { BoardZone } from "@/lib/stats/parse-game";
 import { CardArt } from "./cards";
@@ -91,13 +92,13 @@ export function locationName(id: string | null): string | null {
 }
 
 /** The three locations as they stood when the game ended, opponent on top like the game. */
-export function BoardView({ zones, info }: { zones: BoardZone[]; info: CardInfo }) {
+export function BoardView({ zones, info, locations = {} }: { zones: BoardZone[]; info: CardInfo; locations?: Record<string, string> }) {
   return (
     <div className="grid gap-2 sm:grid-cols-3">
       {zones.map((z, i) => (
         <div key={i} className="rounded-lg border border-line bg-bg/40 p-2">
           <div className="mb-2 truncate text-[11px] font-semibold uppercase tracking-wider text-faint">
-            {locationName(z.location) ?? `Location ${i + 1}`}
+            {z.location && locations[z.location] ? <Link className="text-accent underline" href={`/wiki/locations/${encodeURIComponent(z.location)}`}>{locations[z.location]}</Link> : locationName(z.location) ?? `Location ${i + 1}`}
           </div>
           <BoardSide label="Them" ids={z.opponent} info={info} />
           <div className="my-2 h-px bg-line" />
