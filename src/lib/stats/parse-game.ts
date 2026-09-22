@@ -214,7 +214,17 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
       cubes: outcome === "win" ? Math.abs(finalCubeValue) : outcome === "loss" ? -Math.abs(finalCubeValue) : 0,
       finalCubeValue: Math.abs(finalCubeValue),
       conceded: get(item, "Conceded") === true,
-      snapped: truthy(get(item, "_stakesRaised")),
+      // Both sides of the snap come from fields the real file actually carries. This read
+      // `item._stakesRaised`, which appears nowhere in a real GameState.json: the result entry
+      // spells it `StakesRaised`, with no underscore. So snapped came back false on every
+      // upload ever recorded, and the synthetic fixture agreed because it had been written to
+      // match the code rather than the game, exactly as the `_to` board did.
+      // The result entry is keyed by the uploader's own AccountId, so it is the better source;
+      // the player's own turn list is the same field opponentSnapped has always used, and
+      // covers a file whose entry omits the flag.
+      snapped:
+        truthy(get(item, "StakesRaised")) ||
+        truthy(get(players[localIndex], "_turnsOnStakesRaiseRequested")),
       opponentSnapped: truthy(get(opponent, "_turnsOnStakesRaiseRequested")),
       turns: toInt(get(result, "TurnsTaken")),
       totalTurns: toInt(get(result, "TotalTurns")),
