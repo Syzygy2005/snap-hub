@@ -32,6 +32,23 @@ describe("claiming a leaderboard profile", () => {
     expect(result.claim).toMatchObject({ playerName: "PXL Rick", username: "Noah", verifiedAt: null, verifiedBy: null });
   });
 
+  it("gives the loser of a simultaneous claim a refusal, not a crash", async () => {
+    // Both callers read before either writes, so the check above the insert cannot decide this.
+    // The loser used to hit the player_id primary key and throw out through the route as a 500.
+    const [first, second] = await Promise.all([claimPlayer(11, noah), claimPlayer(11, other)]);
+    const results = [first, second];
+    expect(results.filter((r) => r.ok)).toHaveLength(1);
+    const refused = results.find((r) => !r.ok);
+    expect(refused).toMatchObject({ ok: false, status: 409 });
+  });
+
+  it("refuses a second player for one account without crashing", async () => {
+    // player_claims_account_idx is the other way two writes collide.
+    const [a, b] = await Promise.all([claimPlayer(11, noah), claimPlayer(12, noah)]);
+    expect([a, b].filter((r) => r.ok)).toHaveLength(1);
+    expect([a, b].find((r) => !r.ok)).toMatchObject({ ok: false, status: 409 });
+  });
+
   it("stays pending even when the claimant's tracker reports the same name", async () => {
     await sighting(noah, "PXL Rick");
     const result = await claimPlayer(11, noah);

@@ -37,6 +37,8 @@ describe("reset-leaderboard.sql", () => {
     );
     await db.query(`insert into meta (key, value) values ('cards_synced', '"2026-09-10"'::jsonb)`);
     await db.query(`insert into meta (key, value) values ('season_closed:2026-08:global', '{}'::jsonb)`);
+    // Written by every successful source check, so it outlives a wipe unless the script says so.
+    await db.query(`insert into meta (key, value) values ('board_checked:2026-09:global', '{}'::jsonb)`);
     await db.query(
       `insert into news (kind, title, body, published_at) values ('balance', 'Keep me too', 'x', now())`,
     );

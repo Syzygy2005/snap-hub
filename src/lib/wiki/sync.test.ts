@@ -61,6 +61,34 @@ describe("automatic reference imports", () => {
     expect(await cardVariants("Wiki0")).toHaveLength(2);
     expect((await getCards()).find(c=>c.defId==="Wiki0")?.power).toBe(3);
   });
+  it("keeps a delisted card's variants and still imports the rest of the feed", async () => {
+    // Ten cards carry variants, so one of them losing its own is not a catalog-wide collapse.
+    // This used to throw, and the rollback discarded every other card's names, costs, power and
+    // ability text with it. Because the rollback also reverted last_modified, the next run
+    // re-fetched the same body and threw again: one delisted variant froze card data for good.
+    const rows = baseline().map((c,i) => ({...c, cid: 101+i, variants: i < 10 ? [{...variant, cid: 101+i, vid: 4831+i}] : []}));
+    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(feed(rows)));
+    vi.stubGlobal("fetch",fetcher);
+    await syncReference("cards");
+    expect(await cardVariants("Wiki0")).toHaveLength(1);
+    const unchanged = (await syncState("cards"))?.changed_at;
+
+    fetcher.mockResolvedValueOnce(feed(rows.map((r,i) => i === 0 ? {...r, variants: [], name: "Renamed hero"} : r)));
+    await expect(syncReference("cards")).resolves.toMatchObject({total:120});
+    // The delisted card keeps what was already saved for it...
+    expect(await cardVariants("Wiki0")).toHaveLength(1);
+    // ...its other fields still updated, which the throw used to discard along with the import...
+    expect((await entries("cards")).find(c => c.def_id === "Wiki0")?.name).toBe("Renamed hero");
+    // ...and nothing is left flagged, so the next run is not refusing the same body again.
+    expect((await syncState("cards"))?.error).toBeFalsy();
+    // Retaining is not a change to the variant catalog, so it must not look like one.
+    expect((await syncState("cards"))?.changed_at).not.toEqual(unchanged);
+
+    // A catalog-wide collapse is still refused, measured on what actually arrived.
+    fetcher.mockResolvedValueOnce(feed(rows.map(r => ({...r, variants: []}))));
+    await expect(syncReference("cards")).rejects.toThrow("variant catalog");
+    expect(await cardVariants("Wiki0")).toHaveLength(1);
+  });
   it("retains last good data and success time for partial, malformed and failed feeds", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(feed(baseline()));vi.stubGlobal("fetch",fetcher);
     await syncReference("cards"); const success = (await syncState("cards"))?.succeeded_at;

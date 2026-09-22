@@ -10,6 +10,36 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-22",
+    changes: [
+      {
+        title: "Card data keeps updating when a variant is delisted",
+        detail:
+          "When Marvel Snap Zone dropped the last variant of a single card, the whole hourly import was refused and every card kept its old name, cost, power and ability text. That card now keeps the variants already saved for it and the rest of the import goes through as normal. A collapse of the whole variant catalog is still refused.",
+      },
+      {
+        title: "Patch note mentions name the right cards",
+        detail:
+          "Card pages listed official patch notes that only used the card's name as an ordinary word. The card called Random was credited with 55 of 139 articles, more than Thanos, because every patch note says \"a random card\" somewhere. Those are gone, and matching now respects capitals.",
+      },
+      {
+        title: "Claiming a profile answers instead of erroring",
+        detail:
+          "Two people claiming the same profile at the same moment got a server error rather than a message saying it was taken. Both now get a clear answer.",
+      },
+      {
+        title: "Faster card and location pages, lighter stats",
+        detail:
+          "Opening a card or location page read the whole reference table twice. It now reads the one entry. My Stats no longer sends every location name to your browser on each visit, and the tracker setup page stops polling once it has seen an upload.",
+      },
+      {
+        title: "Games are never filed under your opponent",
+        detail:
+          "If a game file did not name your client, the tracker worked out who you were from your deck. On a game with an empty board, a turn one retreat for instance, that guess could land on your opponent, and the game and your display name were recorded against their account. Your uploads now stay on your own tracker key whenever the file does not say who you are.",
+      },
+    ],
+  },
+  {
     date: "2026-09-21",
     changes: [
       { title: "Explore card variants", detail: "Card wiki pages now include variant artwork, rarity and artist credits from Marvel Snap Zone. Released variants appear first, with unreleased previews tucked into their own section. The catalog updates with hourly card imports." },

@@ -208,8 +208,15 @@ export async function getPersonalStats(
     };
   }
   const [rows, allCards] = await Promise.all([loadGames({ window, trackerIds: subject.trackerIds }), getCards()]);
+  // Name only the locations these games were played on. Selecting every released location ran
+  // after the Promise.all rather than inside it, and then shipped all of them to the browser on
+  // every render, though BoardView reads at most three per game the reader expands.
+  const playedOn = [...new Set(rows.flatMap((r) => r.locations ?? []))];
   const db = await getDb();
-  const locations = await db.query<{def_id: string; name: string}>("select def_id,name from locations where status='released'");
+  const locations = playedOn.length
+    ? await db.query<{def_id: string; name: string}>(
+        "select def_id,name from locations where def_id = any($1::text[])", [playedOn])
+    : [];
   const locationInfo = Object.fromEntries(locations.map(l => [l.def_id,l.name]));
   const byId = new Map(allCards.map((c) => [c.defId, c]));
   const games = rows.map(toStatsGame);

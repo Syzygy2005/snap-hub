@@ -41,6 +41,7 @@ export default async function BuilderPage(props: PageProps<"/decks/builder">) {
         importCode={param(sp, "code") ?? null}
         openLocalId={param(sp, "local") ?? null}
         postAs={account?.username ?? null}
+        signedIn={!!account}
       />
     </>
   );

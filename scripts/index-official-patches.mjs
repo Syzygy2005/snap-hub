@@ -59,3 +59,10 @@ notes.sort((a,b) => (b.date ?? "").localeCompare(a.date ?? "") || a.title.locale
 await mkdir("src/lib/wiki/data", {recursive:true});
 await writeFile("src/lib/wiki/data/official-patches.json", JSON.stringify({ indexedAt: new Date().toISOString(), articleCount: notes.length, notes }) + "\n");
 console.log("Complete:",notes.length,"articles;",notes.filter(n=>!n.date).length,"without an explicit year/date");
+// Print the most-mentioned names so a match on an ordinary English word is visible before the
+// file is trusted. The card named Random once led this list with 55 of 139 articles, ahead of
+// Thanos, and nothing in the run said so.
+const counts = new Map();
+for (const note of notes) for (const m of note.mentions) counts.set(m.id, (counts.get(m.id) ?? 0) + 1);
+console.log("Most mentioned:", [...counts].sort((a,b) => b[1]-a[1]).slice(0,10)
+  .map(([id,n]) => `${id} ${n} (${Math.round(100*n/notes.length)}%)`).join(", "));

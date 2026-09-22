@@ -154,6 +154,51 @@
   floated apart with a void between the name and the score. The Player column carries `w-full`
   to take the slack instead. Anything whose text can wrap in that table needs
   `whitespace-nowrap`; "over a day ago" wrapping made two rows half again as tall as the others.
+- `syncReference` runs its guards inside the transaction, so a `throw` rolls back the whole
+  import and, because it reverts `last_modified` too, the next run re-fetches the same body and
+  throws again: a rejection holds until the source publishes something different. That is the
+  intent for a catalog-wide collapse and was a disaster for a single card losing its variants,
+  which happens whenever the source delists one. That case now keeps the saved variants for
+  that card (`importing` in `sync.ts`) and lets the feed through; the catalog-wide 80% check
+  stays, measured on what arrived rather than after retention, so retention cannot hide it.
+  Everything downstream reads `importing`, not `records`: the payload, the change rows and the
+  `changed` check must agree, or `changed_at` moves for an edit that was never written. Before
+  adding a guard here, ask what the source doing this routinely would cost.
+- `parseGameState` emits `accountId` only from something that names the uploader: the header,
+  `ClientPlayerInfo.AccountId`, or the single result entry carrying a deck. Never from
+  `players[localIndex]`. That index falls back to a deck-overlap guess which always answers 0
+  or 1, so on a game with an empty board (a turn-one retreat) it ties to slot 0 and is simply
+  wrong, and `players[wrong].PlayerInfo.AccountId` is the opponent's real id. `record-game`
+  hashes it, so a wrong one files the game under them and writes a `snap_names` row pairing
+  their account with the uploader's name, because `playerName` comes from `ClientPlayerInfo`
+  and does not move with the guess. `snap_names` is the only rename evidence there is and it
+  feeds a one-way merge. No id is the safe answer: the caller then hashes per tracker key. The
+  header is honoured only when it names somebody the file contains, or a typo mints a fresh
+  identity for every bad value; `record-game.test.ts` covers that and caught it being missed.
+- A JS string bound to a `jsonb` column must carry `$n::text::jsonb`. Verified against real
+  postgres.js through a PGlite socket server: a bare `$n` stores `jsonb_typeof = string`, so
+  `value.at` reads back as `String.prototype.at`, a function. PGlite coerces it to an object
+  instead, which is why every such write looked fine locally and was wrong in production, and
+  why `lastBoardCheck` reads `updated_at` rather than the value it wrote. All three `meta`
+  writes in `ingest.ts` carry the cast now. `getLastSnapshot` has no callers; if you give it
+  one, check what the column really holds first.
+- `scripts/index-official-patches.mjs` matches card names **case-sensitively**, and
+  `patchDate` builds the date field by field through `Date.UTC`. Both were bugs with the same
+  shape: invisible where they were run. Lowercasing made the card `Random` match "draw a
+  random card" in 55 of 139 articles, more than Thanos; `Date.parse("September 15 2026")` is
+  local midnight, so the date moved back a day anywhere east of Greenwich while CI (UTC) and
+  the machine that generated the index (UTC-6) both read it correctly. The run prints its
+  most-mentioned names for that reason. Regenerating needs network to marvelsnap.com and
+  marvelsnapzone.com, so the committed `Random` rows were stripped by hand in the meantime.
+- `claimPlayer` and `claimTracker` both decide in the write, never in a read above it. The
+  reads in `claimPlayer` exist to word the error, not to make the decision: `claims.test.ts`
+  races two claims through `Promise.all` and PGlite's single connection interleaves them, which
+  is enough to reproduce the loser taking a primary-key exception out through the route as a
+  500. Any new one-per-thing rule here needs the same shape.
+- Identity is a boolean, never the presence of a display string. `DeckBuilder` took
+  `signedIn={postAs !== null}` from an optional `postAs`, and `undefined !== null` is true, so
+  leaving it out showed the signed-in deck panel to anonymous visitors whose every request then
+  401'd.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { LocationRate } from "@/components/location-rate";
 import { CardVariants } from "@/components/card-variants";
 import { CardHistory } from "@/components/card-history";
@@ -6,18 +6,20 @@ import { officialMentions, PATCH_ARCHIVE } from "@/lib/wiki/patches";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { entries, history } from "@/lib/wiki/queries";
+import { entry, history } from "@/lib/wiki/queries";
 import { listDecks } from "@/lib/decks/queries";
 import { WikiArt } from "@/components/wiki-art";
 import { AbilityText } from "@/components/cards";
 import { ReferenceStatus } from "@/components/wiki-reference";
 export const dynamic = "force-dynamic";
-async function find(kind: string,id: string) {
+// One indexed lookup, and cached so generateMetadata and the page share it. This used to read
+// every card or location row and Array.find one out of it, twice per request.
+const find = cache(async (kind: string,id: string) => {
   if (kind !== "cards" && kind !== "locations") notFound();
-  const entry = (await entries(kind)).find(e => e.def_id === id && e.status === "released");
-  if (!entry) notFound();
-  return {entry,kind: kind as "cards" | "locations"};
-}
+  const found = await entry(kind,id);
+  if (!found) notFound();
+  return {entry: found,kind: kind as "cards" | "locations"};
+});
 export async function generateMetadata({params}: PageProps<"/wiki/[kind]/[id]">): Promise<Metadata> {
   const {kind,id} = await params; const {entry} = await find(kind,id);
   const description = entry.ability.replace(/<[^>]*>/g, "") || `${entry.name} reference and stats.`;

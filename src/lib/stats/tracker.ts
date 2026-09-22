@@ -13,6 +13,8 @@ export interface Tracker {
   name: string;
   /** The Discord account this key belongs to, or null for a key made while signed out. */
   account_id?: number | null;
+  /** Selected by authenticate so /api/tracker/status needs no second read of the same row. */
+  last_upload_at?: Date | null;
 }
 
 export type CreateTrackerResult = { ok: true; token: string; tracker: Tracker } | { ok: false; error: string; status: number };
@@ -88,7 +90,7 @@ export async function authenticate(request: Request): Promise<Tracker | null> {
   const token = /^Bearer\s+(shk_[\w-]{20,})$/.exec(header.trim())?.[1];
   if (!token) return null;
   const db = await getDb();
-  const [row] = await db.query<Tracker>(`select id, name, account_id from trackers where token_hash = $1`, [sha256(token)]);
+  const [row] = await db.query<Tracker>(`select id, name, account_id, last_upload_at from trackers where token_hash = $1`, [sha256(token)]);
   return row ?? null;
 }
 

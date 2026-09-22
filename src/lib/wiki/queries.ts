@@ -8,6 +8,15 @@ export async function entries(kind: Kind): Promise<Entry[]> {
     ? `select def_id,name,ability,art,reference_status as status,cost,power,series,tags,deckable,'' as rarity from cards order by name`
     : `select def_id,name,ability,art,status,null::int as cost,null::int as power,'' as series,'{}'::text[] as tags,false as deckable,rarity from locations order by name`);
 }
+/** One released entry. The detail page used to pull the whole table and Array.find it. */
+export async function entry(kind: Kind, id: string): Promise<Entry | null> {
+  const db = await getDb();
+  const [row] = await db.query<Entry>(kind === "cards"
+    ? `select def_id,name,ability,art,reference_status as status,cost,power,series,tags,deckable,'' as rarity from cards where def_id=$1 and reference_status='released'`
+    : `select def_id,name,ability,art,status,null::int as cost,null::int as power,'' as series,'{}'::text[] as tags,false as deckable,rarity from locations where def_id=$1 and status='released'`,
+    [id]);
+  return row ?? null;
+}
 export async function syncState(kind: Kind) {
   const db = await getDb();
   const [row] = await db.query<{ attempted_at: Date | null; succeeded_at: Date | null; changed_at: Date | null; error: string | null }>(`select * from reference_sync where kind=$1`, [kind]);

@@ -287,7 +287,11 @@ async function fetchAndIngest(db: Db, ref: SeasonRef, region: Region, now: Date)
   try {
     const summary = await ingestBoard(db, ref, region, result.entries, result.total, now);
     if (summary.status === "updated" || summary.status === "unchanged") {
-      await db.query(`insert into meta (key, value, updated_at) values ($1, $2, $3)
+      // $2::text::jsonb, not a bare $2. postgres.js sends a JS string for a jsonb column as a
+      // JSON string, so the row stores "{\"at\":...}" rather than an object and value.at reads
+      // back as String.prototype.at, a function. PGlite coerces it instead, which is why this
+      // only ever went wrong in production.
+      await db.query(`insert into meta (key, value, updated_at) values ($1, $2::text::jsonb, $3)
         on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at`,
         [`board_checked:${seasonKey(ref)}:${region}`, JSON.stringify({ at: now.toISOString() }), now]);
     }
@@ -338,13 +342,13 @@ export async function runSnapshot(now = new Date()): Promise<IngestSummary[]> {
     ]);
     if (!started.length) continue;
     await db.query(
-      `insert into meta (key, value, updated_at) values ($1, $2, $3) on conflict (key) do nothing`,
+      `insert into meta (key, value, updated_at) values ($1, $2::text::jsonb, $3) on conflict (key) do nothing`,
       [closedKey(prevKey, region), JSON.stringify({ at: now.toISOString() }), now],
     );
   }
 
   await db.query(
-    `insert into meta (key, value, updated_at) values ('last_snapshot', $1, $2)
+    `insert into meta (key, value, updated_at) values ('last_snapshot', $1::text::jsonb, $2)
      on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at`,
     [JSON.stringify({ at: now.toISOString(), summaries }), now],
   );

@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { syncCards } from "@/lib/cards/sync";
+import { syncReference } from "@/lib/wiki/sync";
 import { getDeck, likePattern, listDecks, saveDeck } from "./queries";
 
 const card = (i: number) => ({
@@ -21,7 +21,7 @@ const ids = (from: number) => Array.from({ length: 12 }, (_, i) => `Hero${from +
 beforeAll(async () => {
   const payload = { success: { cards: Array.from({ length: 120 }, (_, i) => card(i + 1)) } };
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(payload))));
-  await syncCards();
+  await syncReference("cards");
   vi.unstubAllGlobals();
 
   await saveDeck({ name: "Ongoing pile", cards: ids(1) });

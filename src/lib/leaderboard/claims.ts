@@ -97,10 +97,25 @@ export async function claimPlayer(playerId: number, accountId: number): Promise<
     };
   }
 
-  await db.query(
-    `insert into player_claims (player_id, account_id) values ($1, $2)`,
+  // Claim in the write itself, the way claimTracker does. The reads above are for the error
+  // messages, not the decision: two people pressing "This is me" on the same player in the same
+  // moment both saw nothing taken, both inserted, and the loser hit the player_id primary key
+  // with an exception that escaped the route as a 500 instead of the 409 written above. One
+  // account claiming two players races the same way on player_claims_account_idx.
+  const [inserted] = await db.query<{ player_id: number }>(
+    `insert into player_claims (player_id, account_id) values ($1, $2)
+     on conflict do nothing returning player_id`,
     [playerId, accountId],
   );
+  if (!inserted) {
+    const now = await claimForPlayer(playerId);
+    if (now?.accountId === accountId) return { ok: true, claim: now };
+    if (now) return { ok: false, error: "Somebody has already claimed that player.", status: 409 };
+    const other = await claimForAccount(accountId);
+    return other
+      ? { ok: false, error: `You have already claimed ${other.playerName}. Release that one first.`, status: 409 }
+      : { ok: false, error: "Could not save that claim.", status: 500 };
+  }
   const claim = await claimForPlayer(playerId);
   return claim ? { ok: true, claim } : { ok: false, error: "Could not save that claim.", status: 500 };
 }
