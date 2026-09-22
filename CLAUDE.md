@@ -32,7 +32,17 @@
   `LocationDefId` (`LocationDefIdsAtEndOfGame` is only the fallback). Who is local comes from
   `RemoteGame.ClientPlayerInfo.AccountId` inside the file; the `X-Snap-Account-Id` header is an
   override, not a requirement, because without one the old fallback silently reported the
-  uploader as their own opponent. Add a second real file before widening any of this.
+  uploader as their own opponent.
+- There is a second real file now, `fixtures/real-retreat.json`, anonymised the same way (35
+  GUIDs, three names, BOM kept, confirmed to parse identically to the original). It is the
+  opposite corner from `real-game.json`: a turn-one retreat, so it is the only coverage of
+  `conceded`, of a board that is empty at every location, of locations that were never
+  revealed, and of the uploader sitting in the second slot behind a `$ref`. It is also the
+  real version of the empty-board identity case: with nothing naming the client, the
+  deck-overlap guess has no signal, ties to slot 0 and really does report the uploader as
+  their own opponent, which is why no account id may be derived from it. Locations arrive as
+  `$ref` entries in both of these files even though `real-game.json` has them inline, so never
+  assume a shape without dereferencing.
 - `/api/tracker/download` reads `public/tracker/snaphub-tracker.ps1` off disk at request time. Next.js can't infer
   that, so it's listed in `outputFileTracingIncludes`; moving or renaming the script means updating both.
 - Sign-in needs `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`; without them `discordConfig()` returns null
@@ -208,6 +218,13 @@
   `parse-real-game.test.ts` now asserts both sides, because the one real file is a snapped game
   and nothing but the file settles a field name. Games recorded before the fix cannot be
   repaired: `tracked_games` keeps no copy of the source file.
+- The second and third locations turn over on turns two and three, so a game that ends before
+  then reports them as `RevealOn2` and `RevealOn3`. Those are the game saying nobody saw them,
+  not location IDs: they match nothing in the `locations` table, so `locationName` prettified
+  them into "Reveal On 2" beside a real location and they were stored in
+  `tracked_games.locations` for anything counting locations to count. `parse-game.ts` reads
+  them as null; the board already draws a nameless location as "Location 2". Only this pattern
+  is filtered, and only because a real retreat showed it.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
