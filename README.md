@@ -363,6 +363,10 @@ from that same geometry. The previous raster brand sheet is historical, not the 
 
 ## Credits
 
+[MARVEL SNAP’s official Help Center](https://marvelsnap.helpshift.com/hc/en/3-marvel-snap/) and
+[official announcements](https://marvelsnap.com/category/events/) inform the wiki’s authored rules and
+game-mode summaries. Sections link to their sources and show a manual review date.
+
 [SnapVault location statistics](https://www.snapvault.app/locations) supply observed appearance rates: the share of tracked Ranked and Conquest games containing a location over the source’s last 30 days. The wiki shows numerator, sample size and source, refreshes hourly on view, and hides the field if a location has no valid statistics or the source fails. These rates can include location-changing effects and featured events; they are not base spawn probabilities. The read-only adapter uses public page data, exact game IDs and validated counts, independently of canonical reference imports.
 
 
@@ -385,6 +389,15 @@ shaped.
   generated with ChatGPT (OpenAI)
 
 ## Project layout
+
+The wiki home links to `/wiki/variants`, `/wiki/basics`, `/wiki/game-modes`,
+`/wiki/terminology` and `/wiki/collection`. Guide content lives in `src/lib/wiki/guides.ts`;
+review dates describe manual editorial checks, not the hourly reference import.
+The variant browser reads the existing card JSONB catalog, paginates on the server and filters
+artist credits across sketch, ink and color. Released variants are the default; previews require
+the explicit unreleased filter. Source categories are preserved without inventing variant names.
+`/search` searches released cards/locations/variants, guide sections, player names and listed public
+decks. Private drafts and unlisted decks are excluded. No database migration or new feed is needed.
 
 ```
 src/lib/db/            connection (PGlite or Postgres) and schema

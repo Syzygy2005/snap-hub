@@ -12,6 +12,8 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-22",
     changes: [
+      { title: "A wiki for the whole game", detail: "Browse variants across all cards and filter by sketch, ink or color artist. New guides cover game modes, SNAP terminology, getting started and collection cosmetics, with links to official rules." },
+      { title: "One search for Snap Hub", detail: "The header now finds cards, locations, variant artists, wiki guides, players and public decks, grouped so each kind of result is easy to find." },
       {
         title: "See which locations you actually win",
         detail:

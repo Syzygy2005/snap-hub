@@ -51,7 +51,7 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
     <ReferenceStatus kind={kind} />
     {e.def_id.startsWith("SnapZoneLocation_") && <p className="text-xs text-muted">This source entry has no game identifier. Its reference link uses the provider’s stable ID; match-history linking is unavailable.</p>}
     {kind === "cards" && <section className="my-8"><h2 className="mb-3 text-xl font-bold">Public decks with {e.name}</h2>{decks.length ? <div className="flex flex-wrap gap-3">{decks.map(d => <Link className="brand-tile rounded border border-line bg-surface p-4" href={`/decks/${d.id}`} key={d.id}>{d.name}</Link>)}</div> : <p className="text-sm text-muted">No public decks found yet.</p>}</section>}
-    {kind === "cards" && <Suspense fallback={<p role="status" className="my-8 text-sm text-muted">Loading card variants…</p>}><CardVariants id={id} name={e.name} /></Suspense>}
+    {kind === "cards" && <CardVariants id={id} name={e.name} />}
     {kind === "cards" && <Suspense fallback={<p role="status" className="my-8 text-sm text-muted">Loading historical card versions…</p>}><CardHistory id={id} /></Suspense>}
     <section className="my-8">
       <h2 className="mb-3 text-xl font-bold">Official patch-note mentions</h2>

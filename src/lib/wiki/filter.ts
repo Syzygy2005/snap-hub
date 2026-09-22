@@ -16,7 +16,7 @@ export function filterEntries(items: Entry[], sp: Filters) {
 }
 export function pageHref(path: string, sp: Filters, page: number) {
   const query = new URLSearchParams();
-  for (const key of ["q","cost","power","series","rarity","keyword","category","sort"]) if (value(sp,key)) query.set(key,value(sp,key));
+  for (const key of ["q","cost","power","series","rarity","keyword","category","sort","artist","status","card"]) if (value(sp,key)) query.set(key,value(sp,key));
   query.set("page",String(page));
   return `${path}?${query}`;
 }

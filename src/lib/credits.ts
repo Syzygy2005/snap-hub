@@ -28,6 +28,7 @@ export const INSPIRATION: Credit[] = [
 ];
 
 export const DATA: Credit[] = [
+  { name: "MARVEL SNAP official guides and Help Center", by: "Second Dinner", url: "https://marvelsnap.helpshift.com/hc/en/3-marvel-snap/", note: "Rules, mechanics and event announcements inform the wiki’s authored summaries. Each sourced guide section links to its reference; guides show a manual review date." },
   { name: "SnapVault location statistics", url: "https://www.snapvault.app/locations", note: "Observed location appearance rates from tracked Ranked and Conquest games over the last 30 days, refreshed hourly. These are empirical rates, not base spawn probabilities." },
   { name: "Official MARVEL SNAP patch notes", by: "Second Dinner", url: "https://marvelsnap.com/news/", note: "The historical patch-article index links to official sources; it records mentions, not inferred balance changes." },
   { name: "SNAP.FAN card history", url: "https://snap.fan/cards/history/2026/", note: "Historical card stats and effect versions, fetched per card and cached daily; coverage and dates reflect the source." },

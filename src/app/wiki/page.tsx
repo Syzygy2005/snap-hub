@@ -1,9 +1,17 @@
 import { PageHeader } from "@/components/ui";
 import Link from "next/link";
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "Card & Location Wiki", alternates: { canonical: "/wiki" }, description: "Explore MARVEL SNAP cards and locations, with automatically refreshed stats and effects." };
+import { WIKI_GUIDES } from "@/lib/wiki/guides";
+export const metadata: Metadata = { title:"MARVEL SNAP Wiki",alternates:{canonical:"/wiki"},description:"Cards, locations, variants, artists, game modes and guides to MARVEL SNAP." };
 export default function WikiPage() { return <>
-  <PageHeader title="Know your next move." subtitle="Every card. Every location. Explore the latest available stats and effects, then take your discoveries into the deck builder." />
-  <div className="grid gap-5 sm:grid-cols-2">{[["cards","Card library","Search stats and effects, then explore variants and card history."],["locations","Location atlas","Explore effects, rarity and observed appearance rates."]].map(([id,title,text]) => <Link key={id} className="brand-tile rounded-xl border border-line bg-surface p-8" href={`/wiki/${id}`}><h2 className="font-display text-2xl font-bold">{title} <span className="text-accent">→</span></h2><p className="mt-3 text-muted">{text}</p></Link>)}</div>
-  <p className="mt-8 text-sm text-muted">Reference first. Strategy and interaction guides will follow. Updates are checked hourly; source publication and scheduler delays can affect freshness.</p>
+  <PageHeader title="Know your next move." subtitle="Explore the collection. Learn the rules. Find the art and the answers that bring SNAP to life." />
+  <form action="/search" className="mb-8 flex flex-wrap items-end gap-3 rounded-xl border border-line bg-surface p-5">
+    <label className="min-w-0 grow text-sm font-semibold">Search the wiki and Snap Hub<input type="search" name="q" maxLength={100} placeholder="A card, location, artist or game term…" className="mt-2 block w-full rounded-lg border border-line bg-bg px-4 py-3 font-normal" /></label>
+    <button className="brand-action rounded-lg bg-accent px-5 py-3 text-sm font-bold text-bg">Search</button>
+  </form>
+  <h2 className="mb-4 font-display text-xl font-bold">Explore the collection</h2>
+  <div className="grid gap-4 sm:grid-cols-3">{[["cards","Card library","Current stats and effects, with variants and history."],["locations","Location atlas","Effects, rarity and observed appearance rates."],["variants","Variant gallery","Artwork from every card, filtered by artist and rarity."]].map(([id,title,text])=><Link key={id} className="brand-tile rounded-xl border border-line bg-surface p-6" href={`/wiki/${id}`}><h3 className="font-display text-xl font-bold">{title} <span className="text-accent">→</span></h3><p className="mt-3 text-sm leading-relaxed text-muted">{text}</p></Link>)}</div>
+  <h2 className="mb-4 mt-9 font-display text-xl font-bold">Learn the game</h2>
+  <div className="grid gap-4 sm:grid-cols-2">{WIKI_GUIDES.map(g=><Link key={g.slug} href={`/wiki/${g.slug}`} className="brand-tile rounded-xl border border-line bg-surface/50 p-6"><h3 className="font-display text-xl font-bold">{g.title} <span className="text-accent">→</span></h3><p className="mt-3 text-sm leading-relaxed text-muted">{g.summary}</p></Link>)}</div>
+  <aside className="mt-8 rounded-xl border border-line p-5 text-sm leading-relaxed text-muted"><Link href="/wiki/history" className="font-semibold text-accent underline">Explore patch history</Link><p className="mt-2">Cards, locations and variants are checked hourly. Guides are edited by hand and show their review date. Source publication and scheduler delays can affect reference freshness.</p></aside>
 </>; }
