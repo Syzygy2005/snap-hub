@@ -175,6 +175,30 @@
   feeds a one-way merge. No id is the safe answer: the caller then hashes per tracker key. The
   header is honoured only when it names somebody the file contains, or a typo mints a fresh
   identity for every bad value; `record-game.test.ts` covers that and caught it being missed.
+- A JS string bound to a `jsonb` column must carry `$n::text::jsonb`. Verified against real
+  postgres.js through a PGlite socket server: a bare `$n` stores `jsonb_typeof = string`, so
+  `value.at` reads back as `String.prototype.at`, a function. PGlite coerces it to an object
+  instead, which is why every such write looked fine locally and was wrong in production, and
+  why `lastBoardCheck` reads `updated_at` rather than the value it wrote. All three `meta`
+  writes in `ingest.ts` carry the cast now. `getLastSnapshot` has no callers; if you give it
+  one, check what the column really holds first.
+- `scripts/index-official-patches.mjs` matches card names **case-sensitively**, and
+  `patchDate` builds the date field by field through `Date.UTC`. Both were bugs with the same
+  shape: invisible where they were run. Lowercasing made the card `Random` match "draw a
+  random card" in 55 of 139 articles, more than Thanos; `Date.parse("September 15 2026")` is
+  local midnight, so the date moved back a day anywhere east of Greenwich while CI (UTC) and
+  the machine that generated the index (UTC-6) both read it correctly. The run prints its
+  most-mentioned names for that reason. Regenerating needs network to marvelsnap.com and
+  marvelsnapzone.com, so the committed `Random` rows were stripped by hand in the meantime.
+- `claimPlayer` and `claimTracker` both decide in the write, never in a read above it. The
+  reads in `claimPlayer` exist to word the error, not to make the decision: `claims.test.ts`
+  races two claims through `Promise.all` and PGlite's single connection interleaves them, which
+  is enough to reproduce the loser taking a primary-key exception out through the route as a
+  500. Any new one-per-thing rule here needs the same shape.
+- Identity is a boolean, never the presence of a display string. `DeckBuilder` took
+  `signedIn={postAs !== null}` from an optional `postAs`, and `undefined !== null` is true, so
+  leaving it out showed the signed-in deck panel to anonymous visitors whose every request then
+  401'd.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

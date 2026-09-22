@@ -2,6 +2,13 @@ import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import { DECK_SIZE } from "@/lib/cards/types";
 
+/**
+ * How many private drafts one account may hold. A policy limit, not a measured one: nothing
+ * capped this before, so a stuck retry in the save button, or a script under one session, grew
+ * account_decks without bound and the GET returned every row in one response. Raise it freely.
+ */
+export const ACCOUNT_DECK_LIMIT = 100;
+
 export interface AccountDeck { id: string; name: string; cards: string[]; updatedAt: string }
 type Row = { id: string; name: string; cards: string[]; updated_at: Date };
 const view = (r: Row): AccountDeck => ({ id: r.id, name: r.name, cards: r.cards, updatedAt: r.updated_at.toISOString() });
@@ -16,7 +23,7 @@ export async function saveAccountDeck(ownerId: number, input: { id?: unknown; na
     return { ok: false as const, error: "Cards must be a list of card IDs.", status: 400 };
   }
   const cards = [...new Set(input.cards as string[])];
-  if (!cards.length || cards.length > DECK_SIZE) return { ok: false as const, error: "Save between 1 and 12 cards.", status: 400 };
+  if (!cards.length || cards.length > DECK_SIZE) return { ok: false as const, error: `Save between 1 and ${DECK_SIZE} cards.`, status: 400 };
   const db = await getDb();
   const known = await db.query("select def_id from cards where deckable and def_id = any($1::text[])", [cards]);
   if (known.length !== cards.length) return { ok: false as const, error: "Deck contains unknown cards.", status: 400 };
@@ -29,6 +36,11 @@ export async function saveAccountDeck(ownerId: number, input: { id?: unknown; na
       [name, cards, input.id, ownerId],
     );
   } else {
+    const [{ count }] = await db.query<{ count: number }>(
+      "select count(*)::int as count from account_decks where owner_id = $1", [ownerId]);
+    if (count >= ACCOUNT_DECK_LIMIT) {
+      return { ok: false as const, error: `You can keep ${ACCOUNT_DECK_LIMIT} saved decks. Delete one to save another.`, status: 409 };
+    }
     [row] = await db.query<Row>(
       "insert into account_decks (id, owner_id, name, cards) values ($1, $2, $3, $4::text[]) returning id, name, cards, updated_at",
       [randomUUID(), ownerId, name, cards],

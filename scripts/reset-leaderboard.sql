@@ -33,6 +33,8 @@ truncate table history, standings, player_names, player_claims, players, snapsho
 -- "updated X ago" would otherwise outlive the data it describes, and the season_closed marks
 -- say a finished month's final board is already stored, which after this it is not: leaving
 -- them would stop the previous month ever being fetched again.
-delete from meta where key = 'last_snapshot' or key like 'season_closed:%';
+-- board_checked:* too, or the freshness line outlives the board it describes and the page
+-- reads "Source checked 3 minutes ago" over an empty leaderboard.
+delete from meta where key = 'last_snapshot' or key like 'season_closed:%' or key like 'board_checked:%';
 
 commit;

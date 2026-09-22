@@ -55,7 +55,10 @@ export function parseLocationRate(html: string, id: string): LocationRate | null
       const match = frame.match(/^[\da-f]+:(\[[\s\S]*\])$/);
       if (!match || !frame.includes('"games30d"')) continue;
       let payload: unknown;
-      try { payload = JSON.parse(match[1]); } catch { return null; }
+      // A frame that will not parse is a frame, not a verdict on the page: the script-level
+      // parse above skips the same way. Returning null here dropped the appearance rate for
+      // every location because one row reassembled badly.
+      try { payload = JSON.parse(match[1]); } catch { continue; }
       if (!Array.isArray(payload) || payload[0] !== "$" || !object(payload[3])) continue;
       const data = payload[3].data;
       if (!object(data) || !Array.isArray(data.locations)) continue;

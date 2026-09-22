@@ -1,4 +1,3 @@
-import { getDb } from "@/lib/db";
 
 
 interface SnapZoneCard {
@@ -67,15 +66,4 @@ export function toRecord(c: SnapZoneCard): CardRecord {
     tags: (c.tags ?? []).map((t) => t.tag).filter(Boolean),
     deckable: isDeckable(c),
   };
-}
-
-export async function syncCards(): Promise<{ total: number; deckable: number }> {
-  const { syncReference } = await import("@/lib/wiki/sync");
-  return syncReference("cards");
-}
-
-export async function cardsSyncedAt(): Promise<Date | null> {
-  const db = await getDb();
-  const [row] = await db.query<{ updated_at: Date }>(`select updated_at from meta where key = 'cards_synced'`);
-  return row?.updated_at ?? null;
 }

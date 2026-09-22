@@ -43,6 +43,10 @@ interface Props {
   openLocalId?: string | null;
   /** Display name a shared deck will carry, or null when signed out. */
   postAs?: string | null;
+  /** Whether a session exists. Never inferred from postAs: that is a display name, it is
+   *  optional, and `undefined !== null` is true, so omitting it showed the signed-in deck
+   *  panel to anonymous visitors whose every request then 401'd. */
+  signedIn?: boolean;
 }
 
 type Status = { tone: "ok" | "warn"; text: string } | null;
@@ -106,7 +110,7 @@ function startingState(
   return { deck: [] as string[], name: "", status: null, savedId: null };
 }
 
-export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, addCard }: Props) {
+export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, signedIn = false, addCard }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(cards.map((c) => [c.defId, c])), [cards]);
 
@@ -567,7 +571,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, a
                 Browser decks <span className="num">{savedDecks.length}</span>
               </button>
             )}
-            <AccountDecks signedIn={postAs !== null} name={name} cards={deck} onLoad={(d) => {
+            <AccountDecks signedIn={signedIn} name={name} cards={deck} onLoad={(d) => {
               setDeck(d.cards.filter((id) => byId.has(id))); setName(d.name); setSavedId(null);
             }} />
             {myOpen && savedDecks.length > 0 && (

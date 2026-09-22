@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { toPgParam } from "@/lib/db";
 import { getCards } from "./queries";
-import { cleanAbility, isDeckable, syncCards } from "./sync";
+import { cleanAbility, isDeckable } from "./sync";
+import { syncReference } from "@/lib/wiki/sync";
 import { getDeck, listDecks, saveDeck } from "@/lib/decks/queries";
 
 const card = (i: number, extra: Record<string, unknown> = {}) => ({
@@ -42,7 +43,7 @@ describe("card helpers", () => {
   });
 });
 
-describe("syncCards + decks", () => {
+describe("card import + decks", () => {
   it("stores cards and saves, dedupes and lists decks", async () => {
     const payload = {
       success: {
@@ -54,9 +55,9 @@ describe("syncCards + decks", () => {
     };
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(payload))));
 
-    await expect(syncCards()).resolves.toEqual({ total: 121, deckable: 120 });
+    await expect(syncReference("cards")).resolves.toEqual({ total: 121, deckable: 120 });
     // Running twice updates in place.
-    await syncCards();
+    await syncReference("cards");
 
     const cards = await getCards({ deckableOnly: true });
     expect(cards).toHaveLength(120);

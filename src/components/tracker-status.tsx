@@ -11,17 +11,21 @@ export function TrackerStatus({ token }: { token: string }) {
   useEffect(() => {
     const ctrl = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
+    // The poll exists to answer "did setup work". Once an upload has been seen it has, so it
+    // stops rather than asking the database four times a minute for as long as the tab is open.
+    // "Check now" restarts the effect, and the answer only ever changes in one direction.
+    let done = false;
     const check = async () => {
       if (document.visibilityState !== "visible") { timer = setTimeout(check, 15000); return; }
       try {
         const res = await fetch("/api/tracker/status", { headers: { authorization: `Bearer ${token}` }, signal: ctrl.signal });
         const body = await res.json();
         if (!res.ok) throw new Error(body.error ?? "Couldn't check tracker status.");
-        if (!ctrl.signal.aborted) { setLastUpload(body.lastUploadAt); setChecked(true); setError(""); }
+        if (!ctrl.signal.aborted) { setLastUpload(body.lastUploadAt); setChecked(true); setError(""); done = !!body.lastUploadAt; }
       } catch (err) {
         if (!ctrl.signal.aborted) setError(err instanceof Error ? err.message : "Couldn't check tracker status.");
       } finally {
-        if (!ctrl.signal.aborted) timer = setTimeout(check, 15000);
+        if (!ctrl.signal.aborted && !done) timer = setTimeout(check, 15000);
       }
     };
     void check();
