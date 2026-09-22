@@ -225,6 +225,27 @@
   `tracked_games.locations` for anything counting locations to count. `parse-game.ts` reads
   them as null; the board already draws a nameless location as "Location 2". Only this pattern
   is filtered, and only because a real retreat showed it.
+- The uploader's own cards come from their result entry: `CardDefIdsDrawn` and
+  `CardDefIdsPlayed`. `ClientPlayerInfo.CardsDrawn`/`CardsPlayed`, which the parser used to
+  read, are an event log covering **both players**, interleaved with `None` placeholders and
+  carrying duplicates. On one real game "cards you played" held Domino, Jubilee, Wave, WarMachine
+  and Infinaut, none of them in the uploader's deck. Across all four real files the result entry
+  equals that log exactly once the opponent's cards and the placeholders are removed. `None` is
+  the game's null card id and `cardId` now drops it, which covers the deck, the board and the
+  opponent's cards as well.
+- `OpponentConceded` on the result entry says the opponent walked away. It feeds `foldRate` and
+  `theyFolded`, the mirror of `retreatRate` and `retreated`. Games stored before the column read
+  as false, which is indistinguishable from an opponent who played on, so it understates old
+  history rather than inventing folds; say how many games it had the flag for, never treat the
+  whole history as opponents who never retreated.
+- `LocationResults` is the uploader's own per-location record, index-aligned with the locations:
+  on every real file its `CardsPlayed` matches that player's card count in the matching zone. It
+  fills `won` and `powerPlayed` on each `BoardZone`, so it rides in the existing `board` jsonb
+  and needs no column. **`IsWinner` is only written when it is true**, so a lane that is not won
+  covers losing it and tying it alike and there is nothing in the file that separates them: the
+  UI says "won" and "not won" and draws no "lost" badge. `locationRecords` skips zones with no
+  `won` at all rather than counting them as losses, because a board stored before this would
+  otherwise drag every rate down.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

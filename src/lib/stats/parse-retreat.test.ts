@@ -60,6 +60,24 @@ describe("a real turn-one retreat", () => {
     expect(g.deckCards).toHaveLength(12);
   });
 
+  it("wins nothing, because there was nothing to win", () => {
+    const g = parse();
+    expect(g.board.map((z) => ({ won: z.won, powerPlayed: z.powerPlayed }))).toEqual([
+      { won: false, powerPlayed: null },
+      { won: false, powerPlayed: null },
+      { won: false, powerPlayed: null },
+    ]);
+    // The uploader retreated; the opponent did not, and those are separate facts.
+    expect(g.conceded).toBe(true);
+    expect(g.opponentConceded).toBe(false);
+  });
+
+  it("drew a hand with no empty-slot markers in it", () => {
+    const g = parse();
+    expect(g.cardsDrawn).not.toContain("None");
+    expect(g.cardsDrawn.length).toBeGreaterThan(0);
+  });
+
   it("knows the uploader from the file even though they are the second player", () => {
     const g = parse();
     expect(g.playerName).toBe("LOCAL_PLAYER");

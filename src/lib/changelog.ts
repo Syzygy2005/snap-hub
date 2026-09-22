@@ -13,6 +13,21 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-22",
     changes: [
       {
+        title: "See which locations you actually win",
+        detail:
+          "My Stats now has a Locations panel: how often each location turned up, how often you won it, and the average power you committed there. Each game's board marks the locations you won too. A location counts as won only when the game said so, and the game never says a location was lost, so everything else covers losing it and tying it alike.",
+      },
+      {
+        title: "Cards you played are yours again",
+        detail:
+          "Your played and drawn cards were read from a log that covers both players, so your opponent's cards were mixed into yours on every game, along with a placeholder the game uses for an empty slot. Both now come from your own record of the match. Games uploaded before this keep the old lists.",
+      },
+      {
+        title: "Credit for the games they walked away from",
+        detail:
+          "Your cube panel showed what retreating costs you. It now shows the other side: how often your opponent retreated and what that was worth. The tracker had been recording it all along.",
+      },
+      {
         title: "Retreat early and the board stops inventing locations",
         detail:
           "The second and third locations do not turn over until turns two and three. A game that ended before then still listed them, under the names the game uses internally, so a match you retreated from showed \"Reveal On 2\" beside a real location. A location nobody saw is now left blank.",

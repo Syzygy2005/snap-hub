@@ -18,6 +18,8 @@ export interface ParsedGame {
   cubes: number;
   finalCubeValue: number;
   conceded: boolean;
+  /** The opponent retreated. The game records it per side; only our own was ever read. */
+  opponentConceded: boolean;
   snapped: boolean;
   opponentSnapped: boolean;
   turns: number | null;
@@ -40,6 +42,14 @@ export interface BoardZone {
   location: string | null;
   player: string[];
   opponent: string[];
+  /**
+   * Whether the uploader won this location. The game only writes IsWinner when it is true, so
+   * false covers both losing the location and tying it; there is nothing in the file that
+   * separates those. Say "won" and "not won", never "lost".
+   */
+  won: boolean;
+  /** Total power the uploader committed here, or null for a game recorded before this. */
+  powerPlayed: number | null;
 }
 
 export type ParseResult =
@@ -83,10 +93,13 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
     if (isObj(cur) && Array.isArray(cur.$values)) return cur.$values;
     return [];
   };
+  // "None" is the game's null card ID, written wherever a slot is empty or a draw was not
+  // known. It is not a card, and it was being stored as one in every game's cards_drawn.
+  const named = (id: string) => (id && id !== "None" ? id : null);
   const cardId = (v: Json): string | null => {
     const cur = deref(v);
-    if (typeof cur === "string") return cur || null;
-    if (isObj(cur) && typeof cur.CardDefId === "string") return cur.CardDefId || null;
+    if (typeof cur === "string") return named(cur);
+    if (isObj(cur) && typeof cur.CardDefId === "string") return named(cur.CardDefId);
     return null;
   };
   const cardIds = (v: Json) => unique(list(v).map(cardId));
@@ -195,11 +208,21 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   const locationIds = locations.length
     ? locations.map((loc, i) => revealed(get(loc, "LocationDefId")) ?? endOfGameIds[i] ?? null)
     : endOfGameIds;
-  const board: BoardZone[] = zones.map((z, i) => ({
-    location: locationIds[i] ?? null,
-    player: z[localIndex],
-    opponent: z[opponentIndex],
-  }));
+  // LocationResults is the uploader's own record per location, in the same left-to-right order
+  // as the locations: on every real file its CardsPlayed matches the number of that player's
+  // cards in the matching zone. An entry is missing or bare when nothing was played there.
+  const laneResults = list(get(item, "LocationResults"));
+  const board: BoardZone[] = zones.map((z, i) => {
+    const lane = laneResults[i];
+    const power = get(lane, "PowerPlayed");
+    return {
+      location: locationIds[i] ?? null,
+      player: z[localIndex],
+      opponent: z[opponentIndex],
+      won: get(lane, "IsWinner") === true,
+      powerPlayed: typeof power === "number" && Number.isFinite(power) ? power : null,
+    };
+  });
 
   const name = get(opponent, "PlayerInfo", "Name");
   const clientName = get(remote, "ClientPlayerInfo", "Name");
@@ -218,6 +241,7 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
       cubes: outcome === "win" ? Math.abs(finalCubeValue) : outcome === "loss" ? -Math.abs(finalCubeValue) : 0,
       finalCubeValue: Math.abs(finalCubeValue),
       conceded: get(item, "Conceded") === true,
+      opponentConceded: get(item, "OpponentConceded") === true,
       // Both sides of the snap come from fields the real file actually carries. This read
       // `item._stakesRaised`, which appears nowhere in a real GameState.json: the result entry
       // spells it `StakesRaised`, with no underscore. So snapped came back false on every
@@ -237,8 +261,13 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
       playerName: typeof clientName === "string" && clientName ? clientName.slice(0, 40) : null,
       opponentName: typeof name === "string" && name ? name.slice(0, 40) : null,
       opponentCards: sides[opponentIndex],
-      cardsDrawn: cardIds(get(remote, "ClientPlayerInfo", "CardsDrawn")),
-      cardsPlayed: cardIds(get(remote, "ClientPlayerInfo", "CardsPlayed")),
+      // From the uploader's own result entry, not ClientPlayerInfo. Those lists are an event
+      // log covering BOTH players: on one of these games "cards you played" carried Domino,
+      // Jubilee, Wave, WarMachine and Infinaut, none of which were in the uploader's deck. The
+      // result entry holds only their own cards, and on all four real files it matches
+      // ClientPlayerInfo exactly once the opponent's cards and the None placeholders are out.
+      cardsDrawn: cardIds(get(item, "CardDefIdsDrawn")),
+      cardsPlayed: cardIds(get(item, "CardDefIdsPlayed")),
       locations: unique(locationIds),
       board,
     },

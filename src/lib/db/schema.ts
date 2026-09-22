@@ -182,6 +182,7 @@ create table if not exists tracked_games (
   snapped boolean not null default false,
   opponent_snapped boolean not null default false,
   conceded boolean not null default false,
+  opponent_conceded boolean not null default false,
   turns int,
   total_turns int,
   deck_name text,
@@ -192,11 +193,16 @@ create table if not exists tracked_games (
   cards_drawn text[] not null default '{}',
   cards_played text[] not null default '{}',
   locations text[] not null default '{}',
-  -- [{location, player, opponent}] per location at the end of the game. Null for games
-  -- recorded before this was captured, which is why nothing reads it without a fallback.
+  -- [{location, player, opponent, won, powerPlayed}] per location at the end of the game. Null
+  -- for games recorded before this was captured, which is why nothing reads it without a
+  -- fallback; won and powerPlayed are likewise absent on zones stored before they were read.
   board jsonb
 );
 alter table tracked_games add column if not exists board jsonb;
+-- Added after launch. Games recorded before it default to false, which is indistinguishable
+-- from the opponent having played on, so anything counting these has to say how many games it
+-- had the flag for rather than treating the whole history as opponents who never retreated.
+alter table tracked_games add column if not exists opponent_conceded boolean not null default false;
 create unique index if not exists tracked_games_dedupe_idx on tracked_games (game_id, account_hash);
 create index if not exists tracked_games_time_idx on tracked_games (played_at desc);
 create index if not exists tracked_games_tracker_idx on tracked_games (tracker_id, played_at desc);

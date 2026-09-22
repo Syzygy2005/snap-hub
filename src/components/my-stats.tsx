@@ -10,6 +10,7 @@ import { formatRelative, useNow } from "./relative-time";
 import { BoardView, CardStrip, CubeRate, pct, ResultBadge, signed, WinRate } from "./stats-ui";
 import { EmptyState, Panel, Stat } from "./ui";
 import { CubeDisciplinePanel } from "./cube-discipline";
+import { LocationRecordPanel } from "./location-record";
 
 type Window = "7d" | "30d" | "all";
 const WINDOWS: { key: Window; label: string }[] = [
@@ -249,6 +250,10 @@ export function MyStats() {
 
           <Panel title="Where your cubes go">
             <CubeDisciplinePanel cubes={stats.cubes} />
+          </Panel>
+
+          <Panel title="Locations you win">
+            <LocationRecordPanel records={stats.locations} names={stats.locationInfo ?? {}} />
           </Panel>
 
           <Panel title="Cubes over time">

@@ -130,11 +130,11 @@ export async function recordGame(
 
   const inserted = await db.query<{ id: number }>(
     `insert into tracked_games (tracker_id, account_hash, game_id, played_at, league, battle_mode, friendly, result,
-                                cubes, final_cube_value, snapped, opponent_snapped, conceded, turns, total_turns,
+                                cubes, final_cube_value, snapped, opponent_snapped, conceded, opponent_conceded, turns, total_turns,
                                 deck_name, deck_cards, deck_key, opponent_name, opponent_cards, cards_drawn,
                                 cards_played, locations, board)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::text[], $18, $19,
-             $20::text[], $21::text[], $22::text[], $23::text[], $24::jsonb)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::text[], $19, $20,
+             $21::text[], $22::text[], $23::text[], $24::text[], $25::jsonb)
      on conflict (game_id, account_hash) do nothing
      returning id`,
     [
@@ -151,6 +151,7 @@ export async function recordGame(
       g.snapped,
       g.opponentSnapped,
       g.conceded,
+      g.opponentConceded,
       g.turns,
       g.totalTurns,
       g.deckName,

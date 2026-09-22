@@ -7,6 +7,7 @@ const game = (over: Partial<CubeGame>): CubeGame => ({
   snapped: false,
   opponentSnapped: false,
   conceded: false,
+  opponentConceded: false,
   ...over,
 });
 
@@ -14,8 +15,25 @@ describe("cubeDiscipline", () => {
   it("is empty and says so rather than guessing at zero", () => {
     const d = cubeDiscipline([]);
     expect(d.retreatRate).toBeNull();
+    expect(d.foldRate).toBeNull();
     expect(d.snapped.winRate).toBeNull();
     expect(d.retreated).toEqual({ games: 0, cubes: 0, perGame: null });
+    expect(d.theyFolded).toEqual({ games: 0, cubes: 0, perGame: null });
+  });
+
+  it("counts the cubes they handed over by walking away", () => {
+    // The mirror of retreating. Recorded on every upload, read by nothing until now.
+    const d = cubeDiscipline([
+      game({ opponentConceded: true, result: "win", cubes: 4 }),
+      game({ opponentConceded: true, result: "win", cubes: 2 }),
+      game({ result: "win", cubes: 1 }),
+      game({ result: "loss", cubes: -8, conceded: true }),
+    ]);
+    expect(d.theyFolded).toEqual({ games: 2, cubes: 6, perGame: 3 });
+    expect(d.foldRate).toBe(0.5);
+    // Your own retreat is a separate fact and must not move with theirs.
+    expect(d.retreatRate).toBe(0.25);
+    expect(d.retreated).toMatchObject({ games: 1, cubes: 8 });
   });
 
   it("splits games by who raised the stakes", () => {

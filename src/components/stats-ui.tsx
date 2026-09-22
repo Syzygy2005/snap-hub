@@ -97,8 +97,14 @@ export function BoardView({ zones, info, locations = {} }: { zones: BoardZone[];
     <div className="grid gap-2 sm:grid-cols-3">
       {zones.map((z, i) => (
         <div key={i} className="rounded-lg border border-line bg-bg/40 p-2">
-          <div className="mb-2 truncate text-[11px] font-semibold uppercase tracking-wider text-faint">
-            {z.location && locations[z.location] ? <Link className="text-accent underline" href={`/wiki/locations/${encodeURIComponent(z.location)}`}>{locations[z.location]}</Link> : locationName(z.location) ?? `Location ${i + 1}`}
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-faint">
+            <span className="min-w-0 truncate">
+              {z.location && locations[z.location] ? <Link className="text-accent underline" href={`/wiki/locations/${encodeURIComponent(z.location)}`}>{locations[z.location]}</Link> : locationName(z.location) ?? `Location ${i + 1}`}
+            </span>
+            {/* Only drawn when the game said this one was won. Its absence covers losing the
+                location and tying it, which the file does not tell apart, so there is no
+                matching "lost" badge to draw. */}
+            {z.won && <span className="shrink-0 rounded bg-up/15 px-1.5 py-0.5 text-[10px] text-up">Won</span>}
           </div>
           <BoardSide label="Them" ids={z.opponent} info={info} />
           <div className="my-2 h-px bg-line" />
