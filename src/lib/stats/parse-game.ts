@@ -110,6 +110,12 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   const byAccount = (wanted: string) =>
     wanted ? players.findIndex((p) => String(get(p, "PlayerInfo", "AccountId") ?? "") === wanted) : -1;
   let localIndex = byAccount(accountId ?? "");
+  // The header overrides the file, but only when it names somebody the file actually contains.
+  // A header matching nobody is a typo or a guess, and taking it at face value would mint a
+  // fresh identity for every bad value instead of falling through to the file's own client.
+  const headerIsLocal =
+    !!accountId &&
+    (localIndex >= 0 || items.some((it) => String(get(it, "AccountId") ?? "") === accountId));
   if (localIndex < 0) localIndex = byAccount(clientAccount);
 
   // Only the local player's result entry carries a deck list; prefer an account match, then that.
@@ -123,6 +129,22 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
 
   const deckCards = cardIds(get(item, "Deck", "Cards"));
   if (deckCards.length === 0) return { ok: false, reason: "missing-fields", detail: "No deck in the game result" };
+
+  // The uploader's Snap account id, taken only from something that names them: the header
+  // override, the file naming its own client, or the single result entry carrying a deck,
+  // since only the local player's does. Never from players[localIndex]. That index falls back
+  // to the deck-overlap guess below, which always returns 0 or 1 and so is confidently wrong
+  // half the time it is reached, and players[wrong].PlayerInfo.AccountId is the opponent's
+  // real account id. Hashed downstream, that files the game under their identity and writes a
+  // snap_names row pairing their account with the uploader's display name, since playerName
+  // comes from ClientPlayerInfo and does not move with the guess. snap_names is the only
+  // direct rename evidence the site has and it feeds a one-way merge, so a wrong row there is
+  // not recoverable. Nothing here is better than a guess: with no id the caller hashes per
+  // tracker key, which cannot collide with another person.
+  const localAccount =
+    (headerIsLocal && accountId) ||
+    clientAccount ||
+    (withDeck.length === 1 ? String(get(withDeck[0], "AccountId") ?? "") : "");
 
   const finalCubeValue = Number(get(result, "FinalCubeValue"));
   if (!Number.isFinite(finalCubeValue)) {
@@ -184,7 +206,7 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
     ok: true,
     game: {
       gameId: String(rawGameId),
-      accountId: String(get(players[localIndex], "PlayerInfo", "AccountId") ?? get(item, "AccountId") ?? clientAccount) || null,
+      accountId: localAccount || null,
       league: typeof league === "string" && league ? league : null,
       battleMode: get(result, "IsBattleMode") === true,
       friendly: get(result, "IsBattleFriendMode") === true,

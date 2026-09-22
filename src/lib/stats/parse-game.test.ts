@@ -13,6 +13,10 @@ function gameState(
     namedLocations?: boolean;
     /** null strips AccountId from ClientPlayerInfo, so nothing in the file names the client. */
     clientAccount?: string | null;
+    /** Puts an AccountId on the one result entry that carries a deck. */
+    itemAccount?: string;
+    /** No cards left on the board, as after a turn-one retreat. */
+    emptyBoard?: boolean;
   } = {},
 ) {
   const local = overrides.localSlot ?? 0;
@@ -34,7 +38,7 @@ function gameState(
   const theirs = (card: Record<string, unknown>) => ({ ...card, Owner: { $ref: "p-opp" } });
   const location = (name: string, cards: unknown[]) => ({
     ...(named ? { LocationDefId: name } : {}),
-    _cards: { $values: cards },
+    _cards: { $values: overrides.emptyBoard ? [] : cards },
   });
   const clientAccount = overrides.clientAccount === undefined ? "acct-me" : overrides.clientAccount;
 
@@ -75,6 +79,7 @@ function gameState(
                 LocationDefIdsAtEndOfGame: overrides.locationIds ?? ["Asgard", "Wakanda", "Xandar"],
                 GameResultAccountItems: [
                   {
+                    ...(overrides.itemAccount ? { AccountId: overrides.itemAccount } : {}),
                     IsWinner: local === 0,
                     IsLoser: local !== 0,
                     Conceded: false,
@@ -160,6 +165,50 @@ describe("parseGameState", () => {
     if (!res.ok) return;
     expect(res.game.opponentName).toBe("Rival#123");
     expect(res.game.board).toEqual(BOARD);
+  });
+
+  it("reports no account at all when nothing in the file names the client", () => {
+    // Who is local falls back to a deck-overlap guess, and that guess always answers 0 or 1,
+    // so it is confidently wrong whenever it is wrong. Reading the account id off
+    // players[guess] handed back the opponent's real account id, which the caller hashes to
+    // file the game and to record the uploader's display name against. Both slots must come
+    // back with nothing: the caller then hashes per tracker key, which cannot reach anybody
+    // else's identity.
+    for (const localSlot of [0, 1] as const) {
+      const res = parseGameState(JSON.stringify(gameState({ localSlot, clientAccount: null })));
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      expect(res.game.accountId).toBeNull();
+      expect(res.game.playerName).toBe("Me");
+    }
+  });
+
+  it("does not hand back the opponent's account when the guess is wrong", () => {
+    // A turn-one retreat leaves nothing on the board, so the deck-overlap guess has no signal
+    // and its tie goes to slot 0 while the uploader is in slot 1. The guess is simply wrong
+    // here, and reading the account id off players[guess] returned the opponent's real account
+    // id. The caller hashes that, so the game was filed under the opponent and a snap_names
+    // row recorded the uploader's display name against the opponent's account: the site's only
+    // rename evidence, feeding a merge that cannot be undone.
+    const res = parseGameState(
+      JSON.stringify(gameState({ localSlot: 1, clientAccount: null, emptyBoard: true })),
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.game.accountId).not.toBe("acct-opp");
+    expect(res.game.accountId).toBeNull();
+    expect(res.game.playerName).toBe("Me");
+  });
+
+  it("takes the account from the one result entry carrying a deck", () => {
+    // Only the local player's entry has a deck list, so when it names an account that is the
+    // uploader, whatever the overlap guess would have said about the slots.
+    const res = parseGameState(
+      JSON.stringify(gameState({ localSlot: 1, clientAccount: null, itemAccount: "acct-me" })),
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.game.accountId).toBe("acct-me");
   });
 
   it("keeps the board when the game doesn't name every location", () => {

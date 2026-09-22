@@ -10,6 +10,21 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-22",
+    changes: [
+      {
+        title: "Card data keeps updating when a variant is delisted",
+        detail:
+          "When Marvel Snap Zone dropped the last variant of a single card, the whole hourly import was refused and every card kept its old name, cost, power and ability text. That card now keeps the variants already saved for it and the rest of the import goes through as normal. A collapse of the whole variant catalog is still refused.",
+      },
+      {
+        title: "Games are never filed under your opponent",
+        detail:
+          "If a game file did not name your client, the tracker worked out who you were from your deck. On a game with an empty board, a turn one retreat for instance, that guess could land on your opponent, and the game and your display name were recorded against their account. Your uploads now stay on your own tracker key whenever the file does not say who you are.",
+      },
+    ],
+  },
+  {
     date: "2026-09-21",
     changes: [
       { title: "Explore card variants", detail: "Card wiki pages now include variant artwork, rarity and artist credits from Marvel Snap Zone. Released variants appear first, with unreleased previews tucked into their own section. The catalog updates with hourly card imports." },

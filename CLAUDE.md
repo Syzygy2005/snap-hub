@@ -154,6 +154,27 @@
   floated apart with a void between the name and the score. The Player column carries `w-full`
   to take the slack instead. Anything whose text can wrap in that table needs
   `whitespace-nowrap`; "over a day ago" wrapping made two rows half again as tall as the others.
+- `syncReference` runs its guards inside the transaction, so a `throw` rolls back the whole
+  import and, because it reverts `last_modified` too, the next run re-fetches the same body and
+  throws again: a rejection holds until the source publishes something different. That is the
+  intent for a catalog-wide collapse and was a disaster for a single card losing its variants,
+  which happens whenever the source delists one. That case now keeps the saved variants for
+  that card (`importing` in `sync.ts`) and lets the feed through; the catalog-wide 80% check
+  stays, measured on what arrived rather than after retention, so retention cannot hide it.
+  Everything downstream reads `importing`, not `records`: the payload, the change rows and the
+  `changed` check must agree, or `changed_at` moves for an edit that was never written. Before
+  adding a guard here, ask what the source doing this routinely would cost.
+- `parseGameState` emits `accountId` only from something that names the uploader: the header,
+  `ClientPlayerInfo.AccountId`, or the single result entry carrying a deck. Never from
+  `players[localIndex]`. That index falls back to a deck-overlap guess which always answers 0
+  or 1, so on a game with an empty board (a turn-one retreat) it ties to slot 0 and is simply
+  wrong, and `players[wrong].PlayerInfo.AccountId` is the opponent's real id. `record-game`
+  hashes it, so a wrong one files the game under them and writes a `snap_names` row pairing
+  their account with the uploader's name, because `playerName` comes from `ClientPlayerInfo`
+  and does not move with the guess. `snap_names` is the only rename evidence there is and it
+  feeds a one-way merge. No id is the safe answer: the caller then hashes per tracker key. The
+  header is honoured only when it names somebody the file contains, or a typo mints a fresh
+  identity for every bad value; `record-game.test.ts` covers that and caught it being missed.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

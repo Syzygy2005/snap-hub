@@ -76,30 +76,43 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
     }
     const records = parseReference(await response.json(), kind);
     const ids = records.map(r => r.def_id);
+    const idSet = new Set(ids);
     await db.transaction(async tx => {
       // Serialize imports and re-read the baseline: overlapping jobs cannot lose history.
       await tx.query(`select kind from reference_sync where kind = $1 for update`, [kind]);
       const [current] = await tx.query<{ ids: string[]; succeeded_at: Date | null }>(`select ids, succeeded_at from reference_sync where kind = $1`, [kind]);
-      if (current.ids.some(id => !ids.includes(id))) throw new Error("Reference feed dropped known IDs; retained last good data");
+      if (current.ids.some(id => !idSet.has(id))) throw new Error("Reference feed dropped known IDs; retained last good data");
       const table = kind === "cards" ? "cards" : "locations";
       const fields = kind === "cards" ? "name, cost, power, ability" : "name, ability";
       const old = await tx.query<{ def_id: string } & Record<string, unknown>>(`select * from ${table}`);
       const before = new Map(old.map(row => [row.def_id, row]));
-      if (!current.succeeded_at && old.some(row => (row.reference_status ?? row.status) === "released" && !ids.includes(row.def_id)))
+      if (!current.succeeded_at && old.some(row => (row.reference_status ?? row.status) === "released" && !idSet.has(row.def_id)))
         throw new Error("Reference baseline omitted existing IDs; retained last good data");
+      // One card arriving with no variants is a delisting at the source, not a reason to throw
+      // the import away. Refusing it rolled back names, costs, power, ability text and every
+      // other card with it, and since the rollback also reverted last_modified the next run
+      // re-fetched the same body and refused it again: one delisted variant froze all card data
+      // for good, with reference_sync.error making every wiki page read "Updates are delayed".
+      // Keep what is already saved for that card and let the rest of the feed through. A
+      // catalog-wide collapse is still refused, measured on what actually arrived so that
+      // retention cannot paper over it.
+      let importing = records;
       if (kind === "cards") {
         const previousVariants = old.reduce((total,row) => total + (Array.isArray(row.variants) ? row.variants.length : 0), 0);
         const importedVariants = records.reduce((total,row) => total + row.variants.length, 0);
-        if (importedVariants < previousVariants * .8 || records.some(row => {
+        if (importedVariants < previousVariants * .8) throw new Error("Suspicious drop in variant catalog; retained last good data");
+        importing = records.map(row => {
           const saved = before.get(row.def_id)?.variants;
-          return Array.isArray(saved) && saved.length > 0 && row.variants.length === 0;
-        })) throw new Error("Suspicious drop in variant catalog; retained last good data");
+          return Array.isArray(saved) && saved.length > 0 && row.variants.length === 0
+            ? { ...row, variants: saved as CardVariant[] }
+            : row;
+        });
       }
-      const released = records.filter(r => r.status === "released");
+      const released = importing.filter(r => r.status === "released");
       const previousReleased = old.filter(row => (row.reference_status ?? row.status) === "released").length;
       if (released.length < previousReleased * .8) throw new Error("Suspicious drop in released entries; retained last good data");
       const tracked = fields.split(", ");
-      const changes = records.flatMap(r => {
+      const changes = importing.flatMap(r => {
         const previous = before.get(r.def_id);
         if (!previous || !current.succeeded_at || !tracked.some(key => previous[key] !== r[key as keyof Imported])) return [];
         return [{ def_id: r.def_id, before_data: Object.fromEntries(tracked.map(key => [key, previous[key]])), after_data: Object.fromEntries(tracked.map(key => [key, r[key as keyof Imported]])) }];
@@ -107,7 +120,7 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
       await tx.query(`insert into reference_changes(kind, def_id, before_data, after_data)
         select $1, x.def_id, x.before_data, x.after_data from jsonb_to_recordset($2::text::jsonb) as x(def_id text, before_data jsonb, after_data jsonb)`, [kind, JSON.stringify(changes)]);
       // Send serialized JSON as text: postgres.js otherwise JSON-encodes the string again.
-      const payload = JSON.stringify(records);
+      const payload = JSON.stringify(importing);
       if (kind === "cards") {
         await tx.query(`insert into cards(def_id, name, cost, power, ability, art, series, tags, deckable, reference_status, variants)
           select def_id, name, cost, power, ability, art, series, tags, deckable, status, variants
@@ -116,7 +129,7 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
           ability=excluded.ability, art=excluded.art, series=excluded.series, tags=excluded.tags, deckable=excluded.deckable,
           reference_status=excluded.reference_status, variants=excluded.variants, updated_at=now()`, [payload]);
         await tx.query(`insert into meta(key,value,updated_at) values ('cards_synced',$1::text::jsonb,now())
-          on conflict(key) do update set value=excluded.value, updated_at=now()`, [JSON.stringify({ total: records.length })]);
+          on conflict(key) do update set value=excluded.value, updated_at=now()`, [JSON.stringify({ total: importing.length })]);
       } else {
         await tx.query(`insert into locations(def_id,name,ability,art,rarity,status)
           select def_id,name,ability,art,rarity,status from jsonb_to_recordset($1::text::jsonb) as x(def_id text,name text,ability text,art text,rarity text,status text)
@@ -124,7 +137,7 @@ export async function syncReference(kind: Kind): Promise<{ total: number; deckab
           rarity=excluded.rarity, status=excluded.status, updated_at=now()`, [payload]);
       }
       const compared = kind === "cards" ? ["name","cost","power","ability","art","series","tags","deckable","variants"] : ["name","ability","art","rarity","status"];
-      const changed = records.some(r => {
+      const changed = importing.some(r => {
         const previous = before.get(r.def_id);
         return !previous || compared.some(key => stableValue(previous[key]) !== stableValue(r[key as keyof Imported])) ||
           (kind === "cards" && previous.reference_status !== r.status);
