@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-22",
     changes: [
       {
+        title: "Retreat early and the board stops inventing locations",
+        detail:
+          "The second and third locations do not turn over until turns two and three. A game that ended before then still listed them, under the names the game uses internally, so a match you retreated from showed \"Reveal On 2\" beside a real location. A location nobody saw is now left blank.",
+      },
+      {
         title: "Your snaps are recorded again",
         detail:
           "Every game you snapped was stored as though you had not. The tracker looked for a field the game does not write, so win rate and cube rate for games where you raised the stakes were empty and those games counted as quiet ones instead. New uploads record it properly. Games uploaded before this cannot be corrected, because the file they came from is not kept.",

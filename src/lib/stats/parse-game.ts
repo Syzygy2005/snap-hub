@@ -182,14 +182,18 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   // Each location carries its own LocationDefId, so the name comes off the location the cards
   // came from rather than from lining two lists up by index. LocationDefIdsAtEndOfGame is the
   // fallback, and is still what a game with no locations in state reports.
-  const endOfGameIds = list(get(result, "LocationDefIdsAtEndOfGame")).map((l) =>
-    typeof l === "string" && l ? l : null,
-  );
+  //
+  // The second and third locations turn over on turns two and three, and a game that ends
+  // before then reports them as RevealOn2 and RevealOn3. Those are the game saying "nobody saw
+  // this", not location IDs: they match nothing in the locations table, so the site fell back
+  // to prettifying the ID and showed "Reveal On 2" next to a real location name, and stored
+  // them in tracked_games.locations where anything counting locations would count them. A
+  // location nobody saw is no location, which the board already knows how to draw.
+  const revealed = (id: unknown): string | null =>
+    typeof id === "string" && id && !/^RevealOn\d+$/.test(id) ? id : null;
+  const endOfGameIds = list(get(result, "LocationDefIdsAtEndOfGame")).map(revealed);
   const locationIds = locations.length
-    ? locations.map((loc, i) => {
-        const own = get(loc, "LocationDefId");
-        return typeof own === "string" && own ? own : (endOfGameIds[i] ?? null);
-      })
+    ? locations.map((loc, i) => revealed(get(loc, "LocationDefId")) ?? endOfGameIds[i] ?? null)
     : endOfGameIds;
   const board: BoardZone[] = zones.map((z, i) => ({
     location: locationIds[i] ?? null,
