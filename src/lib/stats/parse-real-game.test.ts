@@ -91,9 +91,14 @@ describe("a real finished game", () => {
     expect(g.opponentCards.filter((c) => g.deckCards.includes(c))).toEqual([]);
   });
 
-  it("records what the uploader drew and played, from their own client info", () => {
+  it("records what the uploader drew and played, and only theirs", () => {
     const g = parse();
     expect(g.cardsPlayed).toEqual(expect.arrayContaining(["ThanosFracturedFrontier", "Juggernaut"]));
     expect(g.cardsDrawn.length).toBeGreaterThan(0);
+    // "None" is the game's empty-slot marker and appeared in every real file's draw log. It is
+    // not a card and was being stored as one.
+    expect([...g.cardsDrawn, ...g.cardsPlayed]).not.toContain("None");
+    // Nothing the uploader played may be a card the opponent revealed.
+    expect(g.cardsPlayed.filter((c) => g.opponentCards.includes(c))).toEqual([]);
   });
 });

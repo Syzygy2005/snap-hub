@@ -5,11 +5,13 @@ import {
   cardStats,
   clusterDecks,
   cubeDiscipline,
+  locationRecords,
   summarize,
   type Archetype,
   type CardStat,
   type CubeDiscipline,
   type GameForStats,
+  type LocationRecord,
   type Summary,
 } from "./aggregate";
 import type { BoardZone } from "./parse-game";
@@ -29,6 +31,8 @@ interface GameRow {
   snapped: boolean;
   opponent_snapped: boolean;
   conceded: boolean;
+  /** False also means "recorded before this was captured", so count it, do not assume it. */
+  opponent_conceded: boolean;
   turns: number | null;
   deck_name: string | null;
   deck_cards: string[];
@@ -78,7 +82,7 @@ async function loadGames(opts: {
   const db = await getDb();
   return db.query<GameRow>(
     `select id, tracker_id, played_at, league, battle_mode, result, cubes, final_cube_value, snapped,
-            opponent_snapped, conceded, turns, deck_name, deck_cards, opponent_name, opponent_cards, cards_drawn,
+            opponent_snapped, conceded, opponent_conceded, turns, deck_name, deck_cards, opponent_name, opponent_cards, cards_drawn,
             cards_played, locations, board
        from tracked_games
       where not friendly
@@ -164,6 +168,8 @@ export interface PersonalGame {
   opponentSnapped: boolean;
   /** You retreated. The tracker has always recorded it; nothing read it until now. */
   conceded: boolean;
+  /** They retreated. */
+  opponentConceded: boolean;
   turns: number | null;
   deckName: string | null;
   deckCards: string[];
@@ -180,6 +186,8 @@ export interface PersonalStats {
   summary: Summary;
   /** Where the cubes go: raising, calling a raise, and walking away. */
   cubes: CubeDiscipline;
+  /** How often each location was won. Empty until games carry lane results. */
+  locations: LocationRecord[];
   decks: (Summary & { key: string; name: string; cards: string[]; lastPlayed: string })[];
   cubesOverTime: { at: string; total: number }[];
   recent: PersonalGame[];
@@ -201,6 +209,7 @@ export async function getPersonalStats(
       window,
       summary: summarize([]),
       cubes: cubeDiscipline([]),
+      locations: [],
       decks: [],
       cubesOverTime: [],
       recent: [],
@@ -244,6 +253,7 @@ export async function getPersonalStats(
     snapped: r.snapped,
     opponentSnapped: r.opponent_snapped,
     conceded: r.conceded,
+    opponentConceded: r.opponent_conceded,
     turns: r.turns,
     deckName: r.deck_name,
     deckCards: r.deck_cards,
@@ -275,8 +285,10 @@ export async function getPersonalStats(
         snapped: r.snapped,
         opponentSnapped: r.opponent_snapped,
         conceded: r.conceded,
+        opponentConceded: r.opponent_conceded,
       })),
     ),
+    locations: locationRecords(rows.map((r) => toBoard(r.board))),
     decks: [...decks.entries()]
       .map(([key, gs]) => ({
         key,

@@ -179,6 +179,7 @@ export interface CubeGame {
   snapped: boolean;
   opponentSnapped: boolean;
   conceded: boolean;
+  opponentConceded: boolean;
 }
 
 export interface Bleed {
@@ -200,10 +201,20 @@ export interface CubeDiscipline {
   /** Losses you sat through to the end. The gap between these two is the whole point. */
   playedOut: Bleed;
   retreatRate: number | null;
+  /** The mirror of retreatRate: how often they walked away from you. */
+  foldRate: number | null;
+  /** Cubes won from games they retreated out of, and how many of your wins those were. */
+  theyFolded: Bleed;
 }
 
 const bleed = (games: CubeGame[]): Bleed => {
   const cubes = games.reduce((n, g) => n + Math.max(0, -g.cubes), 0);
+  return { games: games.length, cubes, perGame: games.length ? cubes / games.length : null };
+};
+
+/** The same shape as bleed, counting cubes won rather than handed over. */
+const take = (games: CubeGame[]): Bleed => {
+  const cubes = games.reduce((n, g) => n + Math.max(0, g.cubes), 0);
   return { games: games.length, cubes, perGame: games.length ? cubes / games.length : null };
 };
 
@@ -227,5 +238,64 @@ export function cubeDiscipline(games: CubeGame[]): CubeDiscipline {
     retreated: bleed(losses.filter((g) => g.conceded)),
     playedOut: bleed(losses.filter((g) => !g.conceded)),
     retreatRate: games.length ? games.filter((g) => g.conceded).length / games.length : null,
+    // Recorded per side by the game and read by nothing until now. A game stored before the
+    // column existed reads as false, which is indistinguishable from an opponent who played
+    // on, so this understates on old history rather than inventing folds.
+    foldRate: games.length ? games.filter((g) => g.opponentConceded).length / games.length : null,
+    theyFolded: take(games.filter((g) => g.opponentConceded)),
   };
+}
+
+/** One location, across every game it turned up in. */
+export interface LocationRecord {
+  location: string;
+  /** Games this location appeared in AND the lane result was recorded. */
+  games: number;
+  /** Lanes won there. */
+  won: number;
+  winRate: number | null;
+  /** Average power committed here, over the lanes that recorded any. */
+  power: number | null;
+}
+
+/** The shape locationRecords needs, so aggregate stays clear of the parser's types. */
+interface LocationLane {
+  location: string | null;
+  won?: boolean;
+  powerPlayed?: number | null;
+}
+
+/**
+ * How often you win each location.
+ *
+ * The game records only that a location was won, never that it was lost, so a lane that is not
+ * won covers both losing it and tying it. Say "won" and "not won"; there is nothing in the file
+ * that separates the two.
+ *
+ * A zone stored before lane results were read has no `won` at all, and counting that as a loss
+ * would quietly drag every rate down, so those zones are skipped and `games` counts only what
+ * was actually recorded.
+ */
+export function locationRecords(boards: LocationLane[][]): LocationRecord[] {
+  const byId = new Map<string, { games: number; won: number; power: number; powered: number }>();
+  for (const zone of boards.flat()) {
+    if (!zone.location || typeof zone.won !== "boolean") continue;
+    const rec = byId.get(zone.location) ?? { games: 0, won: 0, power: 0, powered: 0 };
+    rec.games += 1;
+    if (zone.won) rec.won += 1;
+    if (typeof zone.powerPlayed === "number") {
+      rec.power += zone.powerPlayed;
+      rec.powered += 1;
+    }
+    byId.set(zone.location, rec);
+  }
+  return [...byId.entries()]
+    .map(([location, r]) => ({
+      location,
+      games: r.games,
+      won: r.won,
+      winRate: r.games ? r.won / r.games : null,
+      power: r.powered ? r.power / r.powered : null,
+    }))
+    .sort((a, b) => b.games - a.games || a.location.localeCompare(b.location));
 }

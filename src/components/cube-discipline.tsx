@@ -54,7 +54,7 @@ export function CubeDisciplinePanel({ cubes }: { cubes: CubeDiscipline }) {
         </tbody>
       </table>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Bleed
           label="When you retreat"
           games={retreated.games}
@@ -66,6 +66,15 @@ export function CubeDisciplinePanel({ cubes }: { cubes: CubeDiscipline }) {
           games={playedOut.games}
           perGame={playedOut.perGame}
           hint="losses you did not retreat from"
+        />
+        {/* The mirror of the first tile. The game has always recorded which side walked away;
+            only your own retreat was ever read. */}
+        <Bleed
+          gained
+          label="When they retreat"
+          games={cubes.theyFolded.games}
+          perGame={cubes.theyFolded.perGame}
+          hint={`${pct(cubes.foldRate, 0)} of your games`}
         />
       </div>
 
@@ -106,11 +115,14 @@ function Bleed({
   games,
   perGame,
   hint,
+  gained = false,
 }: {
   label: string;
   games: number;
   perGame: number | null;
   hint: string;
+  /** Cubes won rather than handed over, so the sign and the colour both flip. */
+  gained?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-line bg-surface/80 px-4 py-3">
@@ -120,7 +132,10 @@ function Bleed({
           <span className="text-muted">—</span>
         ) : (
           <>
-            <span className={games < LOW_SAMPLE ? "text-muted" : "text-down"}>−{perGame.toFixed(1)}</span>
+            <span className={games < LOW_SAMPLE ? "text-muted" : gained ? "text-up" : "text-down"}>
+              {gained ? "+" : "\u2212"}
+              {perGame.toFixed(1)}
+            </span>
             <span className="ml-1 text-sm font-medium text-faint">cubes each</span>
           </>
         )}

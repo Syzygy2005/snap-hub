@@ -17,6 +17,10 @@ function gameState(
     itemAccount?: string;
     /** No cards left on the board, as after a turn-one retreat. */
     emptyBoard?: boolean;
+    /** The uploader's own per-location record, in the game's left-to-right order. */
+    laneResults?: { IsWinner?: boolean; CardsPlayed?: number; PowerPlayed?: number }[];
+    /** The opponent walked away. */
+    opponentConceded?: boolean;
     /** Turns each side asked to raise the stakes on, as the real file records them. */
     mySnapTurns?: number[];
     theirSnapTurns?: number[];
@@ -57,8 +61,11 @@ function gameState(
       ClientPlayerInfo: {
         ...(clientAccount === null ? {} : { AccountId: clientAccount }),
         Name: "Me",
-        CardsDrawn: ["AntMan", "Thanos", "Wasp"],
-        CardsPlayed: { $id: "cp", $values: [{ CardDefId: "AntMan" }, { $ref: "card-thanos" }] },
+        // A real file's ClientPlayerInfo lists are an event log for BOTH players, interleaved
+        // with "None" placeholders. The uploader's own cards come off their result entry, so
+        // this carries the opponent's plays and a placeholder to prove neither is read.
+        CardsDrawn: ["None", "Quicksilver", "None"],
+        CardsPlayed: { $id: "cp", $values: [{ CardDefId: "Quicksilver" }, { CardDefId: "None" }] },
       },
       GameState: {
         $id: "2",
@@ -89,9 +96,13 @@ function gameState(
                 GameResultAccountItems: [
                   {
                     ...(overrides.itemAccount ? { AccountId: overrides.itemAccount } : {}),
+                    CardDefIdsDrawn: ["AntMan", "Thanos", "Wasp"],
+                    CardDefIdsPlayed: { $id: "cp2", $values: [{ CardDefId: "AntMan" }, { $ref: "card-thanos" }] },
+                    ...(overrides.laneResults ? { LocationResults: overrides.laneResults } : {}),
                     IsWinner: local === 0,
                     IsLoser: local !== 0,
                     Conceded: false,
+                    ...(overrides.opponentConceded ? { OpponentConceded: true } : {}),
                     ...(mySnapTurns.length ? { StakesRaised: true, StakesRaisedCount: mySnapTurns.length } : {}),
                     Deck: {
                       Id: "deck-1",
@@ -117,10 +128,11 @@ function gameState(
 const withBom = (v: unknown) => String.fromCharCode(0xfeff) + JSON.stringify(v);
 
 describe("parseGameState", () => {
+  const lane = { won: false, powerPlayed: null };
   const BOARD = [
-    { location: "Asgard", player: ["AntMan"], opponent: ["Hulk"] },
-    { location: "Wakanda", player: ["Thanos"], opponent: ["Sunspot"] },
-    { location: "Xandar", player: [], opponent: [] },
+    { location: "Asgard", player: ["AntMan"], opponent: ["Hulk"], ...lane },
+    { location: "Wakanda", player: ["Thanos"], opponent: ["Sunspot"], ...lane },
+    { location: "Xandar", player: [], opponent: [], ...lane },
   ];
 
   it("reads a win, following $ref pointers and $values arrays", () => {
@@ -137,6 +149,7 @@ describe("parseGameState", () => {
         cubes: 4,
         finalCubeValue: 4,
         conceded: false,
+        opponentConceded: false,
         snapped: true,
         opponentSnapped: true,
         turns: 6,
@@ -174,6 +187,43 @@ describe("parseGameState", () => {
     if (!res.ok) return;
     expect(res.game.opponentName).toBe("Rival#123");
     expect(res.game.board).toEqual(BOARD);
+  });
+
+  it("reads the uploader's own cards, not the log covering both players", () => {
+    // ClientPlayerInfo.CardsDrawn and CardsPlayed are an event log for the whole game: on a
+    // real file "cards you played" carried Domino, Jubilee, Wave, WarMachine and Infinaut, none
+    // of them in the uploader's deck, plus a "None" placeholder on every single game. The
+    // uploader's own cards are on their result entry. Here ClientPlayerInfo holds only the
+    // opponent's card and a placeholder, so reading it would be obvious.
+    const res = parseGameState(JSON.stringify(gameState()), "acct-me");
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.game.cardsDrawn).toEqual(["AntMan", "Thanos", "Wasp"]);
+    expect(res.game.cardsPlayed).toEqual(["AntMan", "Thanos"]);
+    expect([...res.game.cardsDrawn, ...res.game.cardsPlayed]).not.toContain("Quicksilver");
+    expect([...res.game.cardsDrawn, ...res.game.cardsPlayed]).not.toContain("None");
+  });
+
+  it("takes each location's result from the uploader's own record", () => {
+    const res = parseGameState(
+      JSON.stringify(gameState({ laneResults: [{ IsWinner: true, PowerPlayed: 12 }, { PowerPlayed: 4 }, {}] })),
+      "acct-me",
+    );
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.game.board.map((z) => ({ won: z.won, powerPlayed: z.powerPlayed }))).toEqual([
+      { won: true, powerPlayed: 12 },
+      // IsWinner is only written when true, so anything else is "not won", never "lost".
+      { won: false, powerPlayed: 4 },
+      { won: false, powerPlayed: null },
+    ]);
+  });
+
+  it("records whether the opponent retreated, separately from whether you did", () => {
+    const theirs = parseGameState(JSON.stringify(gameState({ opponentConceded: true })), "acct-me");
+    expect(theirs.ok && theirs.game).toMatchObject({ conceded: false, opponentConceded: true });
+    const neither = parseGameState(JSON.stringify(gameState()), "acct-me");
+    expect(neither.ok && neither.game).toMatchObject({ conceded: false, opponentConceded: false });
   });
 
   it("keeps the two sides of a snap apart", () => {
