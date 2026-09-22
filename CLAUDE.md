@@ -199,6 +199,15 @@
   `signedIn={postAs !== null}` from an optional `postAs`, and `undefined !== null` is true, so
   leaving it out showed the signed-in deck panel to anonymous visitors whose every request then
   401'd.
+- Who snapped is read from `StakesRaised` on the uploader's result entry and from each player's
+  `_turnsOnStakesRaiseRequested`. There is no `_stakesRaised` in a real GameState.json, which is
+  what the parser read, so `snapped` was false on every upload ever taken while
+  `opponentSnapped` read the real field and worked. The synthetic builder had invented
+  `_stakesRaised` to match the code, so the tests agreed with the bug: the third time this
+  family of error has landed, after the `_to` board and the uploader-as-own-opponent fallback.
+  `parse-real-game.test.ts` now asserts both sides, because the one real file is a snapped game
+  and nothing but the file settles a field name. Games recorded before the fix cannot be
+  repaired: `tracked_games` keeps no copy of the source file.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

@@ -17,20 +17,29 @@ function gameState(
     itemAccount?: string;
     /** No cards left on the board, as after a turn-one retreat. */
     emptyBoard?: boolean;
+    /** Turns each side asked to raise the stakes on, as the real file records them. */
+    mySnapTurns?: number[];
+    theirSnapTurns?: number[];
   } = {},
 ) {
   const local = overrides.localSlot ?? 0;
+  // The real file records a raise on the player, as _turnsOnStakesRaiseRequested, and on the
+  // uploader's own result entry, as StakesRaised. It has no _stakesRaised, which is what this
+  // builder used to invent and what the parser used to read, so both agreed the uploader never
+  // snapped. Same trap as the `_to` board: shape this after the game, not after the code.
+  const mySnapTurns = overrides.mySnapTurns ?? [4];
+  const theirSnapTurns = overrides.theirSnapTurns ?? [5];
   const me = {
     $id: "p-me",
     EntityId: 7,
     PlayerInfo: { $id: "pi-me", AccountId: "acct-me", Name: "Me" },
-    _turnsOnStakesRaiseRequested: [],
+    _turnsOnStakesRaiseRequested: mySnapTurns,
   };
   const opp = {
     $id: "p-opp",
     EntityId: 2,
     PlayerInfo: { $id: "pi-opp", AccountId: "acct-opp", Name: "Rival#123" },
-    _turnsOnStakesRaiseRequested: [5],
+    _turnsOnStakesRaiseRequested: theirSnapTurns,
   };
   const players = local === 0 ? [me, opp] : [opp, me];
   const named = overrides.namedLocations ?? true;
@@ -83,7 +92,7 @@ function gameState(
                     IsWinner: local === 0,
                     IsLoser: local !== 0,
                     Conceded: false,
-                    _stakesRaised: true,
+                    ...(mySnapTurns.length ? { StakesRaised: true, StakesRaisedCount: mySnapTurns.length } : {}),
                     Deck: {
                       Id: "deck-1",
                       Name: "My Thanos",
@@ -165,6 +174,26 @@ describe("parseGameState", () => {
     if (!res.ok) return;
     expect(res.game.opponentName).toBe("Rival#123");
     expect(res.game.board).toEqual(BOARD);
+  });
+
+  it("keeps the two sides of a snap apart", () => {
+    // Whether the uploader snapped and whether the opponent did are separate facts. snapped
+    // used to read a field that does not exist, so it was false on every real upload while
+    // opponentSnapped, which reads the real one, worked. That put every game the uploader
+    // snapped into the "neither of us snapped" bucket in the cube panel.
+    const theirs = parseGameState(JSON.stringify(gameState({ mySnapTurns: [], theirSnapTurns: [5] })), "acct-me");
+    expect(theirs.ok && theirs.game).toMatchObject({ snapped: false, opponentSnapped: true });
+
+    const mine = parseGameState(JSON.stringify(gameState({ mySnapTurns: [4], theirSnapTurns: [] })), "acct-me");
+    expect(mine.ok && mine.game).toMatchObject({ snapped: true, opponentSnapped: false });
+
+    const neither = parseGameState(JSON.stringify(gameState({ mySnapTurns: [], theirSnapTurns: [] })), "acct-me");
+    expect(neither.ok && neither.game).toMatchObject({ snapped: false, opponentSnapped: false });
+
+    // The uploader's raise is read even from the far slot, where players[localIndex] is the
+    // second entry rather than the first.
+    const far = parseGameState(JSON.stringify(gameState({ localSlot: 1, mySnapTurns: [4], theirSnapTurns: [] })), "acct-me");
+    expect(far.ok && far.game).toMatchObject({ snapped: true, opponentSnapped: false });
   });
 
   it("reports no account at all when nothing in the file names the client", () => {

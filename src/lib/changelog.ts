@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-22",
     changes: [
       {
+        title: "Your snaps are recorded again",
+        detail:
+          "Every game you snapped was stored as though you had not. The tracker looked for a field the game does not write, so win rate and cube rate for games where you raised the stakes were empty and those games counted as quiet ones instead. New uploads record it properly. Games uploaded before this cannot be corrected, because the file they came from is not kept.",
+      },
+      {
         title: "Card data keeps updating when a variant is delisted",
         detail:
           "When Marvel Snap Zone dropped the last variant of a single card, the whole hourly import was refused and every card kept its old name, cost, power and ability text. That card now keeps the variants already saved for it and the rest of the import goes through as normal. A collapse of the whole variant catalog is still refused.",

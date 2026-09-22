@@ -58,6 +58,18 @@ describe("a real finished game", () => {
     expect(parse("nobody-at-all").opponentName).toBe("OPPONENT");
   });
 
+  it("sees that the uploader snapped, and that the opponent did not", () => {
+    // This game is a snap: _players[1] is the uploader and its _turnsOnStakesRaiseRequested is
+    // [4], the result entry carries StakesRaised: true under the uploader's own AccountId, and
+    // the opponent's turn list is empty. The parser read item._stakesRaised, a field that
+    // appears nowhere in a real file, so every upload ever recorded said snapped: false.
+    const g = parse();
+    expect(g.snapped).toBe(true);
+    expect(g.opponentSnapped).toBe(false);
+    // The uploader sits behind a $ref here, so this also covers reading the flag through one.
+    expect(parse("1105e9c9-d183-9f67-6073-8e62d3142ca1").snapped).toBe(true);
+  });
+
   it("gives the board back per location, with the two sides split by card owner", () => {
     const g = parse();
     expect(g.board.map((z) => z.location)).toEqual(["Xandar", "Nidavellir", "CaveOfTheDragon"]);
