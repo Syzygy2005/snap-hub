@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 const GROUPS = [
-  { href: "/wiki", label: "Wiki", children: [["/wiki", "Overview", "Start at the reference desk"], ["/wiki/cards", "Cards", "Find costs, power and abilities"], ["/wiki/locations", "Locations", "Explore effects and rarities"], ["/wiki/history", "History", "Browse official patch notes"]] },
+  { href: "/wiki", label: "Wiki", children: [["/wiki", "Overview", "Explore the reference and guides"], ["/wiki/cards", "Cards", "Find costs, power and abilities"], ["/wiki/locations", "Locations", "Explore effects and rarities"], ["/wiki/variants", "Variants", "Browse artwork by artist"], ["/wiki/basics", "How to play", "Learn turns, snaps and retreats"], ["/wiki/game-modes", "Game modes", "Ranked, Conquest and events"], ["/wiki/terminology", "Terminology", "Understand SNAP shorthand"], ["/wiki/collection", "Collection", "Upgrades, variants and cosmetics"], ["/wiki/history", "History", "Browse official patch notes"]] },
   { href: "/leaderboard", label: "Leaderboard", children: [["/leaderboard", "Rankings", "See the Infinite leaderboard"], ["/leaderboard/movers", "Movers", "Follow the biggest rank changes"], ["/players", "Find a player", "Search player profiles"]] },
   { href: "/decks", label: "Decks", children: [["/decks", "Explore decks", "Discover community builds"], ["/decks/builder", "Deck Builder", "Create and refine your next deck"]] },
   { href: "/stats", label: "Stats", children: [["/stats", "Community stats", "Explore the shared game data"], ["/stats/me", "My Stats", "Review your own games"], ["/stats/tracker", "Tracker setup", "Connect your PC game tracker"]] },
@@ -61,7 +61,7 @@ function Navigation({ mobile, closeMobile }: { mobile?: boolean; closeMobile: ()
         </div>
         {group.children.length > 0 && <div id={panelId} inert={!shown} className={`nav-disclosure ${mobile ? "" : "absolute left-0 top-full z-50 w-72 pt-2"}`}>
           <div className="overflow-hidden">
-            <div className={`flex flex-col gap-1 rounded-lg border border-line p-2 ${mobile ? "my-1 bg-surface/50" : "bg-bg shadow-xl"}`}>
+            <div className={`flex max-h-[65dvh] flex-col gap-1 overflow-y-auto rounded-lg border border-line p-2 ${mobile ? "my-1 bg-surface/50" : "bg-bg shadow-xl"}`}>
               {group.children.map(([href, label, description]) => <Link key={href} href={href} aria-label={label}
                 aria-current={pathname === href ? "page" : undefined}
                 onClick={() => { close(); closeMobile(); }}

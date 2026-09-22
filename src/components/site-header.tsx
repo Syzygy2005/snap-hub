@@ -22,15 +22,16 @@ export async function SiteHeader() {
 
         <NavLinks />
 
-        <form action="/players" className="order-last w-full sm:ml-auto sm:w-44 xl:order-none">
-          <label className="sr-only" htmlFor="player-search">
-            Search players
+        <form action="/search" role="search" aria-label="Site search" className="order-last w-full sm:ml-auto sm:w-44 xl:order-none">
+          <label className="sr-only" htmlFor="site-search">
+            Search Snap Hub
           </label>
           <input
-            id="player-search"
+            id="site-search"
             name="q"
             type="search"
-            placeholder="Search players…"
+            maxLength={100}
+            placeholder="Search Snap Hub…"
             className="w-full rounded-md border border-line bg-surface px-3 py-1.5 text-base text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:w-44 sm:text-sm"
           />
         </form>

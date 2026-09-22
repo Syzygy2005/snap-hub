@@ -7,13 +7,19 @@ import { filterEntries, pageHref, value } from "@/lib/wiki/filter";
 import { WikiArt } from "@/components/wiki-art";
 import { AbilityText } from "@/components/cards";
 import { ReferenceStatus } from "@/components/wiki-reference";
+import { WikiGuide } from "@/components/wiki-guide";
+import { guideBySlug } from "@/lib/wiki/guides";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: PageProps<"/wiki/[kind]">): Promise<Metadata> {
   const {kind} = await params;
+  const guide = guideBySlug(kind);
+  if (guide) return {title:guide.title,description:guide.summary,alternates:{canonical:`/wiki/${kind}`}};
   return { title: kind === "cards" ? "Card library" : "Location atlas", alternates: { canonical: `/wiki/${kind}` } };
 }
 export default async function Gallery(props: PageProps<"/wiki/[kind]">) {
   const {kind} = await props.params;
+  const guide = guideBySlug(kind);
+  if (guide) return <WikiGuide guide={guide} />;
   if (kind !== "cards" && kind !== "locations") notFound();
   const sp = await props.searchParams;
   const all = await entries(kind);
