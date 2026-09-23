@@ -253,6 +253,12 @@
   been checked against a real file: both real fixtures are ranked and read false, which is the
   direction that matters, since a flag reading true on a ranked game would hide it. A battle
   game read as ranked costs a slightly wrong number; that was the owner's call to accept.
+- `EnergySpent` on the result entry is deliberately left unread. It looks like the makings of a
+  "wasted energy" stat, and that stat would be wrong: plenty of decks are built to leave energy
+  unspent, and several cards pay off for it, so a number that counts leftover energy as waste
+  would mark correct play as a mistake. Rejected on the owner's knowledge of high Infinite play,
+  so do not re-propose it. It is the same trap `cubeDiscipline` avoids: one figure applied to
+  every game alike, when the right play depends on the deck.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
