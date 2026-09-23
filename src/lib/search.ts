@@ -1,7 +1,9 @@
+import { artistHref } from "@/lib/wiki/variant-key";
+import { LEARNING_LINKS } from "@/lib/wiki/archetypes";
 import { getDb } from "@/lib/db";
 import { likePattern, listDecks } from "@/lib/decks/queries";
 import { searchPlayers } from "@/lib/leaderboard/queries";
-import { browseVariants, variantHref } from "@/lib/wiki/variant-browser";
+import { artists, browseVariants, variantHref } from "@/lib/wiki/variant-browser";
 import { searchGuides } from "@/lib/wiki/guides";
 
 export interface SiteResult { title: string; description: string; href: string; art?: string }
@@ -36,7 +38,8 @@ export async function searchSite(input: string): Promise<SearchGroup[]> {
         description:[v.rarity,...[...new Set(v.artists.map(a=>a.name))]].filter(Boolean).join(" · "),
       }));
     }},
-    {title:"Wiki guides",run:async()=>searchGuides(q)},
+    {title:"Artists",more:"/wiki/artists?"+query,run:async()=>(await artists(q)).slice(0,LIMIT+1).map(a=>({title:a.name,description:a.roles.join(" · ")+" · "+a.total+" credited variants",href:artistHref(a.name),art:a.art}))},
+    {title:"Wiki guides",run:async()=>[...searchGuides(q),...LEARNING_LINKS.filter(g=>(g.title+" "+g.description).toLowerCase().includes(q.toLowerCase()))]},
     {title:"Players",more:`/players?${query}`,run:async()=>(await searchPlayers(q,LIMIT+1)).map(p=>({title:p.name,href:`/players/${p.id}`,description:p.latestRank ? `${p.onBoard ? "Rank" : "Last seen at rank"} #${p.latestRank} · ${p.latestSeason}` : "Player profile"}))},
     {title:"Public decks",more:`/decks?${query}`,run:async()=>(await listDecks({q,limit:LIMIT+1})).map(d=>({title:d.name,href:`/decks/${d.id}`,description:d.owner ? `Shared by ${d.owner}` : "Community deck"}))},
   ];

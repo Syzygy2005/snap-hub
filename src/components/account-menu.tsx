@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { Account } from "@/lib/auth/session";
 import { avatarUrl } from "@/lib/auth/discord";
@@ -37,7 +38,7 @@ export function AccountMenu({ account, enabled }: { account: Account | null; ena
           {account.username.slice(0, 1).toUpperCase()}
         </span>
       )}
-      <span className="max-w-24 truncate text-sm font-medium">{account.username}</span>
+      <Link href="/wiki/my-collection" title="My variant collection" className="max-w-24 truncate text-sm font-medium hover:text-accent">{account.username}</Link>
       <button
         type="button"
         disabled={busy}

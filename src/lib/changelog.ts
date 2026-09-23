@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-23",
     changes: [
+      { title: "A wiki worth getting lost in", detail: "Daily artwork spotlights, artist galleries, side-by-side variant comparisons and connected card discoveries bring the collection to life. Sign in to mark variants Owned or Wanted and optionally share a revocable wishlist link. Six archetype guides and an interactive priority, snapping and ability lab help you plan your next game." },
       {
         title: "Battle mode stays out of your ranked numbers",
         detail:

@@ -434,7 +434,7 @@ The wiki warns after three hours without success (or immediately after a failed 
 Upstream publication time plus scheduler delay determines patch freshness; this is not an official
 real-time game API. Datamined/unreleased entries are hidden from the public reference and builder.
 History starts at the initial baseline, records observed name/stat/effect changes, and makes no
-claim to be a complete historical patch archive. Authored strategy guides are deferred.
+claim to be a complete historical patch archive. Authored strategy guides are reviewed separately.
 
 Data credit: [Marvel Snap Zone locations](https://marvelsnapzone.com/locations/), including
 source-reported rarity categories (not inferred spawn percentages). The Jade League rebrand applies the jade/forest/cream identity, Manrope headings and Inter body text.
@@ -487,3 +487,39 @@ No article bodies are redistributed. The page displays its indexing date.
 Reference bulk writes cast serialized JSON through text before jsonb to avoid double encoding in
 postgres.js. CI runs the reference sync suite against PostgreSQL 17 as well as PGlite.
 The hourly reference workflow reports per-source failure categories and retains the last good data.
+
+### Artist discovery, personal collections and learning guides
+
+The wiki homepage rotates deterministic daily card, location and artist spotlights (UTC).
+Artist pages aggregate exact credited names across sketch, ink and color; one artwork counts
+once per artist even when several roles are credited. Names are source credits, not verified
+identities or biographies. Galleries retain explicit released/preview filters and pagination.
+Two selected variants can be compared side by side; the selection persists in sessionStorage
+across filtering and reloads. Comparison URLs contain only public catalog identifiers.
+
+Discord accounts can manually mark variants Owned or Wanted. This is a checklist, not an
+in-game inventory sync. The owner always comes from the server session. Previews may be Wanted,
+but cannot be newly marked Owned. Removed source items remain removable from saved lists.
+The idempotent runtime schema adds account_variants and wishlist_shares; no manual migration
+or new service is required. Restart the server after local schema edits.
+
+Collections are private. Sharing is explicitly enabled, exposing only the account display name
+and current Wanted list through an unguessable URL. No Owned list or account identifier is
+returned. Pages and APIs are dynamic; private API responses use no-store, and wishlist pages
+are noindex and excluded from the sitemap. Disabling sharing deletes the token; enabling again
+creates a new one. Collection and sharing mutations check Origin when supplied.
+
+Six editorial archetype guides explain core roles, phased plans, substitutions and common
+mistakes. They show live imported card text and do not claim current competitive rankings.
+The interaction lab demonstrates ordinary board priority, final-turn Ranked cube stakes and
+Cosmo versus On Reveal/Activate. Assumptions and official sources appear beside each example;
+it is not a complete game simulator. Guides are manually reviewed and dated.
+Related references use shared mechanic wording, not inferred synergies. Public artists and
+learning pages appear in search and the sitemap; private lists never do.
+
+Sources remain the existing [Marvel Snap Zone catalog](https://marvelsnapzone.com/cards/),
+[official Help Center](https://marvelsnap.helpshift.com/hc/en/3-marvel-snap/) and
+[Second Dinner's Activate guide](https://marvelsnap.com/our-first-brand-new-ability-activate/).
+Collection isolation, catalog changes and share-token revocation are tested against PGlite
+and PostgreSQL in CI. Browser tests cover the public discovery and signed-in sharing flows
+at desktop/mobile sizes, plus interactive guide updates with reduced motion.

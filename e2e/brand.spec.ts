@@ -28,7 +28,7 @@ test("new identity stays usable on home, menus and share assets", async ({page,i
 test("artwork motion resets and respects touch and reduced motion",async({page,isMobile})=>{
   await page.goto("/wiki/cards/TestCard1");
   const art=page.locator(".brand-art").filter({has:page.getByRole("img",{name:"Test Card 1",exact:true})});
-  const title=page.getByRole("heading",{name:"Test Card 1",exact:true});
+  const title=page.getByRole("heading",{name:"Test Card 1",exact:true,level:1});
   const before=await title.boundingBox();
   if (!isMobile) {
     await art.hover({position:{x:15,y:15}});

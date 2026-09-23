@@ -45,3 +45,23 @@ export async function variantFacets(status: string) {
 export function variantHref(card: string, id: string) {
   return `/wiki/cards/${encodeURIComponent(card)}#variant-${encodeURIComponent(id)}`;
 }
+
+export async function findVariant(card: string, id: string): Promise<VariantEntry | null> {
+  const [row] = await (await getDb()).query<VariantEntry>(`select c.def_id as card_id,c.name as card_name,v as variant ${FROM} and c.def_id=$1 and v->>'id'=$2 limit 1`,[card,id]);
+  return row ?? null;
+}
+
+export interface ArtistSummary { name: string; total: number; released: number; roles: string[]; art: string }
+export async function artists(q = ""): Promise<ArtistSummary[]> {
+  // DISTINCT counts a piece once even when an artist has multiple roles.
+  return (await getDb()).query<ArtistSummary>(`with credits as (
+    select c.def_id,v->>'id' as variant_id,v->>'status' as status,v->>'art' as art,
+      a->>'name' as name,a->>'role' as role
+    from cards c cross join lateral jsonb_array_elements(case when jsonb_typeof(c.variants)='array' then c.variants else '[]'::jsonb end) v
+    cross join lateral jsonb_array_elements(v->'artists') a where c.reference_status='released'
+  ) select name,count(distinct (def_id,variant_id))::int as total,
+      count(distinct (def_id,variant_id)) filter(where status='released')::int as released,
+      array_agg(distinct role order by role) as roles,
+      (array_agg(art order by (status='released') desc,def_id,variant_id))[1] as art
+    from credits where lower(name) like $1 group by name order by lower(name),name`,[likePattern(q.trim().slice(0,100).toLowerCase())]);
+}

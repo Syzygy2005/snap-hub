@@ -265,4 +265,16 @@ create table if not exists reference_changes (
   before_data jsonb not null, after_data jsonb not null, detected_at timestamptz not null default now()
 );
 create index if not exists reference_changes_entry on reference_changes(kind, def_id, detected_at desc);
+-- Manual cosmetic collection: catalog changes never delete saved choices.
+create table if not exists account_variants (
+  owner_id int not null references accounts(id) on delete cascade,
+  card_id text not null, variant_id text not null,
+  status text not null check (status in ('owned','wanted')),
+  updated_at timestamptz not null default now(),
+  primary key(owner_id,card_id,variant_id)
+);
+create table if not exists wishlist_shares (
+  owner_id int primary key references accounts(id) on delete cascade,
+  token text not null unique
+);
 `;
