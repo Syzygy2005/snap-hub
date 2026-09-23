@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader, EmptyState } from "@/components/ui";
-import { WikiArt } from "@/components/wiki-art";
+import { VariantGrid } from "@/components/variant-grid";
 import { ReferenceStatus } from "@/components/wiki-reference";
-import { browseVariants, variantFacets, variantHref } from "@/lib/wiki/variant-browser";
+import { browseVariants, variantFacets } from "@/lib/wiki/variant-browser";
 import { pageHref, value } from "@/lib/wiki/filter";
 
 export const dynamic = "force-dynamic";
@@ -28,15 +28,7 @@ export default async function VariantsPage(props: PageProps<"/wiki/variants">) {
     </form>
     {result.status === "unreleased" && <p className="mb-4 rounded border border-line p-4 text-sm text-accent">Unreleased previews can change. Dates are source metadata, not confirmed release promises.</p>}
     <p role="status" className="mb-4 text-sm text-muted">{result.total} variants · Page {result.page} of {result.pages}</p>
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">{result.items.map(({card_id,card_name,variant:v}) => <article key={`${card_id}:${v.id}`} className="min-w-0 rounded-xl border border-line bg-surface/40 p-3">
-      <a href={v.art} target="_blank" rel="noreferrer" aria-label={`View ${card_name} variant ${v.id} artwork`}><WikiArt name={`${card_name} variant ${v.id}`} art={v.art} /></a>
-      <h2 className="mt-3 text-sm font-bold"><Link className="hover:text-accent" href={result.status === "released" ? variantHref(card_id,v.id) : `/wiki/cards/${encodeURIComponent(card_id)}`}>{card_name}</Link></h2>
-      <p className="mt-1 text-xs text-muted">Variant {v.order || v.id}</p>
-      <p className="mt-1 text-xs text-accent">{v.rarity || "Category not listed"}</p>
-      <dl className="mt-3 space-y-1 break-words text-xs text-muted">{v.artists.map(a => <div key={a.role}><dt className="inline">{a.role}: </dt><dd className="inline"><Link className="underline hover:text-accent" href={`/wiki/variants?${new URLSearchParams({artist:a.name,status:result.status})}`}>{a.name}</Link></dd></div>)}</dl>
-      {!v.artists.length && <p className="mt-3 text-xs text-muted">Artist not listed</p>}
-      {v.releaseDate && <p className="mt-2 text-xs text-muted">Source date: <time dateTime={v.releaseDate}>{v.releaseDate}</time></p>}
-    </article>)}</div>
+    <VariantGrid items={result.items} />
     {!result.total && <EmptyState title="No variants found"><p>Try another artist or fewer filters. The catalog fills after the first successful card import.</p><Link className="mt-3 inline-block text-accent underline" href="/wiki/variants">Clear filters</Link></EmptyState>}
     <nav aria-label="Variant pages" className="my-8 flex justify-between text-sm text-accent">{result.page>1 ? <Link href={pageHref("/wiki/variants",sp,result.page-1)}>← Previous</Link> : <span />}{result.page<result.pages && <Link href={pageHref("/wiki/variants",sp,result.page+1)}>Next →</Link>}</nav>
     <ReferenceStatus kind="cards" />

@@ -1,3 +1,4 @@
+import { WikiDiscovery } from "@/components/wiki-discovery";
 import { cache, Suspense } from "react";
 import { LocationRate } from "@/components/location-rate";
 import { CardVariants } from "@/components/card-variants";
@@ -49,6 +50,7 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
       {e.tags.length > 0 && <p className="mt-4 text-sm text-muted">Source tags: {e.tags.join(", ")}</p>}
     </section>
     <ReferenceStatus kind={kind} />
+    <WikiDiscovery id={id} ability={e.ability} />
     {e.def_id.startsWith("SnapZoneLocation_") && <p className="text-xs text-muted">This source entry has no game identifier. Its reference link uses the provider’s stable ID; match-history linking is unavailable.</p>}
     {kind === "cards" && <section className="my-8"><h2 className="mb-3 text-xl font-bold">Public decks with {e.name}</h2>{decks.length ? <div className="flex flex-wrap gap-3">{decks.map(d => <Link className="brand-tile rounded border border-line bg-surface p-4" href={`/decks/${d.id}`} key={d.id}>{d.name}</Link>)}</div> : <p className="text-sm text-muted">No public decks found yet.</p>}</section>}
     {kind === "cards" && <CardVariants id={id} name={e.name} />}

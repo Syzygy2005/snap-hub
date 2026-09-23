@@ -1,0 +1,6 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { PageHeader } from "@/components/ui";
+import { InteractionLab } from "@/components/interaction-lab";
+export const metadata:Metadata={title:"SNAP interaction lab",description:"Interactive board examples for reveal priority, cube stakes and Activate versus On Reveal.",alternates:{canonical:"/wiki/interactions"}};
+export default function InteractionsPage(){return <><PageHeader title="Make the next move make sense." subtitle="Small, hands-on examples for the rules that change a game. Adjust the board, check the stakes and read the result."/><p className="mb-5 text-xs text-muted">Reviewed September 22, 2026. Simplified teaching examples, not a full game simulator.</p><nav aria-label="Lab examples" className="mb-8 flex flex-wrap gap-4 text-sm text-accent"><a href="#priority">Reveal priority ↓</a><a href="#snapping">Cube stakes ↓</a><a href="#abilities">Ability interactions ↓</a></nav><InteractionLab/><div className="mt-8 flex flex-wrap gap-5 text-sm text-accent"><Link href="/wiki/terminology">Look up a term →</Link><Link href="/wiki/archetypes">Find a deck game plan →</Link><Link href="/wiki/basics">Revisit the basics →</Link></div></>;}

@@ -34,10 +34,13 @@ describe("where PGlite stores its files", () => {
 
   it("falls back to memory and warns when the directory cannot be made", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    // /dev/null is not a directory, so mkdir fails immediately with ENOTDIR. A path under a
-    // read-only mount would do as well, but not every box this runs on has the same ones, and
-    // /proc turned out to hang rather than fail in at least one container.
-    vi.stubEnv("PGLITE_DIR", "/dev/null/snaphub/pglite");
+    // A regular file makes mkdir fail on both Unix and Windows.
+    const { mkdtempSync,writeFileSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const file = join(mkdtempSync(join(tmpdir(), "snaphub-blocked-")), "file");
+    writeFileSync(file, "not a directory");
+    vi.stubEnv("PGLITE_DIR", join(file, "pglite"));
     expect(await load()).toBe("memory://");
     expect(warn).toHaveBeenCalledOnce();
     expect(warn.mock.calls[0][0]).toContain("in-memory");
