@@ -8,14 +8,13 @@ export async function WikiSpotlight() {
   const day=new Date().toISOString().slice(0,10),db=await getDb();
   const [cards,locations,credits]=await Promise.all([
     db.query<{def_id:string;name:string;art:string;ability:string}>("select def_id,name,art,ability from cards where reference_status='released' and deckable=true order by md5(def_id||$1) limit 1",[day]),
-    db.query<{def_id:string;name:string;art:string;ability:string}>("select def_id,name,art,ability from locations where status='released' order by md5(def_id||$1) limit 1",[day]),artists()
+    db.query<{def_id:string;name:string;art:string;ability:string}>("select def_id,name,art,ability from locations where status='released' order by md5(def_id||$1) limit 1",[day]),artists({seed:day,limit:1})
   ]);
-  const artist=credits.length?credits[Math.floor(Date.parse(day)/86400000)%credits.length]:null;
+  const artist=credits[0] ?? null;
   return <section aria-labelledby="spotlight-heading" className="mb-9">
     <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2"><h2 id="spotlight-heading" className="font-display text-2xl font-bold">A little discovery, every day.</h2><span className="text-xs text-muted">Daily picks · {day} UTC</span></div>
     <div className="grid gap-4 md:grid-cols-3">{[{item:cards[0],kind:"cards",label:"Card of the day"},{item:locations[0],kind:"locations",label:"Location spotlight"}].map(({item,kind,label})=><article key={kind} className="overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-surface to-bg p-5"><p className="text-xs font-bold uppercase tracking-widest text-accent">{label}</p>{item?<><Link href={`/wiki/${kind}/${encodeURIComponent(item.def_id)}`}><div className="mx-auto max-w-60"><WikiArt featured name={item.name} art={item.art}/></div><h3 className="mt-3 font-display text-2xl font-bold">{item.name} →</h3></Link><p className="mt-3 text-sm leading-relaxed text-muted"><AbilityText text={item.ability}/></p></>:<p className="my-8 text-sm text-muted">Today’s reference pick will appear after the catalog’s first import.</p>}</article>)}
       <article className="overflow-hidden rounded-2xl border border-line bg-gradient-to-b from-surface to-bg p-5"><p className="text-xs font-bold uppercase tracking-widest text-accent">Artist spotlight</p>{artist?<><Link href={artistHref(artist.name)}><div className="mx-auto max-w-60"><WikiArt featured name={`Artwork credited to ${artist.name}`} art={artist.art}/></div><h3 className="mt-3 break-words font-display text-2xl font-bold">{artist.name} →</h3></Link><p className="mt-3 text-sm text-muted">{artist.roles.join(" · ")} · {artist.total} credited variants</p></>:<p className="my-8 text-sm text-muted">Artist spotlights arrive with the variant catalog.</p>}</article>
     </div>
-    <Link href="/wiki/interactions#priority" className="brand-tile mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-accent/30 bg-surface p-5"><div><p className="text-xs uppercase tracking-widest text-accent">Learn something in a minute</p><h3 className="mt-2 text-lg font-bold">Can you tell who reveals first?</h3><p className="mt-2 text-sm text-muted">Change the board. Watch priority shift. Make your next play with a plan.</p></div><span className="font-bold text-accent">Try the board →</span></Link>
   </section>;
 }

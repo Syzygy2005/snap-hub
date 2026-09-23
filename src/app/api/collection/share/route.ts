@@ -1,6 +1,6 @@
 import { currentAccount } from "@/lib/auth/session";
 import { disableShare, enableShare } from "@/lib/wiki/collection";
-import { privateJson, sameOrigin } from "@/lib/wiki/collection-http";
+import { privateJson, sameOrigin } from "@/lib/http";
 
 async function change(request: Request, enabled: boolean) {
   if (!sameOrigin(request)) return privateJson({error:"Please use this site's collection controls."},403);

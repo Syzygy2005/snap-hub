@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { getDb } from "@/lib/db";
 
 export const SESSION_COOKIE = "snaphub_session";
@@ -80,11 +81,15 @@ export async function pruneSessions(now = new Date()): Promise<void> {
   await db.query(`delete from sessions where expires_at <= $1`, [now]);
 }
 
-/** Who is signed in, for Server Components and route handlers. */
-export async function currentAccount(): Promise<Account | null> {
+/**
+ * Who is signed in, for Server Components and route handlers. Cached for the request, since the
+ * site header and the wiki layout both ask on every wiki page and it is the same answer.
+ * Outside a render (a route handler) React does not cache and this simply runs.
+ */
+export const currentAccount = cache(async (): Promise<Account | null> => {
   const store = await cookies();
   return accountForToken(store.get(SESSION_COOKIE)?.value);
-}
+});
 
 /** Secure cookies are dropped over plain http, which is how the site runs locally. */
 export const cookieOptions = (origin: string) =>

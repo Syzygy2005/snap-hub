@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-const labels: Record<string,string> = {wiki:"Wiki",cards:"Cards",locations:"Locations",variants:"Variants",artists:"Artists",archetypes:"Archetypes",interactions:"Interaction lab",compare:"Compare", "my-collection":"My collection","game-modes":"Game modes",basics:"How to play",terminology:"Terminology",collection:"Collection guide",history:"History"};
+import { WIKI_CRUMBS as labels } from "@/lib/wiki/sections";
 export function WikiBreadcrumbs() {
   const path=usePathname().split("/").filter(Boolean);
   if(path.length<2)return null;

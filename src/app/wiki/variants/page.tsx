@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Pager } from "@/components/pager";
 import { PageHeader, EmptyState } from "@/components/ui";
 import { VariantGrid } from "@/components/variant-grid";
 import { ReferenceStatus } from "@/components/wiki-reference";
 import { browseVariants, variantFacets } from "@/lib/wiki/variant-browser";
-import { pageHref, value } from "@/lib/wiki/filter";
+import { value } from "@/lib/wiki/filter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Variant gallery", description: "Browse MARVEL SNAP variant artwork by card, artist and rarity.", alternates: { canonical: "/wiki/variants" } };
@@ -30,7 +31,7 @@ export default async function VariantsPage(props: PageProps<"/wiki/variants">) {
     <p role="status" className="mb-4 text-sm text-muted">{result.total} variants · Page {result.page} of {result.pages}</p>
     <VariantGrid items={result.items} />
     {!result.total && <EmptyState title="No variants found"><p>Try another artist or fewer filters. The catalog fills after the first successful card import.</p><Link className="mt-3 inline-block text-accent underline" href="/wiki/variants">Clear filters</Link></EmptyState>}
-    <nav aria-label="Variant pages" className="my-8 flex justify-between text-sm text-accent">{result.page>1 ? <Link href={pageHref("/wiki/variants",sp,result.page-1)}>← Previous</Link> : <span />}{result.page<result.pages && <Link href={pageHref("/wiki/variants",sp,result.page+1)}>Next →</Link>}</nav>
+    <Pager label="Variant pages" base={"/wiki/variants"} sp={sp} page={result.page} pages={result.pages}/>
     <ReferenceStatus kind="cards" />
   </>;
 }

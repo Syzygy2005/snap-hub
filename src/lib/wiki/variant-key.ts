@@ -6,3 +6,5 @@ export function parseVariantKey(key: string): [string,string] | null {
   } catch { return null; }
 }
 export const artistHref = (name: string) => `/wiki/artists/${encodeURIComponent(name)}`;
+export const variantHref = (card: string, id: string) =>
+  `/wiki/cards/${encodeURIComponent(card)}#variant-${encodeURIComponent(id)}`;

@@ -12,7 +12,12 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-23",
     changes: [
-      { title: "A wiki worth getting lost in", detail: "Daily artwork spotlights, artist galleries, side-by-side variant comparisons and connected card discoveries bring the collection to life. Sign in to mark variants Owned or Wanted and optionally share a revocable wishlist link. Six archetype guides and an interactive priority, snapping and ability lab help you plan your next game." },
+      {
+        title: "Wiki fixes: better related cards, working artist pages",
+        detail:
+          "Keep exploring on a card page no longer treats \"remove\" as a Move card or \"withdraw\" as Draw, and it now points to the Bounce and Zoo guides when a card fits them. Artists with only unreleased previews open on those previews instead of an empty gallery. Card pages show their stats straight away while variants load, and one failed section no longer takes the whole page down. Save and share errors read as plain messages.",
+      },
+      { title: "A wiki worth getting lost in", detail: "Daily artwork spotlights, artist galleries, side-by-side variant comparisons and connected card discoveries bring the collection to life. Sign in to mark variants Owned or Wanted and optionally share a revocable wishlist link. Six archetype guides help you plan your next game." },
       {
         title: "Battle mode stays out of your ranked numbers",
         detail:

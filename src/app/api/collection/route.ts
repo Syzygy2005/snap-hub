@@ -1,6 +1,6 @@
 import { currentAccount } from "@/lib/auth/session";
 import { savedVariants, setVariant } from "@/lib/wiki/collection";
-import { privateJson, sameOrigin } from "@/lib/wiki/collection-http";
+import { privateJson, sameOrigin } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
 export async function GET() {

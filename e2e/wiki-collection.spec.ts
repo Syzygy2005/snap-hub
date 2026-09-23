@@ -61,23 +61,12 @@ test("collection persists and shared wishlist excludes owned artwork and can be 
   await guest.close();
 });
 
-test("learning pages connect and interactive examples respond without overflow",async({page})=>{
+test("learning pages connect without overflow",async({page})=>{
   await page.emulateMedia({reducedMotion:"reduce"});
   await page.goto("/wiki");
   await expect(page.getByRole("heading",{name:"A little discovery, every day."})).toBeVisible();
-  await page.getByRole("link",{name:/Can you tell who reveals first/}).click();
-  await expect(page.locator("#priority")).toBeInViewport();
-  await expect(page.locator("#priority").getByRole("status")).toContainText("You reveal first.");
-  await page.getByRole("spinbutton",{name:"Opponent right power"}).fill("10");
-  await expect(page.locator("#priority").getByRole("status")).toContainText("Opponent reveals first.");
-  await page.getByRole("combobox",{name:"Snap situation"}).selectOption({label:"Second snap pending"});
-  await expect(page.locator("#snapping").getByRole("status")).toContainText("−2");
-  await expect(page.locator("#snapping").getByRole("status")).toContainText("±8");
-  await page.getByRole("combobox",{name:"Ability type"}).selectOption("activate");
-  await expect(page.locator("#abilities").getByRole("status")).toContainText("Activate can resolve.");
-  await page.screenshot({path:test.info().outputPath("interaction-lab.png"),fullPage:true});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.getByRole("link",{name:"Find a deck game plan"}).click();
+  await page.goto("/wiki/archetypes");
   await page.getByRole("link",{name:/Destroy →/}).click();
   await expect(page.getByRole("heading",{name:"Destroy: learn the game plan"})).toBeVisible();
   await expect(page.getByRole("heading",{name:"Missing a card?"})).toBeVisible();
@@ -86,4 +75,11 @@ test("learning pages connect and interactive examples respond without overflow",
   await page.goto("/wiki/artists");
   await expect(page.getByRole("link",{name:/Preview Artist/})).toBeVisible();
   await page.screenshot({path:test.info().outputPath("artists.png"),fullPage:true});
+  // An artist with only previews opens on their previews. It used to open on the released
+  // filter and say "No artwork matches these filters".
+  await page.getByRole("link",{name:/Preview Artist/}).click();
+  await expect(page.getByRole("heading",{name:"Preview Artist"})).toBeVisible();
+  await expect(page.getByText("1 variants · Page 1 of 1")).toBeVisible();
+  // exact, or it also matches the "Unreleased previews" option in the filter.
+  await expect(page.getByText("Unreleased preview",{exact:true})).toBeVisible();
 });

@@ -1,9 +1,10 @@
 import { PageHeader, EmptyState } from "@/components/ui";
 import Link from "next/link";
+import { Pager } from "@/components/pager";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { entries } from "@/lib/wiki/queries";
-import { filterEntries, pageHref, value } from "@/lib/wiki/filter";
+import { filterEntries, value } from "@/lib/wiki/filter";
 import { WikiArt } from "@/components/wiki-art";
 import { AbilityText } from "@/components/cards";
 import { ReferenceStatus } from "@/components/wiki-reference";
@@ -43,6 +44,6 @@ export default async function Gallery(props: PageProps<"/wiki/[kind]">) {
       <p className="text-xs leading-relaxed text-muted"><AbilityText text={e.ability} /></p>
     </Link>)}</div>
     {!result.total && <EmptyState title={all.length ? "No matches yet" : "The library is warming up"}>{all.length ? <><p>Try fewer filters or a different search.</p><Link href={`/wiki/${kind}`} className="mt-4 inline-block text-accent underline">Clear filters</Link></> : "The reference library is awaiting its first successful update."}</EmptyState>}
-    <nav aria-label="Wiki pages" className="mt-8 flex justify-between text-sm text-accent">{result.page > 1 ? <Link href={pageHref(`/wiki/${kind}`,sp,result.page-1)}>← Previous</Link> : <span />}{result.page < result.pages && <Link href={pageHref(`/wiki/${kind}`,sp,result.page+1)}>Next →</Link>}</nav>
+    <Pager label="Wiki pages" base={`/wiki/${kind}`} sp={sp} page={result.page} pages={result.pages}/>
   </>;
 }

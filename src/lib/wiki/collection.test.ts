@@ -6,7 +6,7 @@ import { POST,DELETE } from "@/app/api/collection/share/route";
 import { collection,enableShare,disableShare,shareToken,sharedWishlist } from "./collection";
 import { artists,findVariant } from "./variant-browser";
 import { parseVariantKey,variantKey } from "./variant-key";
-import { sameOrigin } from "./collection-http";
+import { sameOrigin } from "@/lib/http";
 vi.mock("@/lib/auth/session",()=>({currentAccount:vi.fn()}));
 const owner={id:9101,discordId:"collection-owner",username:"Collector",avatar:null},other={...owner,id:9102,discordId:"collection-other"};
 const variant=(id:string,status="released")=>({id,status,art:"/brand/emblem.svg",order:null,rarity:"Rare",releaseDate:null,collectorQuality:null,artists:[{role:"Sketch",name:"Collection & Artist"},{role:"Color",name:"Collection & Artist"}]});
@@ -80,7 +80,7 @@ it("shares only wanted entries, live updates, and permanently revokes the old to
   expect(await sharedWishlist("bad-token")).toBeNull();
 });
 it("counts one artwork per artist even with multiple roles, and round-trips unusual selection IDs",async()=>{
-  expect((await artists("Collection & Artist"))[0]).toMatchObject({total:3,released:2,roles:["Color","Sketch"]});
+  expect((await artists({name:"Collection & Artist"}))[0]).toMatchObject({total:3,released:2,roles:["Color","Sketch"]});
   expect(parseVariantKey(variantKey("A/&?#","Variant \"1\""))).toEqual(["A/&?#","Variant \"1\""]);
   for(const input of ["oops","{}",'[1,2]','["x"]','["","a"]'])expect(parseVariantKey(input)).toBeNull();
 });

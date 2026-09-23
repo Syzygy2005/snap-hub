@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { WikiArt } from "@/components/wiki-art";
-import { searchSite, cleanQuery } from "@/lib/search";
-import { value } from "@/lib/wiki/filter";
+import { searchSite } from "@/lib/search";
+import { cleanQuery, value } from "@/lib/wiki/filter";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {title:"Search Snap Hub",description:"Find cards, locations, variants, artists, wiki guides, players and public decks.",robots:{index:false,follow:true}};
