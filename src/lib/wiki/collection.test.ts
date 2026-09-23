@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import { getDb } from "@/lib/db";
 import { currentAccount } from "@/lib/auth/session";
 import { GET,PUT } from "@/app/api/collection/route";
@@ -17,6 +17,12 @@ beforeAll(async()=>{
   const db=await getDb();
   await db.query("insert into accounts(id,discord_id,username) values (9101,'collection-owner','Collector'),(9102,'collection-other','Other') on conflict do nothing");
   await db.query("insert into cards(def_id,name,cost,power,ability,art,series,deckable,variants) values('CollectionTest','Collection test',1,1,'','','1',true,$1::text::jsonb) on conflict(def_id) do update set variants=excluded.variants",[catalog]);
+});
+afterAll(async()=>{
+  // PostgreSQL CI shares one database across files; leave no gallery fixture behind.
+  const db=await getDb();
+  await db.query("delete from accounts where discord_id in ('collection-owner','collection-other')");
+  await db.query("delete from cards where def_id='CollectionTest'");
 });
 beforeEach(async()=>{
   const db=await getDb();
