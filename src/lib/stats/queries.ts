@@ -85,7 +85,12 @@ async function loadGames(opts: {
             opponent_snapped, conceded, opponent_conceded, turns, deck_name, deck_cards, opponent_name, opponent_cards, cards_drawn,
             cards_played, locations, board
        from tracked_games
+      -- Friendly and battle-mode games are stored but never counted. Neither has cubes at
+      -- stake in the ladder sense, and battle mode is a different game with its own health
+      -- bar, so folding either into win rate and cube rate would describe a player who does
+      -- not exist. battle_mode was written on every upload and read by nothing until this.
       where not friendly
+        and not battle_mode
         and ($1::timestamptz is null or played_at >= $1)
         and ($2::text is null or coalesce(league, 'Unknown') = $2)
         and ($3::int[] = '{}'::int[] or tracker_id = any($3::int[]))
@@ -130,7 +135,7 @@ export async function getMetaStats(window: StatWindow, league: string | null): P
     getCards(),
     db.query<{ league: string; games: number }>(
       `select coalesce(league, 'Unknown') as league, count(*)::int as games from tracked_games
-        where not friendly group by 1 order by 2 desc`,
+        where not friendly and not battle_mode group by 1 order by 2 desc`,
     ),
   ]);
   const byId = new Map(allCards.map((c) => [c.defId, c]));

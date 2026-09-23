@@ -10,6 +10,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-23",
+    changes: [
+      {
+        title: "Battle mode stays out of your ranked numbers",
+        detail:
+          "Battle mode games were counted in win rate and cube rate as though they were ranked. They are still recorded, but your stats and the community stats now leave them out, the same way friendly games always have been.",
+      },
+    ],
+  },
+  {
     date: "2026-09-22",
     changes: [
       { title: "A wiki for the whole game", detail: "Browse variants across all cards and filter by sketch, ink or color artist. New guides cover game modes, SNAP terminology, getting started and collection cosmetics, with links to official rules." },
