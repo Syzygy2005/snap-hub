@@ -246,6 +246,13 @@
   UI says "won" and "not won" and draws no "lost" badge. `locationRecords` skips zones with no
   `won` at all rather than counting them as losses, because a board stored before this would
   otherwise drag every rate down.
+- `friendly` and `battle_mode` games are stored on upload and excluded on read, in `loadGames`
+  and in the league count in `getMetaStats`, which is a separate query and has to agree on its
+  own. `battle_mode` used to be written and read by nothing, so battle games counted as ranked.
+  Any new read of `tracked_games` needs both filters. Only the false side of `IsBattleMode` has
+  been checked against a real file: both real fixtures are ranked and read false, which is the
+  direction that matters, since a flag reading true on a ranked game would hide it. A battle
+  game read as ranked costs a slightly wrong number; that was the owner's call to accept.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
