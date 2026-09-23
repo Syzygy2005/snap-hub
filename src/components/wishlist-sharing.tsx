@@ -1,13 +1,15 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { errorMessage } from "./variant-tools";
 export function WishlistSharing({initialToken}: {initialToken:string|null}) {
   const [token,setToken]=useState(initialToken),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
   async function change(enabled:boolean) {
     setBusy(true);setMessage("");
     try {
       const response=await fetch("/api/collection/share",{method:enabled?"POST":"DELETE"});
-      const data=await response.json();if(!response.ok)throw new Error(data.error);
+      if(!response.ok)throw new Error(await errorMessage(response,"Couldn't update sharing."));
+      const data=await response.json();
       setToken(data.token);setMessage(enabled?"Wishlist sharing enabled.":"Sharing disabled. The old link no longer works.");
     } catch(error) {setMessage(error instanceof Error?error.message:"Couldn't update sharing.");}
     finally {setBusy(false);}
@@ -20,8 +22,4 @@ export function WishlistSharing({initialToken}: {initialToken:string|null}) {
       <button disabled={busy} onClick={()=>change(true)} className="rounded bg-accent px-4 py-2 text-sm font-bold text-bg disabled:opacity-40">Enable share link</button>}
     </div><p role="status" className="mt-3 text-sm text-accent">{message}</p>
   </section>;
-}
-export function CopyComparison() {
-  const [message,setMessage]=useState("");
-  return <div className="my-4"><button className="rounded border border-line px-4 py-2 text-sm" onClick={async()=>{try{await navigator.clipboard.writeText(location.href);setMessage("Comparison link copied.");}catch{setMessage("Copy the address from your browser to share this comparison.");}}}>Copy comparison link</button><p role="status" className="mt-2 text-sm text-muted">{message}</p></div>;
 }

@@ -511,9 +511,7 @@ creates a new one. Collection and sharing mutations check Origin when supplied.
 
 Six editorial archetype guides explain core roles, phased plans, substitutions and common
 mistakes. They show live imported card text and do not claim current competitive rankings.
-The interaction lab demonstrates ordinary board priority, final-turn Ranked cube stakes and
-Cosmo versus On Reveal/Activate. Assumptions and official sources appear beside each example;
-it is not a complete game simulator. Guides are manually reviewed and dated.
+Guides are manually reviewed and dated.
 Related references use shared mechanic wording, not inferred synergies. Public artists and
 learning pages appear in search and the sitemap; private lists never do.
 
@@ -522,4 +520,4 @@ Sources remain the existing [Marvel Snap Zone catalog](https://marvelsnapzone.co
 [Second Dinner's Activate guide](https://marvelsnap.com/our-first-brand-new-ability-activate/).
 Collection isolation, catalog changes and share-token revocation are tested against PGlite
 and PostgreSQL in CI. Browser tests cover the public discovery and signed-in sharing flows
-at desktop/mobile sizes, plus interactive guide updates with reduced motion.
+at desktop/mobile sizes.

@@ -259,6 +259,31 @@
   would mark correct play as a mistake. Rejected on the owner's knowledge of high Infinite play,
   so do not re-propose it. It is the same trap `cubeDiscipline` avoids: one figure applied to
   every game alike, when the right play depends on the deck.
+- Wiki sections live once, in `src/lib/wiki/sections.ts`. The header menu, the tabs, the
+  breadcrumbs and the sitemap all read it; they used to be five hand-kept copies. `private`
+  keeps a per-visitor page such as My collection out of the sitemap.
+- The wiki layout wraps every wiki page, so it must not load per-visitor data. It used to read
+  the visitor's whole saved-variant collection and send it with every page, the guides
+  included. `VariantToolsProvider` now fetches `/api/collection` the first time an Owned/Wanted
+  button mounts, and those buttons stay disabled until it lands so no click is decided on a
+  status that has not arrived. `currentAccount` is wrapped in React `cache` so the site header
+  and the wiki layout share one session lookup per request.
+- "Keep exploring" (`wiki-discovery.tsx`) matches a mechanic at the start of a word, in JS and
+  in SQL (`\m`), so "move" finds moves and moved but not remove. It was a substring match.
+  Its term list includes every archetype's own `mechanic`, or that archetype's guide is
+  unreachable from card text; Bounce (`return`) and Zoo (`1-cost`) were. Optional sections on
+  a card page catch their own errors and sit behind Suspense: the page has only a root error
+  boundary, so a throw there replaced the card with the error screen.
+- `artists()` takes options rather than a search string: `name` for one exact artist, `limit`,
+  and `seed` for a stable daily pick. Callers ask for what they show; the spotlight used to
+  aggregate every artist to display one. An artist page defaults to the release status the
+  artist has work in. The gallery's artist filter is case-insensitive on purpose and tested.
+- The browser tests run `next start`, which serves the **last build**. Changing a source file
+  and rerunning them tests the old code. Rebuild first; a check written to catch a bug passed
+  against the buggy page for exactly this reason until it was rebuilt.
+- The interaction lab (`/wiki/interactions`) was removed by the owner's call: a hand-coded
+  calculator of board priority and cube stakes, i.e. game rules written out by hand, showing
+  what players already see in the game. The archetype guides were kept.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

@@ -5,7 +5,7 @@ import { parseVariantKey } from "@/lib/wiki/variant-key";
 import { value } from "@/lib/wiki/filter";
 import { VariantGrid } from "@/components/variant-grid";
 import { PageHeader } from "@/components/ui";
-import { CopyComparison } from "@/components/wishlist-sharing";
+import { CopyComparison } from "@/components/variant-tools";
 export const metadata:Metadata={title:"Compare variant artwork",robots:{index:false,follow:true}};
 export default async function ComparePage(props:PageProps<"/wiki/compare">) {
   const sp=await props.searchParams,keys=[value(sp,"a"),value(sp,"b")];

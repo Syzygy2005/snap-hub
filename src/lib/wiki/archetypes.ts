@@ -1,9 +1,13 @@
-export interface Archetype {
+/**
+ * A hand-written deck guide. Not the same thing as `Archetype` in stats/aggregate.ts, which is a
+ * group of real tracked decks with a measured win rate; the two shared a name.
+ */
+export interface ArchetypeGuide {
   slug:string;title:string;summary:string;mechanic:string;cards:{id:string;name:string;role:string}[];
   plan:[string,string,string];substitutions:string[];mistakes:string[];
 }
 // Editorial foundations, not live tier rankings or fixed twelve-card recommendations.
-export const ARCHETYPES:Archetype[]=[
+export const ARCHETYPES:ArchetypeGuide[]=[
   {slug:"destroy",title:"Destroy",mechanic:"destroy",summary:"Turn your own cards into resources, then cash in on the destruction.",
     cards:[{id:"Carnage",name:"Carnage",role:"Destruction enabler"},{id:"Deathlok",name:"Deathlok",role:"Destruction enabler"},{id:"Wolverine",name:"Wolverine",role:"Reusable destruction target"},{id:"Death",name:"Death",role:"Destruction payoff"}],
     plan:["Set up targets in a lane you can destroy. Keep an extra slot open for the enabler; a full lane cannot accept another card.","Sequence targets before enablers and check every location before committing. Decide which two lanes your eventual power can reach.","Count the power you can actually place in two lanes, including your remaining slots and Energy. A huge single lane does not win the match alone."],
@@ -38,7 +42,4 @@ export const ARCHETYPES:Archetype[]=[
 export const archetypeBySlug=(slug:string)=>ARCHETYPES.find(a=>a.slug===slug);
 export const LEARNING_LINKS=[
   ...ARCHETYPES.map(a=>({title:a.title,description:a.summary,href:`/wiki/archetypes/${a.slug}`})),
-  {title:"Reveal priority",description:"Explore lane wins, total power and which player reveals first.",href:"/wiki/interactions#priority"},
-  {title:"Snapping and cube stakes",description:"Compare retreating now with playing out the final turn.",href:"/wiki/interactions#snapping"},
-  {title:"Activate and On Reveal",description:"See why Cosmo treats these two abilities differently.",href:"/wiki/interactions#abilities"},
 ];

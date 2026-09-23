@@ -1,8 +1,9 @@
 import { currentAccount } from "@/lib/auth/session";
 import { accountDecks, saveAccountDeck, deleteAccountDeck } from "@/lib/decks/account";
 
+import { privateJson as json } from "@/lib/http";
+
 export const dynamic = "force-dynamic";
-const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 
 export async function GET() {
   const account = await currentAccount();

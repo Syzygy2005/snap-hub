@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import { WIKI_SECTIONS } from "@/lib/wiki/sections";
 
 const GROUPS = [
-  { href: "/wiki", label: "Wiki", children: [["/wiki", "Overview", "Explore the reference and guides"], ["/wiki/cards", "Cards", "Find costs, power and abilities"], ["/wiki/locations", "Locations", "Explore effects and rarities"], ["/wiki/variants", "Variants", "Browse and compare artwork"], ["/wiki/artists", "Artists", "Explore the people behind the art"], ["/wiki/my-collection", "My collection", "Owned variants and your wishlist"], ["/wiki/archetypes", "Archetypes", "Learn a deck’s game plan"], ["/wiki/interactions", "Interaction lab", "Practice priority and cube stakes"], ["/wiki/basics", "How to play", "Learn turns, snaps and retreats"], ["/wiki/game-modes", "Game modes", "Ranked, Conquest and events"], ["/wiki/terminology", "Terminology", "Understand SNAP shorthand"], ["/wiki/collection", "Collection", "Upgrades, variants and cosmetics"], ["/wiki/history", "History", "Browse official patch notes"]] },
+  { href: "/wiki", label: "Wiki", children: WIKI_SECTIONS.map((s) => [s.href, s.label, s.description]) },
   { href: "/leaderboard", label: "Leaderboard", children: [["/leaderboard", "Rankings", "See the Infinite leaderboard"], ["/leaderboard/movers", "Movers", "Follow the biggest rank changes"], ["/players", "Find a player", "Search player profiles"]] },
   { href: "/decks", label: "Decks", children: [["/decks", "Explore decks", "Discover community builds"], ["/decks/builder", "Deck Builder", "Create and refine your next deck"]] },
   { href: "/stats", label: "Stats", children: [["/stats", "Community stats", "Explore the shared game data"], ["/stats/me", "My Stats", "Review your own games"], ["/stats/tracker", "Tracker setup", "Connect your PC game tracker"]] },

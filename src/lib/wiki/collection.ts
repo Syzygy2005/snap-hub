@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { getDb } from "@/lib/db";
-import { findVariant, type VariantEntry } from "./variant-browser";
+import { findVariant, VARIANT_ROWS, type VariantEntry } from "./variant-browser";
 
 export type VariantStatus = "owned" | "wanted";
 export interface SavedVariant { card_id: string; variant_id: string; status: VariantStatus }
@@ -26,7 +26,7 @@ export async function setVariant(owner: number, card: string, id: string, status
 export async function collection(owner: number, status?: VariantStatus): Promise<CollectionEntry[]> {
   return (await getDb()).query<CollectionEntry>(`select s.card_id,s.variant_id,s.status,coalesce(c.name,s.card_id) as card_name,v as variant
     from account_variants s left join cards c on c.def_id=s.card_id and c.reference_status='released'
-    left join lateral jsonb_array_elements(case when jsonb_typeof(c.variants)='array' then c.variants else '[]'::jsonb end) v
+    left join lateral ${VARIANT_ROWS} v
       on v->>'id'=s.variant_id
     where s.owner_id=$1 and ($2::text is null or s.status=$2) order by lower(coalesce(c.name,s.card_id)),s.variant_id`, [owner,status ?? null]);
 }

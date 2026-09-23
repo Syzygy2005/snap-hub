@@ -3,7 +3,15 @@ import { VariantGrid } from "./variant-grid";
 import Link from "next/link";
 
 export async function CardVariants({ id, name }: { id: string; name: string }) {
-  const variants = await cardVariants(id);
+  // One section of the card page. If the catalog read fails, say so here rather than letting the
+  // error reach the page's boundary and replace the card's stats with an error screen.
+  let variants: Awaited<ReturnType<typeof cardVariants>>;
+  try {
+    variants = await cardVariants(id);
+  } catch (error) {
+    console.error("Card variants unavailable", error);
+    return <section className="my-8" aria-labelledby="variants-heading"><h2 id="variants-heading" className="mb-3 text-xl font-bold">Card variants</h2><p className="text-sm text-muted">Variants couldn’t be loaded right now. The rest of this page is unaffected.</p></section>;
+  }
   const released = variants?.filter(v => v.status === "released") ?? [];
   const upcoming = variants?.filter(v => v.status === "unreleased") ?? [];
   return <section className="my-8" aria-labelledby="variants-heading">

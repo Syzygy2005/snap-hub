@@ -12,6 +12,7 @@ import { listDecks } from "@/lib/decks/queries";
 import { WikiArt } from "@/components/wiki-art";
 import { AbilityText } from "@/components/cards";
 import { ReferenceStatus } from "@/components/wiki-reference";
+import { stripTags } from "@/lib/wiki/filter";
 export const dynamic = "force-dynamic";
 // One indexed lookup, and cached so generateMetadata and the page share it. This used to read
 // every card or location row and Array.find one out of it, twice per request.
@@ -23,7 +24,7 @@ const find = cache(async (kind: string,id: string) => {
 });
 export async function generateMetadata({params}: PageProps<"/wiki/[kind]/[id]">): Promise<Metadata> {
   const {kind,id} = await params; const {entry} = await find(kind,id);
-  const description = entry.ability.replace(/<[^>]*>/g, "") || `${entry.name} reference and stats.`;
+  const description = stripTags(entry.ability) || `${entry.name} reference and stats.`;
   return {title: entry.name, description, alternates: { canonical: `/wiki/${kind}/${encodeURIComponent(id)}` }, openGraph: { title: entry.name, description, ...(entry.art ? {images: [{url:entry.art,alt:entry.name}]} : {}) }};
 }
 export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
@@ -50,10 +51,13 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
       {e.tags.length > 0 && <p className="mt-4 text-sm text-muted">Source tags: {e.tags.join(", ")}</p>}
     </section>
     <ReferenceStatus kind={kind} />
-    <WikiDiscovery id={id} ability={e.ability} />
+    {/* Both sections query the database. Behind Suspense the card's own stats stream first
+        instead of waiting on them, which is how CardVariants was loaded before it lost its
+        boundary. */}
+    <Suspense fallback={null}><WikiDiscovery id={id} ability={e.ability} /></Suspense>
     {e.def_id.startsWith("SnapZoneLocation_") && <p className="text-xs text-muted">This source entry has no game identifier. Its reference link uses the provider’s stable ID; match-history linking is unavailable.</p>}
     {kind === "cards" && <section className="my-8"><h2 className="mb-3 text-xl font-bold">Public decks with {e.name}</h2>{decks.length ? <div className="flex flex-wrap gap-3">{decks.map(d => <Link className="brand-tile rounded border border-line bg-surface p-4" href={`/decks/${d.id}`} key={d.id}>{d.name}</Link>)}</div> : <p className="text-sm text-muted">No public decks found yet.</p>}</section>}
-    {kind === "cards" && <CardVariants id={id} name={e.name} />}
+    {kind === "cards" && <Suspense fallback={<p role="status" className="my-8 text-sm text-muted">Loading card variants…</p>}><CardVariants id={id} name={e.name} /></Suspense>}
     {kind === "cards" && <Suspense fallback={<p role="status" className="my-8 text-sm text-muted">Loading historical card versions…</p>}><CardHistory id={id} /></Suspense>}
     <section className="my-8">
       <h2 className="mb-3 text-xl font-bold">Official patch-note mentions</h2>
@@ -65,6 +69,6 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
       <Link href="/wiki/history" className="mt-4 inline-block text-sm text-accent underline">Browse the official patch archive and other history sources</Link>
     </section>
     <section className="my-8"><h2 className="mb-3 text-xl font-bold">Observed changes</h2><p className="mb-4 text-xs text-muted">Recorded from successful imports after the initial baseline. Dates show detection time, not the game’s patch time.</p>
-    {changes.length ? changes.map(c => <article key={c.id} className="mb-3 rounded border border-line p-4"><time className="text-xs text-muted">{c.detected_at.toUTCString()}</time>{Object.keys(c.after_data).filter(k => c.before_data[k] !== c.after_data[k]).map(k => <p key={k} className="mt-2 break-words text-sm"><strong className="capitalize">{k}: </strong><span className="text-muted">{String(c.before_data[k]).replace(/<[^>]*>/g, "")}</span> → {String(c.after_data[k]).replace(/<[^>]*>/g, "")}</p>)}</article>) : <p className="text-sm text-muted">No changes recorded since the baseline import.</p>}</section>
+    {changes.length ? changes.map(c => <article key={c.id} className="mb-3 rounded border border-line p-4"><time className="text-xs text-muted">{c.detected_at.toUTCString()}</time>{Object.keys(c.after_data).filter(k => c.before_data[k] !== c.after_data[k]).map(k => <p key={k} className="mt-2 break-words text-sm"><strong className="capitalize">{k}: </strong><span className="text-muted">{stripTags(String(c.before_data[k]))}</span> → {stripTags(String(c.after_data[k]))}</p>)}</article>) : <p className="text-sm text-muted">No changes recorded since the baseline import.</p>}</section>
   </>;
 }
