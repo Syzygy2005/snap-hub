@@ -20,8 +20,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning className={`${inter.variable} ${manrope.variable}`}>
       <head>
-        {/* Apply the saved palette before the body is painted, independently of hydration. */}
-        <script dangerouslySetInnerHTML={{ __html: 'try{document.documentElement.dataset.theme=localStorage.getItem("snaphub:theme")==="dark"?"dark":"light"}catch{}' }} />
+        {/* Apply the palette before the body is painted, independently of hydration: a saved choice
+            if there is one, otherwise the device's own light or dark setting. Keep it in step with
+            themeFor in theme-toggle.tsx. */}
+        <script dangerouslySetInnerHTML={{ __html: 'try{var s=null;try{s=localStorage.getItem("snaphub:theme")}catch(e){}document.documentElement.dataset.theme=s==="dark"||s==="light"?s:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}catch(e){}' }} />
       </head>
       <body className="flex min-h-dvh flex-col">
         <a

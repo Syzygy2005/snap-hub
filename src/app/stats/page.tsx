@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CardStatsTable } from "@/components/card-stats-table";
-import { CardStrip, CubeRate, LOW_SAMPLE, pct, ShareBar, signed, WinRate } from "@/components/stats-ui";
+import { CardStrip, CubeRate, LOW_SAMPLE, pct, ShareBar, signed, SmallSample, WinRate } from "@/components/stats-ui";
 import { EmptyState, PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { encodeDeck } from "@/lib/decks/code";
 import { param } from "@/lib/leaderboard/params";
@@ -140,7 +140,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
                       <td className="px-2 py-3">
                         <ShareBar value={a.metaShare} />
                       </td>
-                      <td className="num px-2 py-3 text-right">{a.games.toLocaleString()}</td>
+                      <td className="num whitespace-nowrap px-2 py-3 text-right">{a.games.toLocaleString()}<SmallSample games={a.games} /></td>
                       <td className="px-2 py-3 text-right">
                         <WinRate value={a.winRate} games={a.games} />
                       </td>
@@ -177,7 +177,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
           <div>
             <dt className="font-semibold text-ink">Sample size</dt>
             <dd>
-              Only games from players running the tracker count. Fewer than {LOW_SAMPLE} games is a small sample; treat those rates as
+              Only games from players running the tracker count. Rows under {LOW_SAMPLE} games are tagged small sample; treat those rates as
               a rough guess. Friendly battles are left out.
             </dd>
           </div>

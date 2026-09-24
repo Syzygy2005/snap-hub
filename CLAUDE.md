@@ -154,6 +154,18 @@
   panel only draws a conclusion when both sides clear it, and says which side is short, because
   somebody who never retreats is exactly who the panel is for and also the slowest to collect
   retreats.
+- There are two palettes, cream (`light`) and forest (`dark`), on `html[data-theme]`, with the
+  tokens redefined under `:root[data-theme="dark"]` in `globals.css`. Components use the token
+  names only, so both palettes follow automatically; never hard-code a palette colour. A saved
+  choice (`snaphub:theme` in localStorage) wins; with none, the device's light or dark setting
+  decides, and the page follows it live until the visitor picks. The inline script in
+  `layout.tsx` sets the attribute before first paint; without it a dark visitor sees a cream
+  flash on every load, and `theme.spec.ts` checks it with hydration blocked. That script and
+  `themeFor` in `theme-toggle.tsx` must give the same answer. The server always renders `light`,
+  which is why `<html>` carries `suppressHydrationWarning`.
+- Small samples are tagged on the count (`SmallSample` in `stats-ui.tsx`), in the archetype and
+  card tables. Rows used to be faded; the cream palette dropped that for contrast, which left
+  greyed rates as the only sign, and those do not stand out when scanning a table.
 - Home uses a responsive cream/forest hero, not a raster banner. Keep decorative artwork hidden
   below md and verify 390px screenshots so the mobile hero never crops or pushes content offscreen.
 - The Jade League rebrand uses Manrope/Inter and a hand-and-card emblem; keep app icons, share images,

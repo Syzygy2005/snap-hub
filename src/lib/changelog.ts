@@ -12,7 +12,8 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-24",
     changes: [
-      { title: "Choose light or dark mode", detail: "Use the sun/moon button beside the header search to switch between cream and forest. Snap Hub remembers your choice for your next visit, with readable text and jade accents in both modes." },
+      { title: "Choose light or dark mode", detail: "Snap Hub starts in the same light or dark mode as your phone or computer. Use the sun/moon button beside the header search to pick cream or forest instead, and Snap Hub remembers your choice for your next visit, with readable text and jade accents in both modes." },
+      { title: "Small samples are labelled", detail: "Archetypes and cards with fewer than 20 tracked games carry a small sample tag next to the game count, so you can tell at a glance which rates are still early." },
       { title: "Sharper Snap Hub lettering", detail: "The header now pairs the hand-and-card emblem with custom angular SNAP lettering, a centered HUB line and jade dividers. The whole wordmark stays crisp and aligned on phones and larger screens." },
       { title: "A lighter cream and jade look", detail: "Warm cream now leads across the site, with jade actions, forest text and softer panels. Forms, stats and share previews follow the lighter palette, with the same smooth motion and reduced-motion support." },
       {

@@ -27,6 +27,16 @@ export function WinRate({ value, games }: { value: number | null; games: number 
   );
 }
 
+/**
+ * Marks a row whose rates rest on fewer than LOW_SAMPLE games. Rows used to be faded for this,
+ * which the cream palette dropped for contrast; greyed rates alone do not stand out when scanning
+ * a table, so the count itself says so.
+ */
+export function SmallSample({ games }: { games: number }) {
+  if (games >= LOW_SAMPLE) return null;
+  return <span className="ml-1.5 whitespace-nowrap rounded border border-line px-1 py-px align-middle text-[10px] font-medium uppercase tracking-wide text-muted" title={`Fewer than ${LOW_SAMPLE} games: treat these rates as a rough guess`}>small sample</span>;
+}
+
 export function CubeRate({ value, games }: { value: number | null; games: number }) {
   const low = games < LOW_SAMPLE;
   const tone = value === null || low ? "text-muted" : value > 0 ? "text-up" : value < 0 ? "text-down" : "text-ink";
