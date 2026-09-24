@@ -10,6 +10,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-24",
+    changes: [
+      {
+        title: "Guides checked against the official rules",
+        detail:
+          "How to play now gives the exact rule for who reveals first: more locations won, then more total Power, then a coin flip. Game modes no longer names a points system for the Infinite leaderboard, and Sanctum Showdown now says the Sanctum moves each turn.",
+      },
+    ],
+  },
+  {
     date: "2026-09-23",
     changes: [
       {

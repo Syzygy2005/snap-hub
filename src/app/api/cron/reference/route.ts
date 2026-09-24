@@ -6,7 +6,14 @@ export async function GET(request: Request) {
   const secret = cleanEnv("CRON_SECRET");
   if (secret ? request.headers.get("authorization")?.trim() !== `Bearer ${secret}` : process.env.NODE_ENV === "production")
     return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-  const results = await Promise.allSettled([syncReference("cards"), syncReference("locations")]);
+  // One after the other, never together. Both feeds come from the same host, and while they
+  // were requested at once the locations feed alone was refused (HTTP 403) on nine of 67 runs.
+  const results: PromiseSettledResult<Awaited<ReturnType<typeof syncReference>>>[] = [];
+  for (const kind of ["cards", "locations"] as const) {
+    results.push(await syncReference(kind).then(
+      value => ({ status: "fulfilled" as const, value }),
+      (reason: unknown) => ({ status: "rejected" as const, reason })));
+  }
   const ok = results.every(r => r.status === "fulfilled");
   for (const result of results) if (result.status === "rejected") console.error("[reference]", result.reason);
   // This route is authenticated; report a bounded category without SQL or connection details.

@@ -22,3 +22,15 @@ it("requires a secret in production and reports partial failure as a failed job"
   const good=await GET(req());expect(good.status).toBe(200);expect(good.headers.get("cache-control")).toBe("no-store");
   expect(await good.json()).toEqual({ok:true,cards:"fulfilled",locations:"fulfilled",failures:[]});
 });
+it("asks the source for one feed at a time", async () => {
+  // Requested together, the locations feed alone was refused on nine of 67 runs.
+  vi.stubEnv("CRON_SECRET","test-secret");
+  const order: string[] = [];
+  vi.mocked(syncReference).mockImplementation(async kind => {
+    order.push(`start ${kind}`); await new Promise(r => setTimeout(r, 5)); order.push(`end ${kind}`);
+    return {total:120,deckable:120};
+  });
+  const res = await GET(new Request("http://localhost/api/cron/reference",{headers:{authorization:"Bearer test-secret"}}));
+  expect(res.status).toBe(200);
+  expect(order).toEqual(["start cards","end cards","start locations","end locations"]);
+});

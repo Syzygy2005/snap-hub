@@ -42,6 +42,9 @@ export function parseReference(body: unknown, kind: Kind): Imported[] {
   });
 }
 
+/** Exported so tests can skip the pause; the route itself never needs to touch it. */
+export const pause = { wait: (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)) };
+
 async function download(kind: Kind, modified?: string | null) {
   for (let attempt = 0; ; attempt++) {
     try {
@@ -49,6 +52,10 @@ async function download(kind: Kind, modified?: string | null) {
         headers: { "User-Agent": "Mozilla/5.0 (compatible; SnapHub reference sync)", ...(modified ? { "If-Modified-Since": modified } : {}) } });
       if (response.status === 304 || response.ok) return response;
       if (attempt === 0 && response.status >= 500) continue;
+      // The source refuses a request now and then with a 403: nine of 67 hourly runs from
+      // 21 to 24 September 2026, always the locations feed and never cards. A refusal like that
+      // is the source pushing back, so ask once more after a pause rather than straight away.
+      if (attempt === 0 && (response.status === 403 || response.status === 429)) { await pause.wait(3_000); continue; }
       throw new Error(`Reference source returned HTTP ${response.status}`);
     } catch (error) {
       if (attempt === 0 && error instanceof Error && ["TimeoutError", "TypeError"].includes(error.name)) continue;

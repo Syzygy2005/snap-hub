@@ -284,6 +284,13 @@
 - The interaction lab (`/wiki/interactions`) was removed by the owner's call: a hand-coded
   calculator of board priority and cube stakes, i.e. game rules written out by hand, showing
   what players already see in the game. The archetype guides were kept.
+- The reference route syncs cards and then locations, one after the other. Requested together,
+  the locations feed alone was refused with HTTP 403 on nine of 67 hourly runs (21 to 24
+  September 2026) and cards never were. `download` also asks once more after a 403 or 429, with
+  a pause. Whether sequencing is the cure has not been proven, because the source cannot be
+  reached from the sandbox; the Actions history is the measure, so check it before changing either.
+  Every card and variant image is hotlinked from the same host, so the browser meets the same
+  source that pushes back on the server.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.

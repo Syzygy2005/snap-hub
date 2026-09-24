@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getDb } from "@/lib/db";
 import { getCards } from "@/lib/cards/queries";
 import { cardVariants, entries, history, syncState } from "./queries";
-import { parseReference, syncReference } from "./sync";
+import { parseReference, pause, syncReference } from "./sync";
 const card = (i: number) => ({carddefid: `Wiki${i}`, name: `Hero ${i}`, type: "Character", status: "released", cost: 2, power: 3, ability: "<span>On Reveal</span>: Draw a card.", art: "https://example.com/art.webp", source: "Series 1", tags: [{tag:"Draw"}], variants: []});
 const variant = {cid:101,vid:4831,art:"https://marvelsnapzone.com/wp-content/themes/blocksy-child/assets/media/cards/101_166025444242.webp?v=1090",variant_order:"01",status:"Released",rarity:"Rare",sketcher:"G-Angle",inker:"",colorist:"G-Angle",ReleaseDate:1651950000,CollectorsQualityDefId:""};
 const baseline = () => Array.from({length: 120},(_,i) => card(i));
@@ -102,6 +102,20 @@ describe("automatic reference imports", () => {
     fetcher.mockResolvedValue(new Response("Unavailable",{status:503}));
     await expect(syncReference("cards")).rejects.toThrow("503");
     expect(await getCards()).toHaveLength(120);
+  });
+  it("asks once more after a pause when the source refuses, and reports a second refusal", async () => {
+    // The live source refused the locations feed with a 403 on nine of 67 hourly runs.
+    const wait = vi.spyOn(pause, "wait").mockResolvedValue();
+    const fetcher = vi.fn().mockResolvedValueOnce(new Response("Forbidden",{status:403})).mockResolvedValueOnce(feed(baseline()));
+    vi.stubGlobal("fetch",fetcher);
+    await expect(syncReference("cards")).resolves.toMatchObject({ total: 120 });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(wait).toHaveBeenCalledTimes(1);
+    fetcher.mockReset().mockResolvedValue(new Response("Forbidden",{status:403}));
+    await expect(syncReference("cards")).rejects.toThrow("Reference source returned HTTP 403");
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(await getCards()).toHaveLength(120);
+    wait.mockRestore();
   });
   it("accepts unchanged conditional responses and keeps unreleased cards out of builder", async () => {
     const rows = baseline(); rows[0].status="unreleased";
