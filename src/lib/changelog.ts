@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-24",
     changes: [
       {
+        title: "Card art stops going missing",
+        detail:
+          "Art on the card library, the location atlas and the wiki's featured picks sometimes showed \"Artwork unavailable\" because the site hosting it turned some requests away. Snap Hub now fetches each image once and serves it itself, so it loads the same every time.",
+      },
+      {
         title: "Guides checked against the official rules",
         detail:
           "How to play now gives the exact rule for who reveals first: more locations won, then more total Power, then a coin flip. Sanctum Showdown now says the Sanctum moves each turn.",

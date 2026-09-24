@@ -1,4 +1,5 @@
 import type { Card } from "@/lib/cards/types";
+import { artSrc } from "@/lib/art";
 
 /** Renders Snap Zone ability text, turning <span>Keyword</span> markers into bold text without using HTML. */
 export function AbilityText({ text, className = "" }: { text: string; className?: string }) {
@@ -29,10 +30,11 @@ export function CardArt({
   eager?: boolean;
 }) {
   return (
-    // Hotlinked from Snap Zone; next/image would re-host every card through the image optimizer.
+    // Served through /art (see lib/art.ts), not next/image: the optimizer would bill a
+    // transformation per card and size, where /art passes the source file through once.
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={card.art}
+      src={artSrc(card.art)}
       alt={card.name}
       loading={eager ? "eager" : "lazy"}
       decoding="async"
