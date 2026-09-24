@@ -386,7 +386,7 @@ shaped.
   [snapscripts](https://github.com/snaptools2023/snapscripts), [Snap Extract](https://github.com/switchfire6/snap-extract),
   [marvelsnapdeck](https://github.com/barkingloudly/marvelsnapdeck),
   [marvel-snap-deckstrings](https://github.com/9j/marvel-snap-deckstrings), [DeckCodes.chat](https://deckcodes.chat/about)
-- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, parse5, sharp, Vitest, Playwright, jsdom, Manrope and
+- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, parse5, Vitest, Playwright, jsdom, Manrope and
   Inter (Google Fonts); hosted on Vercel, Supabase and GitHub Actions, with Vercel Web Analytics; sign-in through Discord
 - **Made with AI**: code written with [Claude Code](https://claude.com/claude-code) (Anthropic); logo, brand sheet, the
   Jade League visual overhaul and parts of the wiki made with ChatGPT (OpenAI)
