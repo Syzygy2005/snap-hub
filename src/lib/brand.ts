@@ -1,4 +1,4 @@
-/** Jade League palette and scalable adaptation of the supplied hand-and-card reference. */
+/** Jade League palette and the approved split-card emblem inside an open jade ring. */
 export const BRAND = { forest: "#102D29", jade: "#36D6A0", cream: "#F3F2E9", surface: "#19413A", muted: "#A8D0B5" } as const;
 /** Outlined lettering keeps the lockup's alignment independent of fonts and tracking. */
 export const WORDMARK = {
@@ -19,45 +19,25 @@ export const WORDMARK = {
   ],
   rules: "M0 87H60V92H0ZM216 87H276V92H216Z",
 } as const;
+export const EMBLEM_VIEWBOX = "0 0 200 200";
+const CARD_TRANSFORM = "translate(100 100) scale(.70) translate(-103 -100) rotate(12 103 100)";
 export const EMBLEM_PATHS = [
   {
-    "d": "M45 159A74 74 0 1 1 151 170",
+    "d": "M49 157A76 76 0 1 1 154 155",
     "fill": "none",
-    "stroke": "#36D6A0",
-    "strokeWidth": "10",
+    "stroke": BRAND.jade,
+    "strokeWidth": "11",
     "strokeLinecap": "round"
   },
+  // Two silhouettes leave the lightning cut transparent on every surface.
   {
-    "d": "M115 16 164 32Q168 34 166 39L143 109Q142 113 137 111L91 96Z",
-    "fill": "#102D29",
-    "stroke": "#36D6A0",
-    "strokeWidth": "6",
-    "strokeLinejoin": "round"
+    "d": "M61 24H109.044444L67 110H94L59.166667 174.166667L46 161V39ZM141.75 24H145L160 39V161L145 176H90.85L126 100H99Z",
+    "fill": "currentColor",
+    "transform": CARD_TRANSFORM
   },
   {
-    "d": "m138 38-19 31 16-5-8 23 28-34-17 6Z",
-    "fill": "#36D6A0"
-  },
-  {
-    "d": "m45 191 22-40-5-28 10-27 36-14q11-4 16 6l5 13 10 32q3 10-7 17l-19 15-14 45Z",
-    "fill": "#F3F2E9",
-    "stroke": "#102D29",
-    "strokeWidth": "5",
-    "strokeLinejoin": "round"
-  },
-  {
-    "d": "m79 107 32-13q10-4 14 6l3 8-36 16m1-1 30-12q11-3 14 7l2 8-35 15m0 0 29-12q8-3 12 7l2 7-32 18-10 25",
-    "fill": "#F3F2E9",
-    "stroke": "#102D29",
-    "strokeWidth": "5",
-    "strokeLinecap": "round",
-    "strokeLinejoin": "round"
-  },
-  {
-    "d": "m78 110 13 31-12 25",
-    "fill": "none",
-    "stroke": "#102D29",
-    "strokeWidth": "5",
-    "strokeLinecap": "round"
+    "d": "M145 24L160 39V78H149V44L133 28Z",
+    "fill": BRAND.jade,
+    "transform": CARD_TRANSFORM
   }
 ] as const;

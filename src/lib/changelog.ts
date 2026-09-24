@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-24",
     changes: [
+      { title: "A new split-card emblem", detail: "An angular card with a lightning-shaped cut and jade ring now appears in the header, app icons and home share preview. It adapts to cream and forest themes and keeps the custom SNAP/HUB lettering you already know." },
       { title: "Public decks and tracker keys need a Discord sign-in", detail: "Listing a deck on the Decks page and making a tracker key now need a Discord sign-in, which keeps spam off the Decks page and fake games out of the community stats. Signed out, you can still share a deck by link, and any tracker key you already have keeps working." },
       { title: "Variant links land on the variant", detail: "Opening a variant from search now scrolls to that artwork on the card page every time. It sometimes stopped at the top of the page when the variants took a moment to load." },
       { title: "Choose light or dark mode", detail: "Snap Hub starts in the same light or dark mode as your phone or computer. Use the sun/moon button beside the header search to pick cream or forest instead, and Snap Hub remembers your choice for your next visit, with readable text and jade accents in both modes." },

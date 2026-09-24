@@ -174,8 +174,12 @@
   greyed rates as the only sign, and those do not stand out when scanning a table.
 - Home uses a responsive cream/forest hero, not a raster banner. Keep decorative artwork hidden
   below md and verify 390px screenshots so the mobile hero never crops or pushes content offscreen.
-- The Jade League rebrand uses Manrope/Inter and a hand-and-card emblem; keep app icons, share images,
-  and SVG exports consistent with components/brand.tsx. Pointer effects belong on featured art only,
+- The current brand guide is `brand/README.md`; `brand/brand-sheet.png` is a historical reference.
+  The approved emblem is an angular split card with a transparent lightning cut inside an open jade ring.
+  Keep the custom `WORDMARK` geometry unchanged: SNAP lettering, HUB alignment and jade dividers are fixed.
+  `src/lib/brand.ts` supplies `src/components/brand.tsx`; regenerate the light/dark emblem exports and app icon
+  with `node scripts/build-brand.mjs`, keeping the cut transparent on both palettes. Check the Apple icon
+  and home share preview too. Manrope/Inter remain the UI fonts. Pointer effects belong on featured art only,
   never on readable statistics; honor reduced motion and pointer cancellation.
 - `LeaderboardTable`'s `compact` means no search bar and no paging, not fewer columns: hiding
   Best and Last played left three auto-width columns splitting 600px of slack, so the numbers
