@@ -20,7 +20,7 @@ export const CHANGELOG: Release[] = [
       {
         title: "Card art stops going missing",
         detail:
-          "Art on the card library, the location atlas and the wiki's featured picks sometimes showed \"Artwork unavailable\" because the site hosting it turned some requests away. Snap Hub now fetches each image once and serves it itself, so it loads the same every time. An image that fails to load gets one more try, and the full-size artwork links and the pictures in shared card links use the same copy.",
+          "Art on the card library, the location atlas and the wiki's featured picks sometimes showed \"Artwork unavailable\" because the site hosting it turned some requests away. Snap Hub now fetches each image once and serves it itself, so it loads the same every time. An image that fails to load gets one more try, in the wiki and the deck builder alike, and the full-size artwork links and the pictures in shared card links use the same copy.",
       },
       {
         title: "Guides checked against the official rules",

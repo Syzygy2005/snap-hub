@@ -1,5 +1,6 @@
 import type { Card } from "@/lib/cards/types";
 import { artSrc } from "@/lib/art";
+import { RetryImage } from "./retry-image";
 
 /** Renders Snap Zone ability text, turning <span>Keyword</span> markers into bold text without using HTML. */
 export function AbilityText({ text, className = "" }: { text: string; className?: string }) {
@@ -29,17 +30,24 @@ export function CardArt({
   className?: string;
   eager?: boolean;
 }) {
+  // Served through /art (see lib/art.ts), not next/image: the optimizer would bill a
+  // transformation per card and size, where /art passes the source file through once.
+  // The boxes keep the image's footprint, so a missing card never collapses a deck grid; the
+  // name is written into the fallback because the deck slots show no name beside the art.
+  const box = `aspect-square w-full rounded-md ${className}`;
   return (
-    // Served through /art (see lib/art.ts), not next/image: the optimizer would bill a
-    // transformation per card and size, where /art passes the source file through once.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <RetryImage
       src={artSrc(card.art)}
       alt={card.name}
-      loading={eager ? "eager" : "lazy"}
-      decoding="async"
-      draggable={false}
+      eager={eager}
       className={`aspect-square w-full object-contain ${className}`}
+      waiting={<span className={`block bg-surface-2/40 ${box}`} role="img" aria-label={`${card.name}: artwork loading`} />}
+      fallback={
+        <span className={`grid place-items-center overflow-hidden border border-line p-1 text-center text-[10px] leading-tight text-muted ${box}`}
+          role="img" aria-label={`${card.name}: artwork unavailable`} title={card.name}>
+          {card.name}
+        </span>
+      }
     />
   );
 }
