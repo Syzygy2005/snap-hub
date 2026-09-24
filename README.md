@@ -357,7 +357,8 @@ retains failure screenshots/traces for seven days. Unit tests remain `npm test`.
 ## Brand
 
 The current identity follows the supplied Jade League rebrand guide: cream as the primary surface, jade actions and forest text,
-with Manrope headings and Inter body text. `src/lib/brand.ts` owns the vector geometry;
+with Manrope headings, Inter body text and a custom vector wordmark. Its angular SNAP lettering and centered HUB line
+share fixed geometry, so font loading and letter spacing cannot shift the header logo. `src/lib/brand.ts` owns the vector geometry;
 `node scripts/build-brand.mjs` regenerates the SVG exports. Next renders social and Apple icons
 from that same geometry. The previous raster brand sheet is historical, not the current source.
 
@@ -450,7 +451,8 @@ Inter body text are self-hosted through Next's font loader. Shared tokens live i
 semantic rank, win/loss and chart colors remain distinct. The hand-and-card SVG is a scalable
 adaptation of the supplied reference sheet, not an extracted original vector master.
 `src/lib/brand.ts` supplies `components/brand.tsx`; run `node scripts/build-brand.mjs`
-to update `public/brand/emblem.svg` and `app/icon.svg` from that same geometry. App icons and social previews replace the previous gauntlet identity.
+to update `public/brand/emblem.svg`, `public/brand/wordmark.svg` and `app/icon.svg` from that same geometry. The header pairs
+the emblem with outlined SNAP/HUB lettering and jade dividers. App icons and social previews replace the previous gauntlet identity.
 
 Pointer tilt is restricted to featured artwork with a fine mouse pointer. It updates at most
 once per animation frame, resets on exit or cancellation, and responds immediately when reduced
