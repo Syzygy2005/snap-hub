@@ -358,16 +358,21 @@ retains failure screenshots/traces for seven days. Unit tests remain `npm test`.
 
 ## Brand
 
-The current identity follows the supplied Jade League rebrand guide: cream as the primary surface, jade actions and forest text,
-with Manrope headings, Inter body text and a custom vector wordmark. Its angular SNAP lettering and centered HUB line
-share fixed geometry, so font loading and letter spacing cannot shift the header logo. `src/lib/brand.ts` owns the vector geometry;
-`node scripts/build-brand.mjs` regenerates the SVG exports. Next renders social and Apple icons
-from that same geometry. The previous raster brand sheet is historical, not the current source.
+The [current brand guide](brand/README.md) documents the approved split-card emblem: an angular card with a
+transparent lightning-shaped cut inside an open jade ring. It pairs with the existing custom SNAP/HUB wordmark,
+whose lettering, proportions and jade dividers are unchanged. Manrope headings and Inter body text support
+cream surfaces, jade actions and forest text, with a forest dark theme. The earlier raster sheet in `brand/brand-sheet.png`
+is retained as a historical reference; the [updated visual sheet](brand/brand-guide.svg) shows the current logo system.
 
-Cream is the default theme. The sun/moon button beside the header search switches to a forest dark theme;
-`snaphub:theme` in local storage remembers the choice and keeps other tabs in sync. A small inline script applies
-the saved palette before the body paints. Theme tokens also adapt native controls, focus borders and the wordmark;
-the standalone SVG export and share images retain their cream-palette branding.
+`src/lib/brand.ts` owns the vector geometry; `node scripts/build-brand.mjs` regenerates the light and dark emblem
+exports, wordmark, app icon and visual brand guide. The shared components also supply the Apple icon and home share preview.
+Use [emblem.svg](public/brand/emblem.svg) on light surfaces and [emblem-dark.svg](public/brand/emblem-dark.svg)
+on dark surfaces; the lightning cut stays transparent in both.
+
+The theme follows the device until the visitor chooses cream or forest with the sun/moon button beside the header search.
+`snaphub:theme` in local storage remembers that choice and keeps other tabs in sync. A small inline script applies
+the palette before the body paints. Theme tokens also adapt native controls, focus borders, the emblem and wordmark;
+standalone exports have the fixed palette documented in the guide.
 
 ## Credits
 
@@ -452,14 +457,15 @@ source-reported rarity categories (not inferred spawn percentages). The Jade Lea
 
 ### Jade League visual identity
 
-The September 2026 rebrand follows the supplied Snap Hub guide: jade `#36D6A0`, forest
-`#102D29`, cream `#F3F2E9`, surface `#19413A`, muted `#A8D0B5`. Manrope headings and
-Inter body text are self-hosted through Next's font loader. Shared tokens live in `globals.css`;
-semantic rank, win/loss and chart colors remain distinct. The hand-and-card SVG is a scalable
-adaptation of the supplied reference sheet, not an extracted original vector master.
-`src/lib/brand.ts` supplies `components/brand.tsx`; run `node scripts/build-brand.mjs`
-to update `public/brand/emblem.svg`, `public/brand/wordmark.svg` and `app/icon.svg` from that same geometry. The header pairs
-the emblem with outlined SNAP/HUB lettering and jade dividers. App icons and social previews replace the previous gauntlet identity.
+The [brand guide](brand/README.md) is the current reference for identity and asset use. The September 24 emblem
+combines the approved angular split card and lightning cut with the jade ring; the custom SNAP/HUB wordmark stays intact.
+Jade `#36D6A0`, forest `#102D29` and cream `#F3F2E9` remain the core palette. Manrope headings and Inter body text
+are self-hosted through Next's font loader. Shared light/dark tokens live in `globals.css`; semantic rank, win/loss
+and chart colors remain distinct.
+
+`src/lib/brand.ts` supplies `src/components/brand.tsx`; run `node scripts/build-brand.mjs` to update
+`public/brand/emblem.svg`, `public/brand/emblem-dark.svg`, `public/brand/wordmark.svg` and `src/app/icon.svg`
+from that geometry. Preserve the lightning gap's transparency and the wordmark's existing outlines when exporting.
 
 Pointer tilt is restricted to featured artwork with a fine mouse pointer. It updates at most
 once per animation frame, resets on exit or cancellation, and responds immediately when reduced
