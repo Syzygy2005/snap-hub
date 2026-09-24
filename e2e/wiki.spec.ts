@@ -15,7 +15,11 @@ test("wiki search, reference details and add to existing draft",async ({page})=>
   await expect(variants.getByText("Preview Artist", {exact:true}).first()).toBeHidden();
   await variants.getByText("Unreleased variants (1)", {exact:true}).click();
   await expect(variants.getByText("Preview Artist", {exact:true}).first()).toBeVisible();
-  await variants.getByRole("img", {name:"Test Card 1 variant released-example",exact:true}).evaluate(img=>img.dispatchEvent(new Event("error")));
+  // Art gets one more try before it gives up, so it takes two failures to see the fallback.
+  const variantArt = variants.getByRole("img", {name:"Test Card 1 variant released-example",exact:true});
+  await variantArt.evaluate(img=>img.dispatchEvent(new Event("error")));
+  await expect(variants.getByRole("img", {name:"Test Card 1 variant released-example: artwork loading"})).toBeVisible();
+  await variantArt.evaluate(img=>img.dispatchEvent(new Event("error")));
   await expect(variants.getByRole("img", {name:"Test Card 1 variant released-example: artwork unavailable"})).toBeVisible();
   await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:test.info().outputPath("wiki-card.png"),fullPage:true});
@@ -35,8 +39,19 @@ test("wiki search, reference details and add to existing draft",async ({page})=>
 });
 test("failed wiki art remains readable",async({page})=>{
   await page.goto("/wiki/cards/TestCard1");
-  await page.getByRole("img",{name:"Test Card 1",exact:true}).evaluate(img=>img.dispatchEvent(new Event("error")));
+  const art = page.getByRole("img",{name:"Test Card 1",exact:true});
+  await art.evaluate(img=>img.dispatchEvent(new Event("error")));
+  await expect(page.getByRole("img",{name:"Test Card 1: artwork loading"})).toBeVisible();
+  // The retry is a fresh image; it loads here, so fail it again to reach the fallback.
+  await art.evaluate(img=>img.dispatchEvent(new Event("error")));
   await expect(page.getByRole("img",{name:"Test Card 1: artwork unavailable"})).toBeVisible();
+});
+
+test("art that fails once is tried again and shows",async({page})=>{
+  await page.goto("/wiki/cards/TestCard1");
+  await page.getByRole("img",{name:"Test Card 1",exact:true}).evaluate(img=>img.dispatchEvent(new Event("error")));
+  await expect(page.getByRole("img",{name:"Test Card 1",exact:true})).toBeVisible();
+  await expect(page.getByRole("img",{name:"Test Card 1: artwork unavailable"})).toHaveCount(0);
 });
 
 test("wiki separates historical sources from observed changes", async ({ page }) => {

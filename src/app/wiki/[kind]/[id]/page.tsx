@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { entry, history } from "@/lib/wiki/queries";
 import { listDecks } from "@/lib/decks/queries";
 import { WikiArt } from "@/components/wiki-art";
+import { artSrc } from "@/lib/art";
 import { AbilityText } from "@/components/cards";
 import { ReferenceStatus } from "@/components/wiki-reference";
 import { stripTags } from "@/lib/wiki/filter";
@@ -25,7 +26,7 @@ const find = cache(async (kind: string,id: string) => {
 export async function generateMetadata({params}: PageProps<"/wiki/[kind]/[id]">): Promise<Metadata> {
   const {kind,id} = await params; const {entry} = await find(kind,id);
   const description = stripTags(entry.ability) || `${entry.name} reference and stats.`;
-  return {title: entry.name, description, alternates: { canonical: `/wiki/${kind}/${encodeURIComponent(id)}` }, openGraph: { title: entry.name, description, ...(entry.art ? {images: [{url:entry.art,alt:entry.name}]} : {}) }};
+  return {title: entry.name, description, alternates: { canonical: `/wiki/${kind}/${encodeURIComponent(id)}` }, openGraph: { title: entry.name, description, ...(entry.art ? {images: [{url:artSrc(entry.art),alt:entry.name}]} : {}) }};
 }
 export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
   const {kind: input,id} = await params; const {entry: e,kind} = await find(input,id);
