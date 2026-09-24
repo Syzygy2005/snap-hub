@@ -15,7 +15,7 @@ export const CHANGELOG: Release[] = [
       {
         title: "Guides checked against the official rules",
         detail:
-          "How to play now gives the exact rule for who reveals first: more locations won, then more total Power, then a coin flip. Game modes no longer names a points system for the Infinite leaderboard, and Sanctum Showdown now says the Sanctum moves each turn.",
+          "How to play now gives the exact rule for who reveals first: more locations won, then more total Power, then a coin flip. Sanctum Showdown now says the Sanctum moves each turn.",
       },
     ],
   },

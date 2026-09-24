@@ -291,6 +291,9 @@
   reached from the sandbox; the Actions history is the measure, so check it before changing either.
   Every card and variant image is hotlinked from the same host, so the browser meets the same
   source that pushes back on the server.
+- Past Infinite, the in-game leaderboard is ordered by Snap Points, higher is better. Web sources
+  disagree (some say cubes weighted by MMR); the owner plays at high Infinite and confirmed it,
+  so the guide says Snap Points.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
