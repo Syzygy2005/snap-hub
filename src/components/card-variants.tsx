@@ -1,6 +1,7 @@
 import { cardVariants } from "@/lib/wiki/queries";
 import { VariantGrid } from "./variant-grid";
 import Link from "next/link";
+import { ScrollToHash } from "./scroll-to-hash";
 
 export async function CardVariants({ id, name }: { id: string; name: string }) {
   // One section of the card page. If the catalog read fails, say so here rather than letting the
@@ -26,6 +27,7 @@ export async function CardVariants({ id, name }: { id: string; name: string }) {
           <p className="my-4 text-sm text-muted">These source-listed previews can change before release.</p>
           <VariantGrid anchors items={upcoming.map(variant=>({card_id:id,card_name:name,variant}))} />
         </details>}
+        <ScrollToHash prefix="variant-" />
       </>}
   </section>;
 }
