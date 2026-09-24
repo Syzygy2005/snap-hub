@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-24",
     changes: [
+      { title: "Choose light or dark mode", detail: "Use the sun/moon button beside the header search to switch between cream and forest. Snap Hub remembers your choice for your next visit, with readable text and jade accents in both modes." },
       { title: "Sharper Snap Hub lettering", detail: "The header now pairs the hand-and-card emblem with custom angular SNAP lettering, a centered HUB line and jade dividers. The whole wordmark stays crisp and aligned on phones and larger screens." },
       { title: "A lighter cream and jade look", detail: "Warm cream now leads across the site, with jade actions, forest text and softer panels. Forms, stats and share previews follow the lighter palette, with the same smooth motion and reduced-motion support." },
       {

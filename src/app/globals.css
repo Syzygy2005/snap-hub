@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Jade League identity. Cream leads; jade marks actions and forest keeps the reading surface clear. */
-@theme inline {
+@theme {
   --color-bg: #f3f2e9;
   --color-surface: #fafaf5;
   --color-surface-2: #e7ece2;
@@ -26,22 +26,56 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 18px;
+}
+
+@theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
   color-scheme: light;
+  --control-line: #7e9384;
+  --panel-shadow: 0 6px 24px rgb(16 45 41 / .045);
+  --tile-shadow: 0 12px 24px #102d2914;
+  --hero-art: radial-gradient(ellipse at 60% 40%, #c6eedb, #e7eee2 75%);
+  --hero-art-line: #08785630;
   --motion-ease: cubic-bezier(.22, 1, .36, 1);
   --motion-duration: 280ms;
   --default-transition-duration: 280ms;
   --default-transition-timing-function: cubic-bezier(.22, 1, .36, 1);
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #102d29;
+  --color-surface: #19413a;
+  --color-surface-2: #204c43;
+  --color-surface-3: #214d42;
+  --color-line: #396457;
+  --color-ink: #f3f2e9;
+  --color-muted: #a8d0b5;
+  --color-faint: #acc8b9;
+  --color-accent: #36d6a0;
+  --color-accent-strong: #67e5ba;
+  --color-accent-deep: #67e5ba;
+  --color-gold: #e4cc8d;
+  --color-gem-purple: #c5b5e8;
+  --color-gem-blue: #a3d6e5;
+  --color-up: #7ce5ae;
+  --color-down: #ffa798;
+  --control-line: #6c9a87;
+  --panel-shadow: 0 8px 30px rgb(0 15 12 / .12);
+  --tile-shadow: 0 12px 24px #001e1826;
+  --hero-art: radial-gradient(ellipse at 60% 40%, #245849, #102d29 75%);
+  --hero-art-line: #36d6a038;
+}
+
 html,
 body {
   background: var(--color-bg);
   color: var(--color-ink);
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 body {
@@ -88,15 +122,15 @@ button:not(:disabled), summary, select { cursor: pointer; }
 input, select, textarea { accent-color: var(--color-accent); }
 button, a, summary { touch-action: manipulation; }
 button:disabled { cursor: not-allowed; }
-.brand-panel { box-shadow: 0 6px 24px rgb(16 45 41 / .045); }
+.brand-panel { box-shadow: var(--panel-shadow); }
 .brand-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
 .brand-hero { position: relative; isolation: isolate; background: var(--color-surface); color: var(--color-ink); }
 .brand-hero :focus-visible { outline-color: var(--color-ink); outline-offset: 4px; }
-:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { border-color: #7e9384; }
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { border-color: var(--control-line); }
 input:focus, select:focus, textarea:focus { border-color: var(--color-accent); }
 input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 1; }
-.brand-hero-art { background: radial-gradient(ellipse at 60% 40%, #c6eedb, #e7eee2 75%); }
-.brand-hero-art::before, .brand-hero-art::after { content: ''; position: absolute; width: 280px; height: 380px; border: 1px solid #08785630; border-radius: 28px; transform: rotate(18deg); }
+.brand-hero-art { background: var(--hero-art); }
+.brand-hero-art::before, .brand-hero-art::after { content: ''; position: absolute; width: 280px; height: 380px; border: 1px solid var(--hero-art-line); border-radius: 28px; transform: rotate(18deg); }
 .brand-hero-art::after { transform: rotate(-12deg); width: 240px; height: 330px; }
 .brand-tile, .brand-action, button, a, summary, input, select, textarea { transition: color var(--motion-duration) ease, background-color var(--motion-duration) ease, border-color var(--motion-duration) ease, box-shadow var(--motion-duration) ease, transform var(--motion-duration) var(--motion-ease); }
 .brand-tile:focus-visible { border-color: var(--color-accent); box-shadow: 0 0 0 3px #36d6a025; }
@@ -113,7 +147,7 @@ input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 
 @keyframes menu-enter { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes selection-enter { from { opacity: 0; transform: scale(.75); } to { opacity: 1; transform: scale(1); } }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .brand-tile:hover { transform: translateY(-3px); border-color: #36d6a080; box-shadow: 0 12px 24px #102d2914; }
+  .brand-tile:hover { transform: translateY(-3px); border-color: #36d6a080; box-shadow: var(--tile-shadow); }
   .brand-action:active { transform: translateY(1px); }
   .deck-choice:hover img { transform: scale(1.025); }
 }

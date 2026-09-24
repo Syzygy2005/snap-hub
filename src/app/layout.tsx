@@ -18,7 +18,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
+    <html lang="en" data-theme="light" suppressHydrationWarning className={`${inter.variable} ${manrope.variable}`}>
+      <head>
+        {/* Apply the saved palette before the body is painted, independently of hydration. */}
+        <script dangerouslySetInnerHTML={{ __html: 'try{document.documentElement.dataset.theme=localStorage.getItem("snaphub:theme")==="dark"?"dark":"light"}catch{}' }} />
+      </head>
       <body className="flex min-h-dvh flex-col">
         <a
           href="#main-content"

@@ -9,8 +9,8 @@ export function BrandLogo() {
 
 export function BrandWordmark({ className }: { className?: string }) {
   return <svg width={WORDMARK.width} height={WORDMARK.height} viewBox={WORDMARK.viewBox} className={className} aria-hidden="true" focusable="false">
-    <g transform={WORDMARK.snapTransform} fill={BRAND.forest} fillRule="evenodd">{WORDMARK.snap.map((d, index) => <path key={index} d={d} />)}</g>
-    <g fill={BRAND.forest} fillRule="evenodd">{WORDMARK.hub.map((d, index) => <path key={index} d={d} />)}</g>
+    <g transform={WORDMARK.snapTransform} fill="currentColor" fillRule="evenodd">{WORDMARK.snap.map((d, index) => <path key={index} d={d} />)}</g>
+    <g fill="currentColor" fillRule="evenodd">{WORDMARK.hub.map((d, index) => <path key={index} d={d} />)}</g>
     <path d={WORDMARK.rules} fill={BRAND.jade} />
   </svg>;
 }

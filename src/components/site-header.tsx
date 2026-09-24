@@ -5,6 +5,7 @@ import { discordConfig } from "@/lib/auth/discord";
 import { currentAccount } from "@/lib/auth/session";
 import { AccountMenu } from "./account-menu";
 import { NavLinks } from "./nav-links";
+import { ThemeToggle } from "./theme-toggle";
 
 export async function SiteHeader() {
   // Read the session unconditionally, and first. A header showing who is signed in can never
@@ -22,19 +23,22 @@ export async function SiteHeader() {
 
         <NavLinks />
 
-        <form action="/search" role="search" aria-label="Site search" className="order-last w-full sm:ml-auto sm:w-44 xl:order-none">
-          <label className="sr-only" htmlFor="site-search">
-            Search Snap Hub
-          </label>
-          <input
-            id="site-search"
-            name="q"
-            type="search"
-            maxLength={100}
-            placeholder="Search Snap Hub…"
-            className="w-full rounded-md border border-line bg-surface px-3 py-1.5 text-base text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:w-44 sm:text-sm"
-          />
-        </form>
+        <div className="order-last flex w-full items-center gap-2 sm:ml-auto sm:w-auto xl:order-none">
+          <form action="/search" role="search" aria-label="Site search" className="min-w-0 flex-1 sm:w-44">
+            <label className="sr-only" htmlFor="site-search">
+              Search Snap Hub
+            </label>
+            <input
+              id="site-search"
+              name="q"
+              type="search"
+              maxLength={100}
+              placeholder="Search Snap Hub…"
+              className="w-full rounded-md border border-line bg-surface px-3 py-1.5 text-base text-ink placeholder:text-faint focus:border-accent focus:outline-none sm:w-44 sm:text-sm"
+            />
+          </form>
+          <ThemeToggle />
+        </div>
 
         <AccountMenu account={enabled ? account : null} enabled={enabled} />
       </div>

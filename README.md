@@ -362,6 +362,11 @@ share fixed geometry, so font loading and letter spacing cannot shift the header
 `node scripts/build-brand.mjs` regenerates the SVG exports. Next renders social and Apple icons
 from that same geometry. The previous raster brand sheet is historical, not the current source.
 
+Cream is the default theme. The sun/moon button beside the header search switches to a forest dark theme;
+`snaphub:theme` in local storage remembers the choice and keeps other tabs in sync. A small inline script applies
+the saved palette before the body paints. Theme tokens also adapt native controls, focus borders and the wordmark;
+the standalone SVG export and share images retain their cream-palette branding.
+
 ## Credits
 
 [MARVEL SNAP’s official Help Center](https://marvelsnap.helpshift.com/hc/en/3-marvel-snap/) and
