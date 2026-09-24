@@ -84,3 +84,31 @@ test("tracker setup confirms a real game upload", async ({ page }) => {
   await page.getByRole("button", { name: "Check now" }).click();
   await expect(page.getByRole("status")).toHaveText("Tracker upload received");
 });
+
+test("a deck counts one view per browser, however often it is refreshed", async ({ page, browser }) => {
+  const cards = Array.from({ length: 12 }, (_, i) => `TestCard${i + 1}`);
+  // Its own deck per project: desktop and mobile share one database, and saving the same name and
+  // cards again returns the existing deck with the other run's views already on it.
+  const saved = await page.request.post("/api/decks", { data: { name: `View Counter ${test.info().project.name}`, cards, listed: false } });
+  const { id } = await saved.json();
+  const counted = page.waitForResponse(r => r.url().endsWith(`/api/decks/${id}/view`));
+  await page.goto(`/decks/${id}`);
+  await expect(page.getByText("0 views", { exact: false })).toBeVisible();
+  await counted;
+  await page.reload();
+  await expect(page.getByText("1 view", { exact: false })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("1 view", { exact: false })).toBeVisible();
+
+  // A different browser is a different viewer.
+  const other = await browser.newPage();
+  try {
+    const second = other.waitForResponse(r => r.url().endsWith(`/api/decks/${id}/view`));
+    await other.goto(`/decks/${id}`);
+    await second;
+  } finally {
+    await other.close();
+  }
+  await page.reload();
+  await expect(page.getByText("2 views", { exact: false })).toBeVisible();
+});

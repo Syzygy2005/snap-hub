@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-24",
     changes: [
+      { title: "Deck views count people, not refreshes", detail: "A deck's view count now goes up once per browser. Refreshing, coming back later or a link preview in a chat app no longer adds views, and your own views of your own decks don't count." },
       { title: "Public decks and tracker keys need a Discord sign-in", detail: "Listing a deck on the Decks page and making a tracker key now need a Discord sign-in, which keeps spam off the Decks page and fake games out of the community stats. Signed out, you can still share a deck by link, and any tracker key you already have keeps working." },
       { title: "Variant links land on the variant", detail: "Opening a variant from search now scrolls to that artwork on the card page every time. It sometimes stopped at the top of the page when the variants took a moment to load." },
       { title: "Choose light or dark mode", detail: "Snap Hub starts in the same light or dark mode as your phone or computer. Use the sun/moon button beside the header search to pick cream or forest instead, and Snap Hub remembers your choice for your next visit, with readable text and jade accents in both modes." },

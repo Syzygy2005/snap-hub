@@ -3,7 +3,7 @@ import { toPgParam } from "@/lib/db";
 import { getCards } from "./queries";
 import { cleanAbility, isDeckable } from "./sync";
 import { syncReference } from "@/lib/wiki/sync";
-import { getDeck, listDecks, saveDeck } from "@/lib/decks/queries";
+import { getDeck, listDecks, saveDeck, countDeckView } from "@/lib/decks/queries";
 
 const card = (i: number, extra: Record<string, unknown> = {}) => ({
   name: `Hero ${i}`,
@@ -75,7 +75,8 @@ describe("card import + decks", () => {
     expect(await saveDeck({ name: "Alt", cards: [...ids.slice(0, 11), "ThorChampion"] })).toMatchObject({ ok: false });
 
     const id = (first as { id: string }).id;
-    expect((await getDeck(id, true))?.views).toBe(1);
+    expect(await countDeckView(id, null)).toBe(true);
+    expect((await getDeck(id))?.views).toBe(1);
     expect((await listDecks()).map((d) => d.id)).toContain(id);
   });
 });
