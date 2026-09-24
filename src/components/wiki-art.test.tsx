@@ -2,7 +2,8 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { RETRY_MS, WikiArt } from "./wiki-art";
+import { WikiArt } from "./wiki-art";
+import { RETRY_MS } from "./retry-image";
 
 const ART = "https://marvelsnapzone.com/wp-content/themes/blocksy-child/assets/media/cards/a.webp?v=3";
 let host: HTMLDivElement;
