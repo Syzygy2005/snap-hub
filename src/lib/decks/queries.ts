@@ -91,17 +91,29 @@ export async function saveDeck(
   return { ok: true, id: row.id };
 }
 
-export async function getDeck(id: string, countView = false): Promise<SavedDeck | null> {
+export async function getDeck(id: string): Promise<SavedDeck | null> {
   const db = await getDb();
   // Unlisted decks are fetched the same way: the link is what grants access.
-  const rows = countView
-    ? await db.query<Parameters<typeof toDeck>[0]>(
-        `with bumped as (update decks set views = views + 1 where id = $1 returning *)
-         select ${DECK_COLUMNS} from bumped d left join accounts a on a.id = d.owner_id`,
-        [id],
-      )
-    : await db.query<Parameters<typeof toDeck>[0]>(`select ${DECK_COLUMNS} ${DECK_FROM} where d.id = $1`, [id]);
+  const rows = await db.query<Parameters<typeof toDeck>[0]>(`select ${DECK_COLUMNS} ${DECK_FROM} where d.id = $1`, [id]);
   return rows[0] ? toDeck(rows[0]) : null;
+}
+
+/**
+ * Counts one view of a deck, never its owner's own. Called from the browser once per deck per
+ * browser (see CountView), not from the page render: the render counted every refresh, and every
+ * link preview a chat app fetched. Views rank nothing, so this aims at an honest count from
+ * ordinary browsing rather than at someone scripting the endpoint.
+ */
+export async function countDeckView(id: string, viewerAccountId: number | null): Promise<boolean> {
+  const db = await getDb();
+  // Spelled out rather than "owner_id is distinct from $2": with a signed-out viewer that reads
+  // null is distinct from null on a signed-out deck, which is false, and those views never count.
+  const rows = await db.query<{ id: string }>(
+    `update decks set views = views + 1
+     where id = $1 and ($2::int is null or owner_id is distinct from $2::int) returning id`,
+    [id, viewerAccountId],
+  );
+  return rows.length > 0;
 }
 
 export interface DeckQuery {

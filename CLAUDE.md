@@ -117,6 +117,13 @@
   community stats. Signed out, a deck still saves unlisted and shares by link, and a key a browser
   already holds keeps working. `createTracker` and `saveDeck` stay open on purpose, because tests,
   scripts and the e2e seed call them directly: the rule belongs to the HTTP boundary.
+- Deck views are counted from the browser (`CountView` posting to `/api/decks/[id]/view`), once
+  per deck per browser through localStorage, and never for the deck's owner. The page render
+  used to count, so every refresh and every chat app's link preview added a view. The owner
+  test is `$2 is null or owner_id is distinct from $2`, spelled out: the short form reads
+  null-is-distinct-from-null on a signed-out view of a signed-out deck, which is false, and the
+  route test fails on it. Views rank nothing; if they ever do, this needs server-side dedupe,
+  because a script can still call the endpoint.
 - `claimTracker` checks ownership inside its UPDATE so simultaneous claims cannot steal a key.
   Upload deduplication hashes the parser's resolved local account ID, including the file fallback;
   a missing or invalid header must not create another identity for the same game.

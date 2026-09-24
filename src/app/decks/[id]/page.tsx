@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AbilityText, CardArt, EnergyCurve } from "@/components/cards";
 import { DeckAdmin } from "@/components/deck-admin";
 import { CopyButton } from "@/components/deck-actions";
+import { CountView } from "@/components/count-view";
 import { RelativeTime } from "@/components/relative-time";
 import { PageHeader, Panel } from "@/components/ui";
 import { getCards } from "@/lib/cards/queries";
@@ -22,7 +23,7 @@ export async function generateMetadata(props: PageProps<"/decks/[id]">): Promise
 
 export default async function DeckPage(props: PageProps<"/decks/[id]">) {
   const { id } = await props.params;
-  const [deck, allCards, account] = await Promise.all([getDeck(id, true), getCards(), currentAccount()]);
+  const [deck, allCards, account] = await Promise.all([getDeck(id), getCards(), currentAccount()]);
   if (!deck) notFound();
   const admin = isAdmin(account);
 
@@ -36,6 +37,7 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
 
   return (
     <>
+      <CountView id={deck.id} />
       <div className="mb-2 text-sm">
         <Link href="/decks" className="text-muted hover:text-ink">
           ← Decks
