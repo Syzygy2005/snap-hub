@@ -45,7 +45,8 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
 3. **Vercel**: Add New → Project → import the GitHub repo. Before deploying, add Environment Variables:
    - `DATABASE_URL`: the Supabase pooler URI
    - `CRON_SECRET`: a long random string (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)
-   - `TRACKER_INVITE_CODE` (optional): a code people must enter to make a tracker key
+   - `TRACKER_INVITE_CODE` (optional): a code people must enter to make a tracker key, on top of
+     the Discord sign-in every key already needs
    - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` (optional): a Discord application, which turns on
      sign-in. Register `<site>/api/auth/discord/callback` as its one redirect URL. Leave both unset and
      the sign-in button never appears.
@@ -269,7 +270,8 @@ for: an id, a username and an avatar. No email.
 Sessions are opaque tokens in an `HttpOnly` cookie, stored as a sha256 hash exactly the way tracker keys
 are, so the table is useless to anyone who reads it and a session is revoked by deleting a row.
 
-Decks belong to whoever posted them while signed in, and to nobody otherwise. Dedupe is per poster, so two
+Decks belong to whoever posted them while signed in, and to nobody otherwise. Only a signed-in deck can be
+listed on the Decks page; a signed-out one is saved unlisted and shared by link. Dedupe is per poster, so two
 people sharing the same twelve cards under the same name each get their own deck rather than the second
 silently landing on the first one's; `nulls not distinct` keeps signed-out posts collapsing as they always
 did. Deleting an account leaves its decks standing and only removes the byline.

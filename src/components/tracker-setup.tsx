@@ -7,7 +7,7 @@ import { TrackerStatus } from "./tracker-status";
 
 const subscribeNoop = () => () => {};
 
-export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
+export function TrackerSetup({ inviteRequired, signedIn }: { inviteRequired: boolean; signedIn: boolean }) {
   const origin = useSyncExternalStore(subscribeNoop, () => window.location.origin, () => "https://your-site.vercel.app");
   const [name, setName] = useState("");
   const [invite, setInvite] = useState("");
@@ -94,6 +94,15 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
               </button>
             </div>
           </div>
+        ) : !signedIn ? (
+          // Keys need an account (see /api/tracker/keys). A key this browser already holds keeps
+          // working below; this only gates making a new one.
+          <p className="text-sm text-muted">
+            <a href="/api/auth/discord?return=%2Fstats%2Ftracker" className="font-semibold text-accent hover:underline">
+              Sign in with Discord
+            </a>{" "}
+            to make a tracker key. Your key and your stats stay tied to your account, so they follow you to any device.
+          </p>
         ) : (
           <form onSubmit={create} className="flex flex-wrap items-end gap-2">
             <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted sm:max-w-xs">

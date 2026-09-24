@@ -52,7 +52,25 @@ test("deck import, export and private sync across browsers", async ({ page, brow
   await ctx.close();
 });
 
+test("tracker keys need an account", async ({ page }) => {
+  expect((await page.request.post("/api/tracker/keys", { data: { name: "Anon PC" } })).status()).toBe(401);
+  await page.goto("/stats/tracker");
+  await expect(page.getByRole("link", { name: "Sign in with Discord", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create key" })).toHaveCount(0);
+});
+
+test("signed out, a deck shares by link but is not listed", async ({ page }) => {
+  await page.goto("/decks/builder");
+  for (let i = 1; i <= 12; i++) await page.getByRole("button", { name: new RegExp(`^Test Card ${i}, cost`) }).click();
+  await page.getByRole("button", { name: "Share link" }).click();
+  await expect(page.getByRole("button", { name: /Share publicly/ })).toBeDisabled();
+  await expect(page.getByText("Sign in with Discord to list decks on the Decks page.")).toBeVisible();
+  await page.getByRole("button", { name: /Share unlisted/ }).click();
+  await expect(page).toHaveURL(/\/decks\/[\w-]+$/);
+});
+
 test("tracker setup confirms a real game upload", async ({ page }) => {
+  await signIn(page);
   const response = await page.request.post("/api/tracker/keys", { data: { name: "E2E PC" } });
   const { token } = await response.json();
   expect(token).toBeTruthy();
