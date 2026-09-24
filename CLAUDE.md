@@ -286,6 +286,13 @@
   unreachable from card text; Bounce (`return`) and Zoo (`1-cost`) were. Optional sections on
   a card page catch their own errors and sit behind Suspense: the page has only a root error
   boundary, so a throw there replaced the card with the error screen.
+- A link to one variant (`#variant-<id>`, used by search) must scroll there once the variants
+  arrive. They stream in behind Suspense after the page, so the browser's own anchor scroll and
+  Next's can both run before the anchor exists and give up at the top. `ScrollToHash` at the end
+  of `CardVariants` does it once they mount. Reproduced by delaying the variants 1.5s in a local
+  build: 3 of 3 landed at the top without it, 6 of 6 on the variant with it. Content streaming in
+  above after the scroll (Keep exploring) was the other suspect and does not break it, since the
+  browser's scroll anchoring holds the position: 6 of 6 with that section delayed instead.
 - `artists()` takes options rather than a search string: `name` for one exact artist, `limit`,
   and `seed` for a stable daily pick. Callers ask for what they show; the spotlight used to
   aggregate every artist to display one. An artist page defaults to the release status the
