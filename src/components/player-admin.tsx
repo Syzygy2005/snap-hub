@@ -154,7 +154,7 @@ export function PlayerAdmin({
             onClick={() => {
               if (confirm(`Merge ${plan.absorb.name} into ${plan.keep.name}? This cannot be undone.`)) void call(true);
             }}
-            className="mt-3 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+            className="mt-3 rounded-md bg-jade px-3 py-1.5 text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-50"
           >
             Merge, this cannot be undone
           </button>

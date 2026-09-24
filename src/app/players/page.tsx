@@ -28,7 +28,7 @@ export default async function PlayersPage(props: PageProps<"/players">) {
           aria-label="Player name"
           className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2 placeholder:text-faint focus:border-accent focus:outline-none"
         />
-        <button className="rounded-lg bg-accent px-4 py-2 font-medium text-bg hover:bg-accent-strong">Search</button>
+        <button className="rounded-lg bg-jade px-4 py-2 font-medium text-forest hover:bg-jade-strong">Search</button>
       </form>
 
       {q && results.length === 0 && (

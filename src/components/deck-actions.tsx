@@ -26,7 +26,7 @@ export function CopyButton({
       }}
       className={
         primary
-          ? "rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-strong"
+          ? "rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-forest hover:bg-jade-strong"
           : "rounded-lg border border-line px-4 py-2 text-sm font-medium text-muted hover:text-ink"
       }
     >

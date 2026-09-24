@@ -25,7 +25,7 @@ export default async function VariantsPage(props: PageProps<"/wiki/variants">) {
       <label className="text-xs">Release status<select name="status" defaultValue={result.status} className={selectClass}><option value="released">Released</option><option value="unreleased">Unreleased previews</option></select></label>
       <label className="text-xs">Sort<select name="sort" defaultValue={value(sp,"sort")} className={selectClass}><option value="">Card name</option><option value="newest">Newest source date</option></select></label>
       {value(sp,"card") && <input type="hidden" name="card" value={value(sp,"card")} />}
-      <div className="flex items-end gap-4"><button className="brand-action rounded bg-accent px-4 py-2 text-sm font-bold text-bg">Apply filters</button><Link href="/wiki/variants" className="py-2 text-sm text-muted underline">Reset</Link></div>
+      <div className="flex items-end gap-4"><button className="brand-action rounded bg-jade px-4 py-2 text-sm font-bold text-forest">Apply filters</button><Link href="/wiki/variants" className="py-2 text-sm text-muted underline">Reset</Link></div>
     </form>
     {result.status === "unreleased" && <p className="mb-4 rounded border border-line p-4 text-sm text-accent">Unreleased previews can change. Dates are source metadata, not confirmed release promises.</p>}
     <p role="status" className="mb-4 text-sm text-muted">{result.total} variants · Page {result.page} of {result.pages}</p>

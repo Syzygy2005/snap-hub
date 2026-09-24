@@ -16,7 +16,7 @@ export default async function SearchPage(props: PageProps<"/search">) {
     <PageHeader title="Search Snap Hub" subtitle="Cards, locations, variants, artists, guides, players and public decks—all in one place." />
     <form action="/search" role="search" aria-label="Search results" className="mb-6 flex flex-wrap gap-3">
       <label className="min-w-0 flex-1 text-sm">Search everything<input key={q} name="q" type="search" maxLength={100} defaultValue={q} placeholder="Try a card, artist, location or SNAP term" className="mt-2 block w-full rounded-lg border border-line bg-surface px-4 py-3" /></label>
-      <button className="self-end rounded-lg bg-accent px-5 py-3 font-bold text-bg">Search</button>
+      <button className="self-end rounded-lg bg-jade px-5 py-3 font-bold text-forest">Search</button>
     </form>
     {!q ? <EmptyState title="What are you looking for?">Enter a name, artist or term above. Try “Asgard”, “On Reveal” or “Conquest”.</EmptyState> : <>
       <p className="mb-4 break-words text-sm text-muted">Results for “{q}”</p>

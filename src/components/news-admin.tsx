@@ -182,7 +182,7 @@ export function NewsAdmin({ editing }: { editing?: NewsItem }) {
           type="button"
           onClick={save}
           disabled={busy}
-          className="rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+          className="rounded-md bg-jade px-3 py-1.5 text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-50"
         >
           {editing ? "Save" : "Post"}
         </button>

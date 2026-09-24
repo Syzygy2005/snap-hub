@@ -8,7 +8,7 @@ export default function PageError({ retry }: { error: Error & { digest?: string 
       <h1 className="text-xl font-semibold">We couldn&apos;t load this page</h1>
       <p className="mt-3 text-sm text-muted">There may be a temporary connection problem. Try loading it again.</p>
       <div className="mt-5 flex flex-wrap justify-center gap-3">
-        <button type="button" onClick={retry} className="rounded-md bg-accent px-4 py-2 font-semibold text-bg hover:bg-accent-strong">
+        <button type="button" onClick={retry} className="rounded-md bg-jade px-4 py-2 font-semibold text-forest hover:bg-jade-strong">
           Try again
         </button>
         <Link href="/" className="rounded-md border border-line px-4 py-2 font-semibold hover:border-accent">

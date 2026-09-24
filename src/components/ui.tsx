@@ -47,7 +47,7 @@ export function Tabs({ items }: { items: { href: string; label: string; active: 
           href={t.href}
           aria-current={t.active ? "page" : undefined}
           className={`rounded-md px-3 py-1 font-medium transition-colors ${
-            t.active ? "bg-accent text-bg" : "text-muted hover:text-ink"
+            t.active ? "bg-jade text-forest" : "text-muted hover:text-ink"
           }`}
         >
           {t.label}

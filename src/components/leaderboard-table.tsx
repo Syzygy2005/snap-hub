@@ -162,7 +162,7 @@ export function RankBadge({ rank }: { rank: number }) {
     rank === 1
       ? "bg-gold text-bg"
       : rank <= 3
-        ? "bg-gold/25 text-gold"
+        ? "bg-gold/15 text-gold"
         : rank <= 10
           ? "bg-gem-purple/20 text-gem-purple"
           : "text-muted";

@@ -3,7 +3,7 @@ import type { Card } from "@/lib/cards/types";
 import type { BoardZone } from "@/lib/stats/parse-game";
 import { CardArt } from "./cards";
 
-/** Below this many games a number is shown faded and marked as a small sample. */
+/** Below this many games a rate uses neutral text rather than a positive/negative color. */
 export const LOW_SAMPLE = 20;
 
 export function pct(v: number | null, digits = 1) {
@@ -38,7 +38,7 @@ export function ShareBar({ value }: { value: number }) {
     <span className="flex items-center gap-2">
       <span className="num w-12 text-right">{pct(value)}</span>
       <span className="hidden h-1.5 w-20 overflow-hidden rounded-sm bg-surface-3 sm:block" aria-hidden>
-        <span className="share-bar block h-full bg-accent" style={{ width: `${Math.min(100, value * 100)}%` }} />
+        <span className="share-bar block h-full bg-jade" style={{ width: `${Math.min(100, value * 100)}%` }} />
       </span>
     </span>
   );

@@ -45,12 +45,12 @@ export default async function Home(props: PageProps<"/">) {
 
       <section className="brand-hero mb-5 grid overflow-hidden rounded-xl border border-line md:grid-cols-[1.4fr_1fr]">
         <div className="p-5 sm:p-8 lg:p-10">
-          <p className="brand-eyebrow text-bg/75">Snap Hub <span className="mx-2 text-accent-deep">/</span> Build. Track. Compete.</p>
+          <p className="brand-eyebrow text-muted">Snap Hub <span className="mx-2 text-accent-deep">/</span> Build. Track. Compete.</p>
           <h1 className="mt-4 max-w-xl font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">Build your next<br className="hidden sm:block" /> winning deck.</h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-bg/80 sm:text-base">Explore the cards. Learn from your games. Find your place on the leaderboard.</p>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-muted sm:text-base">Explore the cards. Learn from your games. Find your place on the leaderboard.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/decks/builder" className="brand-action rounded-lg bg-bg px-5 py-3 text-sm font-bold text-ink hover:bg-surface">Build a deck <span className="ml-3 text-accent" aria-hidden>↗</span></Link>
-            <Link href="/wiki" className="brand-action rounded-lg border border-bg/30 px-5 py-3 text-sm font-semibold text-bg hover:bg-bg/5">Explore the wiki</Link>
+            <Link href="/decks/builder" className="brand-action rounded-lg bg-jade px-5 py-3 text-sm font-bold text-forest hover:bg-jade-strong">Build a deck <span className="ml-3" aria-hidden>↗</span></Link>
+            <Link href="/wiki" className="brand-action rounded-lg border border-line px-5 py-3 text-sm font-semibold text-ink hover:bg-surface-2">Explore the wiki</Link>
           </div>
         </div>
         <div className="brand-hero-art relative hidden items-center justify-center overflow-hidden p-8 md:flex" aria-hidden="true">

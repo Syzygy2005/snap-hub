@@ -22,7 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-dvh flex-col">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-3 focus:font-semibold focus:text-bg"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-jade focus:px-4 focus:py-3 focus:font-semibold focus:text-forest"
         >
           Skip to content
         </a>
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </Link>
               .
             </p>
-            <p className="shrink-0 font-semibold uppercase tracking-[0.18em] text-accent/80">{SITE_TAGLINE}</p>
+            <p className="shrink-0 font-semibold uppercase tracking-[0.18em] text-accent">{SITE_TAGLINE}</p>
           </div>
         </footer>
         <Analytics />
