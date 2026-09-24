@@ -31,7 +31,7 @@ export default function CreditsPage() {
             Dinner or Nuverse.
           </p>
           <p>
-            MARVEL SNAP is a trademark of its owners. Marvel characters, the Infinity Gauntlet and all card art are © Marvel.
+            MARVEL SNAP is a trademark of its owners. Marvel characters and all card art are © Marvel.
             Card data and images are shown for reference and belong to their respective owners.
           </p>
           <p>If you own something shown here and want it credited differently or removed, get in touch and it will be fixed.</p>

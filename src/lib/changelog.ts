@@ -13,6 +13,11 @@ export const CHANGELOG: Release[] = [
     date: "2026-09-24",
     changes: [
       {
+        title: "Credits brought up to date",
+        detail:
+          "The credits now list Discord sign-in, page-view analytics, every data source the wiki reads, and the snapshot schedule the site actually runs on.",
+      },
+      {
         title: "Card art stops going missing",
         detail:
           "Art on the card library, the location atlas and the wiki's featured picks sometimes showed \"Artwork unavailable\" because the site hosting it turned some requests away. Snap Hub now fetches each image once and serves it itself, so it loads the same every time.",

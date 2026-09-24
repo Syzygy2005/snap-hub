@@ -41,7 +41,7 @@ export const DATA: Credit[] = [
   {
     name: "Marvel Snap Zone cards, variants and locations",
     url: "https://marvelsnapzone.com/cards/",
-    note: "Card names, costs, power, abilities, location effects and rarity, plus variant artwork, release metadata and individual artist credits used across the wiki.",
+    note: "Card names, costs, power, abilities, location effects and rarity, plus all card, location and variant artwork, release metadata and individual artist credits. Checked hourly; each image is fetched once and cached rather than loaded from their site on every visit.",
   },
 ];
 
@@ -96,12 +96,14 @@ export const TOOLS: Credit[] = [
   { name: "Tailwind CSS", url: "https://tailwindcss.com", note: "Styling (MIT)" },
   { name: "PGlite", url: "https://pglite.dev", note: "Postgres for local development (Apache-2.0)" },
   { name: "postgres.js", url: "https://github.com/porsager/postgres", note: "Database driver (Unlicense)" },
-  { name: "sharp", url: "https://sharp.pixelplumbing.com", note: "Cutting the logo files out of the brand sheet (Apache-2.0)" },
+  { name: "sharp", url: "https://sharp.pixelplumbing.com", note: "Cut the logo files out of the original brand sheet, before the current vector emblem (Apache-2.0)" },
   { name: "Vitest", url: "https://vitest.dev", note: "Tests (MIT)" },
   { name: "Playwright", url: "https://playwright.dev", note: "Browser regression tests (Apache-2.0)" },
   { name: "jsdom", url: "https://github.com/jsdom/jsdom", note: "Component interaction tests (MIT)" },
   { name: "Manrope & Inter", url: "https://fonts.google.com", note: "Fonts via Google Fonts (SIL Open Font License)" },
-  { name: "Vercel, Supabase & GitHub Actions", url: "https://vercel.com", note: "Hosting, database and the 30-minute snapshot job" },
+  { name: "Vercel, Supabase & GitHub Actions", url: "https://vercel.com", note: "Hosting, database, and the scheduled jobs: a leaderboard snapshot every 10 minutes and an hourly card and location check" },
+  { name: "Vercel Web Analytics", url: "https://vercel.com/docs/analytics", note: "Anonymous page-view counts" },
+  { name: "Discord", url: "https://discord.com/developers/docs/topics/oauth2", note: "Sign-in, and the avatar shown in the account menu" },
   {
     name: "Claude Code",
     by: "Anthropic",
@@ -112,6 +114,6 @@ export const TOOLS: Credit[] = [
     name: "ChatGPT",
     by: "OpenAI",
     url: "https://chatgpt.com",
-    note: "Used to generate the Snap Hub logo and brand sheet.",
+    note: "Used to generate the Snap Hub logo and brand sheet, and for the Jade League visual overhaul and parts of the wiki.",
   },
 ];
