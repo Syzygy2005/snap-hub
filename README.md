@@ -377,16 +377,19 @@ shaped.
 - **Inspiration**: [Better Snap Leaderboard](https://github.com/JaydenScottL/bettersnaplb) by JaydenScottL,
   [Untapped.gg](https://snap.untapped.gg) stats, [Marvel Snap Zone deck builder](https://marvelsnapzone.com/deck-builder/)
 - **Data**: the official [MARVEL SNAP Infinite leaderboard](https://marvelsnap.com/infiniteleaderboard/) (Second
-  Dinner / Nuverse); card data and art from [Marvel Snap Zone](https://marvelsnapzone.com/cards/)
+  Dinner / Nuverse); card, location and variant data and art from [Marvel Snap Zone](https://marvelsnapzone.com/cards/);
+  the [MARVEL SNAP Help Center](https://marvelsnap.helpshift.com/hc/en/3-marvel-snap/) and
+  [official patch notes](https://marvelsnap.com/news/) (Second Dinner); location rates from
+  [SnapVault](https://www.snapvault.app/locations); card history from [SNAP.FAN](https://snap.fan/cards/history/2026/)
 - **Research**: [Marvel Snap Tracker](https://github.com/Razviar/marvelsnaptracker) (game-file field map),
   [Helper for Marvel Snap](https://github.com/johnvictorfs/helper-for-marvel-snap),
   [snapscripts](https://github.com/snaptools2023/snapscripts), [Snap Extract](https://github.com/switchfire6/snap-extract),
   [marvelsnapdeck](https://github.com/barkingloudly/marvelsnapdeck),
   [marvel-snap-deckstrings](https://github.com/9j/marvel-snap-deckstrings), [DeckCodes.chat](https://deckcodes.chat/about)
-- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, sharp, Vitest, Playwright, jsdom, Manrope and Inter (Google
-  Fonts); hosted on Vercel, Supabase and GitHub Actions
-- **Made with AI**: code written with [Claude Code](https://claude.com/claude-code) (Anthropic); logo and brand sheet
-  generated with ChatGPT (OpenAI)
+- **Built with**: Next.js, React, Tailwind CSS, PGlite, postgres.js, parse5, sharp, Vitest, Playwright, jsdom, Manrope and
+  Inter (Google Fonts); hosted on Vercel, Supabase and GitHub Actions, with Vercel Web Analytics; sign-in through Discord
+- **Made with AI**: code written with [Claude Code](https://claude.com/claude-code) (Anthropic); logo, brand sheet, the
+  Jade League visual overhaul and parts of the wiki made with ChatGPT (OpenAI)
 
 ## Project layout
 
@@ -407,7 +410,7 @@ src/lib/decks/         deck code encode/decode, saved decks
 src/lib/stats/         game-file parser, tracker keys and uploads, stat math, queries
 src/app/api/           cron snapshot, decks, tracker endpoints
 public/tracker/        the PC tracker script
-.github/workflows/     30-minute snapshot job
+.github/workflows/     10-minute snapshot job, hourly reference sync, CI
 ```
 
 Fan-made and non-commercial; not affiliated with or endorsed by Marvel, Second Dinner or Nuverse. MARVEL SNAP, Marvel
