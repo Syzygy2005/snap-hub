@@ -96,7 +96,6 @@ export const TOOLS: Credit[] = [
   { name: "Tailwind CSS", url: "https://tailwindcss.com", note: "Styling (MIT)" },
   { name: "PGlite", url: "https://pglite.dev", note: "Postgres for local development (Apache-2.0)" },
   { name: "postgres.js", url: "https://github.com/porsager/postgres", note: "Database driver (Unlicense)" },
-  { name: "sharp", url: "https://sharp.pixelplumbing.com", note: "Cut the logo files out of the original brand sheet, before the current vector emblem (Apache-2.0)" },
   { name: "Vitest", url: "https://vitest.dev", note: "Tests (MIT)" },
   { name: "Playwright", url: "https://playwright.dev", note: "Browser regression tests (Apache-2.0)" },
   { name: "jsdom", url: "https://github.com/jsdom/jsdom", note: "Component interaction tests (MIT)" },
