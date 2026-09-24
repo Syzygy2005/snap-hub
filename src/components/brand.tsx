@@ -1,7 +1,7 @@
-import { BRAND, EMBLEM_PATHS, WORDMARK } from "@/lib/brand";
-/** Scalable adaptation of the hand-and-card mark in the supplied Jade League guide. */
-export function BrandGlyph({size = 80}: {size?: number}) {
-  return <svg width={size} height={size} viewBox="0 0 200 220" aria-hidden="true">{EMBLEM_PATHS.map((path,index) => <path key={index} {...path} />)}</svg>;
+import { BRAND, EMBLEM_PATHS, EMBLEM_VIEWBOX, WORDMARK } from "@/lib/brand";
+/** Theme-aware split card and jade ring; explicit color supports static image renders. */
+export function BrandGlyph({size = 80, color}: {size?: number; color?: string}) {
+  return <svg width={size} height={size} viewBox={EMBLEM_VIEWBOX} className="text-ink" aria-hidden="true" focusable="false">{EMBLEM_PATHS.map((path,index) => <path key={index} {...path} fill={path.fill === "currentColor" && color ? color : path.fill} />)}</svg>;
 }
 export function BrandLogo() {
   return <span className="inline-flex items-center gap-1.5" aria-hidden="true"><BrandGlyph size={44} /><BrandWordmark className="h-auto w-[88px] sm:w-[104px]" /></span>;
