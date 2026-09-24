@@ -4,22 +4,46 @@ import { useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "snaphub:theme";
 const CHANGE_EVENT = "snaphub:theme-change";
+const SYSTEM_DARK = "(prefers-color-scheme: dark)";
 type Theme = "light" | "dark";
 const normalizeTheme = (value: string | null | undefined): Theme => value === "dark" ? "dark" : "light";
 const getSnapshot = () => normalizeTheme(document.documentElement.dataset.theme);
 const getServerSnapshot = (): Theme => "light";
 
+function savedTheme(): Theme | null {
+  try {
+    const value = window.localStorage.getItem(STORAGE_KEY);
+    return value === "dark" || value === "light" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A saved choice wins; with none, the device's own setting decides. Matches the script in layout.tsx. */
+function themeFor(saved: Theme | null): Theme {
+  return saved ?? (window.matchMedia?.(SYSTEM_DARK).matches ? "dark" : "light");
+}
+
 function subscribe(onChange: () => void) {
-  const onStorage = (event: StorageEvent) => {
-    if (event.key !== STORAGE_KEY && event.key !== null) return;
-    document.documentElement.dataset.theme = normalizeTheme(event.newValue);
+  const apply = (theme: Theme) => {
+    document.documentElement.dataset.theme = theme;
     onChange();
   };
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== STORAGE_KEY && event.key !== null) return;
+    const value = event.key === null ? null : event.newValue;
+    apply(themeFor(value === "dark" || value === "light" ? value : null));
+  };
+  // Until the visitor picks, follow the device when it switches, e.g. at sunset on a phone.
+  const system = window.matchMedia?.(SYSTEM_DARK);
+  const onSystem = () => { if (!savedTheme()) apply(themeFor(null)); };
   window.addEventListener(CHANGE_EVENT, onChange);
   window.addEventListener("storage", onStorage);
+  system?.addEventListener("change", onSystem);
   return () => {
     window.removeEventListener(CHANGE_EVENT, onChange);
     window.removeEventListener("storage", onStorage);
+    system?.removeEventListener("change", onSystem);
   };
 }
 

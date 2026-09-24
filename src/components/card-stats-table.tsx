@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import type { CardStat } from "@/lib/stats/aggregate";
 import type { Card } from "@/lib/cards/types";
 import { CardArt } from "./cards";
-import { CubeRate, LOW_SAMPLE, pct, WinRate } from "./stats-ui";
+import { CubeRate, LOW_SAMPLE, pct, SmallSample, WinRate } from "./stats-ui";
 
 type SortKey = "games" | "winRate" | "drawnWinRate" | "playedWinRate" | "cubeRate";
 
@@ -83,8 +83,8 @@ export function CardStatsTable({
                       <span className="truncate font-medium">{card ? <Link className="hover:text-accent underline-offset-2 hover:underline" href={`/wiki/cards/${encodeURIComponent(s.defId)}`}>{card.name}</Link> : s.defId}</span>
                     </span>
                   </td>
-                  <td className="num px-2 py-1.5 text-right">
-                    {s.games.toLocaleString()} <span className="text-xs text-faint">({pct(s.playRate, 0)})</span>
+                  <td className="num whitespace-nowrap px-2 py-1.5 text-right">
+                    {s.games.toLocaleString()} <span className="text-xs text-faint">({pct(s.playRate, 0)})</span><SmallSample games={s.games} />
                   </td>
                   <td className="px-2 py-1.5 text-right">
                     <WinRate value={s.winRate} games={s.games} />
