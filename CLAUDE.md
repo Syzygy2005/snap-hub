@@ -291,6 +291,14 @@
   reached from the sandbox; the Actions history is the measure, so check it before changing either.
   Every card and variant image is hotlinked from the same host, so the browser meets the same
   source that pushes back on the server.
+- Art is served through `/art/...` (`lib/art.ts`, `app/art/[...path]/route.ts`), never
+  hotlinked. marvelsnapzone answered some of the visitor's image requests with a 403, on some
+  loads and not others, on every page with art; the owner confirmed the status in the browser.
+  The route fetches once and the CDN keeps it, so a versioned image is asked for once per cache
+  fill instead of once per visitor. It serves only the source's `assets/media` directory and only
+  webp, png and jpeg, so it is not an open proxy and cannot hand out an SVG from our origin.
+  Failures are `no-store` so one refusal is never cached for everyone. `next/image` was not
+  used because the optimizer bills per transformation, and there are thousands of variants.
 - Past Infinite, the in-game leaderboard is ordered by Snap Points, higher is better. Web sources
   disagree (some say cubes weighted by MMR); the owner plays at high Infinite and confirmed it,
   so the guide says Snap Points.
