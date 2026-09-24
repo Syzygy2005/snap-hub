@@ -19,14 +19,14 @@ export const alt = "The biggest climbers on the MARVEL SNAP Infinite leaderboard
 // The board only moves every ten minutes, so neither does this.
 export const revalidate = 600;
 
-const BG = "#102d29";
-const SURFACE = "#19413a";
-const LINE = "#396457";
-const INK = "#f3f2e9";
-const MUTED = "#a8d0b5";
-const FAINT = "#acc8b9";
-const ACCENT = "#36d6a0";
-const UP = "#7ce5ae";
+const BG = "#F3F2E9";
+const SURFACE = "#FBFAF4";
+const LINE = "#C8D0C2";
+const INK = "#102D29";
+const MUTED = "#526B60";
+const FAINT = "#526B60";
+const ACCENT = "#087856";
+const UP = "#087856";
 
 /** Names run to 40 characters; past this one the row stops fitting on a 1200px card. */
 export function clip(name: string): string {

@@ -349,7 +349,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
                 aria-pressed={costs.has(b)}
                 onClick={() => toggleIn(costs, b, setCosts)}
                 className={`num h-8 min-w-8 rounded-sm border px-2 text-sm font-semibold transition-colors ${
-                  costs.has(b) ? "border-accent bg-accent text-bg" : "border-line text-muted hover:border-accent/60 hover:text-ink"
+                  costs.has(b) ? "border-accent bg-jade text-forest" : "border-line text-muted hover:border-accent/60 hover:text-ink"
                 }`}
               >
                 {b === 6 ? "6+" : b}
@@ -415,7 +415,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
                   >
                     <CardArt card={c} eager={i < 18} className="transition-transform" />
                     {picked && (
-                      <span className="selection-check absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-accent text-bg shadow">
+                      <span className="selection-check absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-jade text-forest shadow">
                         <svg viewBox="0 0 12 12" className="h-3 w-3" aria-hidden>
                           <path d="M2.5 6.5 5 9l4.5-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         </svg>
@@ -509,7 +509,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
               type="button"
               disabled={!deck.length}
               onClick={() => copy(encodeDeck(deckCards.map((c) => c.defId), name), "Deck code")}
-              className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-bg hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg bg-jade px-3 py-2 text-sm font-semibold text-forest hover:bg-jade-strong disabled:cursor-not-allowed disabled:opacity-40"
             >
               Copy code
             </button>
@@ -529,7 +529,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
                   type="button"
                   disabled={saving}
                   onClick={() => share(true)}
-                  className="w-full rounded-lg bg-accent px-3 py-2 text-left text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-40"
+                  className="w-full rounded-lg bg-jade px-3 py-2 text-left text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-40"
                 >
                   Share publicly
                   <span className="block text-[11px] font-normal">

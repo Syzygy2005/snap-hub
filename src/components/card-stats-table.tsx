@@ -76,7 +76,7 @@ export function CardStatsTable({
             {rows.map((s) => {
               const card = info[s.defId];
               return (
-                <tr key={s.defId} className={`border-t border-line/60 ${s.games < LOW_SAMPLE ? "opacity-70" : ""}`}>
+                <tr key={s.defId} className="border-t border-line/60">
                   <td className="px-4 py-1.5">
                     <span className="flex items-center gap-2">
                       <span className="w-9 shrink-0">{card && <CardArt card={card} />}</span>

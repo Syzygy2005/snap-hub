@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("new identity stays usable on home, menus and share assets", async ({page,isMobile}) => {
   await page.goto("/");
   await expect(page.getByRole("heading",{name:"Build your next winning deck."})).toBeVisible();
-  await expect(page.locator("body")).toHaveCSS("background-color","rgb(16, 45, 41)");
+  await expect(page.locator("body")).toHaveCSS("background-color","rgb(243, 242, 233)");
   await page.screenshot({path:test.info().outputPath("brand-home.png"),fullPage:true});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(await page.locator('img[src*="banner.webp"], img[src*="wordmark.png"], img[src*="brand/icon.png"]').count()).toBe(0);
@@ -12,6 +12,9 @@ test("new identity stays usable on home, menus and share assets", async ({page,i
   const build = page.getByRole("link",{name:"Build a deck",exact:true});
   await build.focus();
   await expect(build).toHaveCSS("outline-color","rgb(16, 45, 41)");
+  const search = page.getByRole("searchbox", { name: "Search Snap Hub", exact: true });
+  await search.focus();
+  await expect(search).toHaveCSS("border-color","rgb(8, 102, 76)");
   if (isMobile) {
     await page.getByText("Menu",{exact:true}).click();
     const menu=page.getByRole("navigation",{name:"Mobile navigation"});

@@ -68,7 +68,7 @@ export function DeckAdmin({ id, name }: { id: string; name: string }) {
               type="button"
               onClick={rename}
               disabled={busy}
-              className="rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+              className="rounded-md bg-jade px-3 py-1.5 text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-50"
             >
               Save
             </button>

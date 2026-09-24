@@ -47,7 +47,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
         >
           My stats
         </Link>
-        <Link href="/stats/tracker" className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-strong">
+        <Link href="/stats/tracker" className="rounded-md bg-jade px-4 py-2 text-sm font-semibold text-forest hover:bg-jade-strong">
           Get the tracker
         </Link>
       </PageHeader>
@@ -107,7 +107,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
                 </thead>
                 <tbody>
                   {stats.archetypes.slice(0, 50).map((a, i) => (
-                    <tr key={a.key} className={`border-t border-line/60 align-top ${a.games < LOW_SAMPLE ? "opacity-75" : ""}`}>
+                    <tr key={a.key} className="border-t border-line/60 align-top">
                       <td className="num px-4 py-3 text-muted">{i + 1}</td>
                       <td className="px-2 py-3">
                         <details className="group">
@@ -177,7 +177,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
           <div>
             <dt className="font-semibold text-ink">Sample size</dt>
             <dd>
-              Only games from players running the tracker count. Rows with under {LOW_SAMPLE} games are faded; treat them as
+              Only games from players running the tracker count. Fewer than {LOW_SAMPLE} games is a small sample; treat those rates as
               a rough guess. Friendly battles are left out.
             </dd>
           </div>

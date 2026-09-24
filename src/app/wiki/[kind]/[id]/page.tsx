@@ -39,7 +39,7 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
       <div className="min-w-0"><p className="text-xs uppercase tracking-widest text-accent">{kind === "cards" ? e.series : `${e.rarity} location`}</p><h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">{e.name}</h1>
       {kind === "cards" && <div className="my-5 flex gap-8"><p><strong className="num text-3xl text-gem-blue">{e.cost}</strong><span className="ml-2 text-sm text-muted">Energy</span></p><p><strong className="num text-3xl text-accent">{e.power}</strong><span className="ml-2 text-sm text-muted">Power</span></p></div>}
       <p className="mt-5 text-lg leading-relaxed"><AbilityText text={e.ability} /></p>
-      {kind === "cards" && (e.deckable ? <Link className="brand-action hover:brightness-110 mt-6 inline-block rounded bg-accent px-5 py-3 text-sm font-bold text-bg" href={`/decks/builder?add=${encodeURIComponent(id)}`}>Add to builder</Link> : <p className="mt-5 text-sm text-muted">Other / mode card · unavailable for standard deck building.</p>)}
+      {kind === "cards" && (e.deckable ? <Link className="brand-action hover:brightness-110 mt-6 inline-block rounded bg-jade px-5 py-3 text-sm font-bold text-forest" href={`/decks/builder?add=${encodeURIComponent(id)}`}>Add to builder</Link> : <p className="mt-5 text-sm text-muted">Other / mode card · unavailable for standard deck building.</p>)}
       {kind === "locations" && <p className="mt-5 text-xs text-muted">Rarity is the source’s category, not a guaranteed appearance rate.</p>}</div>
     </div>
     <section className="my-8 rounded-xl border border-line bg-surface/40 p-5">

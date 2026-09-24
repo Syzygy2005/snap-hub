@@ -356,7 +356,7 @@ retains failure screenshots/traces for seven days. Unit tests remain `npm test`.
 
 ## Brand
 
-The current identity follows the supplied Jade League rebrand guide: forest, jade and cream,
+The current identity follows the supplied Jade League rebrand guide: cream as the primary surface, jade actions and forest text,
 with Manrope headings and Inter body text. `src/lib/brand.ts` owns the vector geometry;
 `node scripts/build-brand.mjs` regenerates the SVG exports. Next renders social and Apple icons
 from that same geometry. The previous raster brand sheet is historical, not the current source.

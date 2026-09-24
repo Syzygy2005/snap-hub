@@ -8,7 +8,7 @@ export default function WikiPage() { return <>
   <PageHeader title="Know your next move." subtitle="Explore the collection. Learn the rules. Find the art and the answers that bring SNAP to life." />
   <form action="/search" className="mb-8 flex flex-wrap items-end gap-3 rounded-xl border border-line bg-surface p-5">
     <label className="min-w-0 grow text-sm font-semibold">Search the wiki and Snap Hub<input type="search" name="q" maxLength={100} placeholder="A card, location, artist or game term…" className="mt-2 block w-full rounded-lg border border-line bg-bg px-4 py-3 font-normal" /></label>
-    <button className="brand-action rounded-lg bg-accent px-5 py-3 text-sm font-bold text-bg">Search</button>
+    <button className="brand-action rounded-lg bg-jade px-5 py-3 text-sm font-bold text-forest">Search</button>
   </form>
   <WikiSpotlight />
   <h2 className="mb-4 font-display text-xl font-bold">Explore the collection</h2>

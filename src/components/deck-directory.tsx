@@ -138,7 +138,7 @@ export function DeckDirectory({ decks, cards, q, selected }: Props) {
             aria-label="Search decks"
             className="min-w-0 flex-1 basis-full rounded-lg border border-line bg-bg px-3 py-1.5 text-base placeholder:text-faint focus:border-accent focus:outline-none sm:basis-auto sm:text-sm"
           />
-          <button className="rounded-lg bg-accent px-4 py-1.5 text-sm font-semibold text-bg hover:bg-accent-strong">
+          <button className="rounded-lg bg-jade px-4 py-1.5 text-sm font-semibold text-forest hover:bg-jade-strong">
             Search
           </button>
           {filtering && (

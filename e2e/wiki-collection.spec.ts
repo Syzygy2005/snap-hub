@@ -7,8 +7,11 @@ test("artist discovery and comparison survive filters and reloads",async({page})
   await expect(page.locator("article")).toHaveCount(1);
   await page.locator("article").getByRole("button",{name:"Compare",exact:true}).click();
   await page.getByRole("navigation",{name:"Wiki sections"}).getByRole("link",{name:"Variants",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Variant gallery",level:1,exact:true})).toBeVisible();
   await page.getByRole("combobox",{name:"Release status",exact:true}).selectOption("unreleased");
   await page.getByRole("button",{name:"Apply filters"}).click();
+  await expect(page).toHaveURL(/status=unreleased/);
+  await expect(page.getByText("Unreleased preview",{exact:true})).toBeVisible();
   await expect(page.getByRole("complementary",{name:"Variant comparison tray"})).toContainText("Compare 1/2");
   await page.locator("article").getByRole("button",{name:"Compare",exact:true}).click();
   await page.reload();

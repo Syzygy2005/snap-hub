@@ -88,7 +88,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
               <button
                 type="button"
                 onClick={() => copy(token, "key")}
-                className="rounded-md bg-accent px-3 py-2 text-sm font-semibold text-bg hover:bg-accent-strong"
+                className="rounded-md bg-jade px-3 py-2 text-sm font-semibold text-forest hover:bg-jade-strong"
               >
                 {copied === "key" ? "Copied!" : "Copy key"}
               </button>
@@ -119,7 +119,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
             )}
             <button
               disabled={busy}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+              className="rounded-md bg-jade px-4 py-2 text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-50"
             >
               {busy ? "Creating…" : "Create key"}
             </button>
@@ -139,7 +139,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
               type="button"
               onClick={() => downloadZip(activeKey)}
               disabled={downloading}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+              className="rounded-md bg-jade px-4 py-2 text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-50"
             >
               {downloading ? "Preparing…" : "Download snap-hub-tracker.zip"}
             </button>
@@ -202,7 +202,7 @@ export function TrackerSetup({ inviteRequired }: { inviteRequired: boolean }) {
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-4 rounded-xl border border-line bg-surface p-4">
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-accent font-display text-sm font-bold text-bg">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-jade font-display text-sm font-bold text-forest">
         {n}
       </span>
       <div className="min-w-0 flex-1">

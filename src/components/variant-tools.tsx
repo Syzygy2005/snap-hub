@@ -64,7 +64,7 @@ export function VariantToolsProvider({ children, signedIn, enabled }: {children:
     {selected.length>0 && <aside aria-label="Variant comparison tray" className={(comparing?"mt-6":"fixed inset-x-4 bottom-3 z-30 mx-auto max-w-6xl")+" rounded-xl border border-accent/50 bg-bg p-3 shadow-xl"}>
       <div className="flex flex-wrap items-center gap-3"><strong className="text-sm">Compare {selected.length}/2</strong>
         <span className={comparing?"contents":"hidden sm:contents"}>{selected.map(v=><button key={v.key} onClick={()=>toggle(v)} aria-label={`Remove ${v.name} from comparison`} className="max-w-full truncate rounded border border-line px-3 py-2 text-xs">{v.name} ×</button>)}</span>
-        {selected.length===2 && !comparing ? <Link className="rounded bg-accent px-4 py-2 text-sm font-bold text-bg" href={`/wiki/compare?${new URLSearchParams({a:selected[0].key,b:selected[1].key})}`}>Compare artwork →</Link> : selected.length<2 ? <span className="text-xs text-muted">Choose one more variant.</span> : null}
+        {selected.length===2 && !comparing ? <Link className="rounded bg-jade px-4 py-2 text-sm font-bold text-forest" href={`/wiki/compare?${new URLSearchParams({a:selected[0].key,b:selected[1].key})}`}>Compare artwork →</Link> : selected.length<2 ? <span className="text-xs text-muted">Choose one more variant.</span> : null}
         <button onClick={()=>setSelected(()=>[])} className="text-xs underline">Clear selection</button>
       </div>
     </aside>}

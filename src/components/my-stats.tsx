@@ -137,7 +137,7 @@ export function MyStats() {
             aria-label="Tracker key"
             className="w-full rounded-md border border-line bg-bg px-3 py-2 font-mono text-base focus:border-accent focus:outline-none sm:text-sm"
           />
-          <button className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg hover:bg-accent-strong">Show my stats</button>
+          <button className="rounded-md bg-jade px-4 py-2 text-sm font-semibold text-forest hover:bg-jade-strong">Show my stats</button>
         </form>
       </div>
     );
@@ -168,7 +168,7 @@ export function MyStats() {
             type="button"
             onClick={linkHeldKey}
             disabled={linking}
-            className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-bg hover:bg-accent-strong disabled:opacity-50"
+            className="shrink-0 rounded-md bg-jade px-3 py-1.5 text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-50"
           >
             {linking ? "Adding…" : "Add to my account"}
           </button>
@@ -221,7 +221,7 @@ export function MyStats() {
               type="button"
               onClick={() => setWindow(w.key)}
               aria-pressed={stats.window === w.key}
-              className={`rounded-md px-3 py-1 font-medium ${stats.window === w.key ? "bg-accent text-bg" : "text-muted hover:text-ink"}`}
+              className={`rounded-md px-3 py-1 font-medium ${stats.window === w.key ? "bg-jade text-forest" : "text-muted hover:text-ink"}`}
             >
               {w.label}
             </button>

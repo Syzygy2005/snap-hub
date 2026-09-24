@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-09-24",
     changes: [
+      { title: "A lighter cream and jade look", detail: "Warm cream now leads across the site, with jade actions, forest text and softer panels. Forms, stats and share previews follow the lighter palette, with the same smooth motion and reduced-motion support." },
       {
         title: "Credits brought up to date",
         detail:
