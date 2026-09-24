@@ -111,6 +111,12 @@
   follow a person across devices. `tracked_games.account_hash` is a separate thing again, a
   hash of the Snap account id used for dedupe. Display names matter only on the leaderboard,
   which has no IDs at all.
+- Making a tracker key and listing a deck on the Decks page both need a Discord account, checked
+  in the routes (`/api/tracker/keys`, `/api/decks`). With neither, a script could flood the public
+  deck list (the only guard was an exact duplicate of name and cards) and fake uploads into the
+  community stats. Signed out, a deck still saves unlisted and shares by link, and a key a browser
+  already holds keeps working. `createTracker` and `saveDeck` stay open on purpose, because tests,
+  scripts and the e2e seed call them directly: the rule belongs to the HTTP boundary.
 - `claimTracker` checks ownership inside its UPDATE so simultaneous claims cannot steal a key.
   Upload deduplication hashes the parser's resolved local account ID, including the file fallback;
   a missing or invalid header must not create another identity for the same game.

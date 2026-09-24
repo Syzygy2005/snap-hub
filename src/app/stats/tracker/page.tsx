@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { TrackerSetup } from "@/components/tracker-setup";
 import { PageHeader, Panel } from "@/components/ui";
 import { trackerInviteRequired } from "@/lib/stats/tracker";
+import { currentAccount } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Stats Tracker" };
 
-export default function TrackerPage() {
+export default async function TrackerPage() {
+  const account = await currentAccount();
   return (
     <>
       <PageHeader
@@ -15,7 +17,7 @@ export default function TrackerPage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <TrackerSetup inviteRequired={trackerInviteRequired()} />
+        <TrackerSetup inviteRequired={trackerInviteRequired()} signedIn={!!account} />
 
         <div className="space-y-6">
           <Panel title="What gets recorded">

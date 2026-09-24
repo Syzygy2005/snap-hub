@@ -527,13 +527,15 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
               <div className="col-span-2 space-y-2">
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={saving || !signedIn}
                   onClick={() => share(true)}
                   className="w-full rounded-lg bg-jade px-3 py-2 text-left text-sm font-semibold text-forest hover:bg-jade-strong disabled:opacity-40"
                 >
                   Share publicly
                   <span className="block text-[11px] font-normal">
-                    Listed on the Decks page for everyone{postAs ? `, as ${postAs}` : ""}.
+                    {signedIn
+                      ? `Listed on the Decks page for everyone${postAs ? `, as ${postAs}` : ""}.`
+                      : "Sign in with Discord to list decks on the Decks page."}
                   </span>
                 </button>
                 <button
