@@ -10,6 +10,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-09-25",
+    changes: [
+      { title: "More room for the things that matter", detail: "Quieter cream surfaces, clearer stats and softly lit featured artwork give the site a more relaxed rhythm. The home leaderboard now has one freshness line." },
+      { title: "A simpler way around the wiki", detail: "Reference, Art & Collection, Guides and History organize the wiki into four groups, with a page picker on phones and shortcuts for the section you are exploring." },
+      { title: "Smoother deck building and loading", detail: "Energy filters have clearer selected states and cards glide into place when you filter or sort. Wiki loading previews now match reference entries, guides and the overview. Reduced-motion preferences are respected throughout." },
+    ],
+  },
+  {
     date: "2026-09-24",
     changes: [
       { title: "Deck views count people, not refreshes", detail: "A deck's view count now goes up once per browser. Refreshing, coming back later or a link preview in a chat app no longer adds views, and your own views of your own decks don't count." },

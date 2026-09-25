@@ -1,4 +1,5 @@
 "use client";
+import { AnimatedCardGrid } from "./animated-card-grid";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -305,7 +306,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       {/* Card pool */}
       <section aria-label="Card pool" className="min-w-0">
-        <div className="mb-4 space-y-3 rounded-xl border border-line bg-surface/80 p-3">
+        <div className="builder-toolbar mb-5 space-y-4 rounded-xl bg-surface/80 p-4">
           <div className="flex flex-wrap gap-2">
             <input
               type="search"
@@ -340,7 +341,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
             </select>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by cost">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-1.5" role="group" aria-label="Filter by cost">
             <span className="mr-1 text-xs uppercase tracking-wider text-faint">Cost</span>
             {COST_BUCKETS.map((b) => (
               <button
@@ -348,7 +349,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
                 type="button"
                 aria-pressed={costs.has(b)}
                 onClick={() => toggleIn(costs, b, setCosts)}
-                className={`num h-8 min-w-8 rounded-sm border px-2 text-sm font-semibold transition-colors ${
+                className={`energy-chip num h-10 min-w-9 rounded-xl border px-1 text-sm font-semibold transition-colors sm:min-w-10 sm:px-2 ${
                   costs.has(b) ? "border-accent bg-jade text-forest" : "border-line text-muted hover:border-accent/60 hover:text-ink"
                 }`}
               >
@@ -365,7 +366,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
                 type="button"
                 aria-pressed={keywords.has(k.label)}
                 onClick={() => toggleIn(keywords, k.label, setKeywords)}
-                className={`rounded-sm border px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
                   keywords.has(k.label)
                     ? "border-accent bg-accent/20 text-ink"
                     : "border-line text-muted hover:border-accent/60 hover:text-ink"
@@ -397,11 +398,11 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
         {pool.length === 0 ? (
           <p className="rounded-xl border border-dashed border-line p-10 text-center text-sm text-muted">No cards match those filters.</p>
         ) : (
-          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
+          <AnimatedCardGrid revision={pool.map((c) => c.defId).join(",")} className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
             {pool.map((c, i) => {
               const picked = inDeck.has(c.defId);
               return (
-                <li key={c.defId}>
+                <li key={c.defId} data-card-id={c.defId}>
                   <button
                     type="button"
                     onClick={() => toggleCard(c.defId)}
@@ -426,7 +427,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
                 </li>
               );
             })}
-          </ul>
+          </AnimatedCardGrid>
         )}
       </section>
 

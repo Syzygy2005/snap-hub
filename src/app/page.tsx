@@ -3,7 +3,6 @@ import { BrandGlyph } from "@/components/brand";
 import { InteractiveArt } from "@/components/interactive-art";
 import { CardArt } from "@/components/cards";
 import { LeaderboardTable, RankBadge } from "@/components/leaderboard-table";
-import { RelativeTime } from "@/components/relative-time";
 import { Panel, PlayerName, RankDelta } from "@/components/ui";
 import { latestRelease } from "@/lib/changelog";
 import { KIND_LABELS, latestNews } from "@/lib/news/queries";
@@ -59,22 +58,15 @@ export default async function Home(props: PageProps<"/">) {
         </div>
       </section>
       <nav aria-label="Explore Snap Hub" className="mb-8 grid grid-cols-3 gap-2 sm:gap-4">
-        {FEATURES.map((f,i) => <Link key={f.href} href={f.href} className="brand-tile rounded-lg border border-line bg-surface/60 p-3 sm:p-4"><span className="mb-2 hidden text-[10px] font-medium tracking-widest text-accent sm:block">0{i+1} /</span><span className="block font-display text-xs font-bold sm:text-base">{f.title}</span><span className="mt-1 hidden text-xs text-muted sm:block">{f.blurb}</span></Link>)}
+        {FEATURES.map((f,i) => <Link key={f.href} href={f.href} className="home-shortcut p-3 sm:p-4"><span className="mb-2 hidden text-[10px] font-medium tracking-widest text-accent sm:block">0{i+1} /</span><span className="flex items-center justify-between gap-1 font-display text-xs font-bold sm:text-base">{f.title}<span aria-hidden className="text-accent">↗</span></span><span className="mt-1 hidden text-xs text-muted sm:block">{f.blurb}</span></Link>)}
       </nav>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-6">
         <Panel
           title={season ? `Top 10 · ${seasonLabel(season)}` : "Top 10"}
-          action={
-            board?.meta.updatedAt ? (
-              <span className="text-xs text-muted">
-                Updated <RelativeTime iso={board.meta.updatedAt} />
-              </span>
-            ) : null
-          }
+          description={<DataFreshness inline checkedAt={checkedAt} archived={!!season && season !== seasonKey(currentSeason())} />}
         >
-          <DataFreshness checkedAt={checkedAt} archived={!!season && season !== seasonKey(currentSeason())} />
           {board ? (
             <>
               <LeaderboardTable rows={board.rows.slice(0, 10)} compact latestUpdate={board.meta.updatedAt} />
@@ -89,7 +81,7 @@ export default async function Home(props: PageProps<"/">) {
           )}
         </Panel>
 
-          <Panel title="Latest decks" action={<Link href="/decks" className="text-xs font-semibold text-accent hover:underline">All decks</Link>}>
+          <Panel tone="quiet" title="Latest decks" action={<Link href="/decks" className="text-xs font-semibold text-accent hover:underline">All decks</Link>}>
             {decks.length ? (
               <ul>
                 {decks.map((d) => (
@@ -153,6 +145,7 @@ export default async function Home(props: PageProps<"/">) {
           {news && (
             <Panel
               title="Game news"
+              tone="quiet"
               action={
                 <Link href="/news" className="text-xs font-medium text-accent hover:underline">
                   All news
@@ -179,6 +172,7 @@ export default async function Home(props: PageProps<"/">) {
           {latest && (
             <Panel
               title="What's new"
+              tone="quiet"
               action={
                 <Link href="/changelog" className="text-xs font-medium text-accent hover:underline">
                   All updates

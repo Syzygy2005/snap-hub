@@ -19,20 +19,25 @@ export function Panel({
   action,
   children,
   className = "",
+  tone = "surface",
+  description,
 }: {
   title?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  tone?: "surface" | "quiet";
+  description?: ReactNode;
 }) {
   return (
-    <section className={`brand-panel rounded-xl border border-line bg-surface/80 ${className}`}>
+    <section className={`brand-panel panel-${tone} rounded-xl ${className}`}>
       {(title || action) && (
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+        <div className="panel-heading flex flex-wrap items-center justify-between gap-3 px-4 py-4">
           {title && <h2 className="font-display text-sm font-bold tracking-wide">{title}</h2>}
           {action}
         </div>
       )}
+      {description && <div className="px-4 pb-3">{description}</div>}
       {children}
     </section>
   );
@@ -105,7 +110,7 @@ export function PlayerName({
       {renamedFrom && (
         <span
           title={`Previously ${renamedFrom}`}
-          className="shrink-0 rounded border border-gem-purple/50 px-1 text-[10px] font-medium uppercase text-gem-purple"
+          className="status-badge shrink-0 text-gem-purple"
         >
           new name
         </span>
@@ -113,7 +118,7 @@ export function PlayerName({
       {shared && (
         <span
           title="More than one player on the board uses this name. We tell them apart by score."
-          className="shrink-0 rounded border border-line px-1 text-[10px] font-medium uppercase text-muted"
+          className="status-badge shrink-0 text-muted"
         >
           dup
         </span>
@@ -134,10 +139,10 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-surface/80 px-4 py-3">
+    <div className="stat-tile rounded-xl bg-surface/80 px-4 py-5">
       <div className="text-xs font-medium uppercase tracking-wider text-muted">{label}</div>
-      <div className="num mt-1 truncate font-display text-2xl font-bold leading-tight">{value}</div>
-      {hint && <div className="mt-0.5 truncate text-xs text-faint">{hint}</div>}
+      <div className="num mt-3 break-words font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{value}</div>
+      {hint && <div className="mt-2 text-xs leading-relaxed text-faint">{hint}</div>}
     </div>
   );
 }

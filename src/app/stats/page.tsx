@@ -160,7 +160,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
         </>
       )}
 
-      <Panel title="How these numbers work">
+      <Panel tone="quiet" title="How these numbers work">
         <dl className="grid gap-4 p-4 text-sm text-muted sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="font-semibold text-ink">Win rate</dt>

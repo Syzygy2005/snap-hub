@@ -123,6 +123,26 @@ input, select, textarea { accent-color: var(--color-accent); }
 button, a, summary { touch-action: manipulation; }
 button:disabled { cursor: not-allowed; }
 .brand-panel { box-shadow: var(--panel-shadow); }
+.panel-surface { border: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent); background: color-mix(in srgb, var(--color-surface) 85%, transparent); }
+.panel-heading { border-bottom: 1px solid color-mix(in srgb, var(--color-line) 45%, transparent); }
+.panel-quiet { box-shadow: none; background: transparent; }
+.panel-quiet > .panel-heading { border-bottom-color: var(--color-line); }
+.home-shortcut { border-bottom: 1px solid var(--color-line); }
+.home-shortcut:hover { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-surface) 60%, transparent); }
+.stat-tile { box-shadow: var(--panel-shadow); border-top: 2px solid color-mix(in srgb, var(--color-jade) 45%, var(--color-line)); }
+.status-badge { display: inline-flex; align-items: center; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--color-line) 70%, transparent); padding: .2rem .5rem; font-size: .625rem; font-weight: 600; line-height: 1.3; letter-spacing: .025em; text-transform: uppercase; }
+.wiki-art-frame { padding: .75rem; border-radius: 1.25rem; background: var(--hero-art); box-shadow: inset 0 0 0 1px var(--hero-art-line), var(--panel-shadow); }
+.wiki-art-frame img { filter: drop-shadow(0 10px 12px color-mix(in srgb, var(--color-forest) 20%, transparent)); }
+.wiki-spotlights .wiki-art-frame { margin-top: 1rem; }
+.wiki-spotlights article { border-color: transparent; box-shadow: var(--panel-shadow); }
+.builder-toolbar { box-shadow: var(--panel-shadow); border: 1px solid color-mix(in srgb, var(--color-line) 55%, transparent); }
+.energy-chip { border-radius: 35% 20% 35% 20%; }
+.energy-chip[aria-pressed=true] { box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 3px var(--color-accent); }
+.card-stats-table[data-sort=games] :is(th,td):nth-child(2),
+.card-stats-table[data-sort=winRate] :is(th,td):nth-child(3),
+.card-stats-table[data-sort=drawnWinRate] :is(th,td):nth-child(4),
+.card-stats-table[data-sort=playedWinRate] :is(th,td):nth-child(5),
+.card-stats-table[data-sort=cubeRate] :is(th,td):nth-child(6) { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
 .brand-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
 .brand-hero { position: relative; isolation: isolate; background: var(--color-surface); color: var(--color-ink); }
 .brand-hero :focus-visible { outline-color: var(--color-ink); outline-offset: 4px; }
@@ -161,13 +181,15 @@ input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 
 main table tbody tr { border-color: color-mix(in srgb, var(--color-line) 45%, transparent); transition: background-color 240ms ease; }
 main table tbody tr:focus-within { background-color: var(--color-surface-2); }
 @media (hover: hover) { main table tbody tr:hover { background-color: color-mix(in srgb, var(--color-surface-2) 75%, transparent); } }
-.skeleton { position: relative; overflow: hidden; background: var(--color-surface); border-radius: 8px; }
+.skeleton { position: relative; overflow: hidden; background: color-mix(in srgb, var(--color-surface-2) 70%, var(--color-bg)); border-radius: 8px; }
 .skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, #36d6a018 50%, transparent 80%); transform: translateX(-100%); animation: skeleton-sweep 1.8s ease-in-out infinite; }
 @keyframes skeleton-sweep { to { transform: translateX(100%); } }
 @media (prefers-reduced-motion: no-preference) {
+  .art-reveal[data-revealed=true] { animation: art-reveal 420ms ease-out; }
   .page-intro, .empty-state { animation: content-enter 360ms var(--motion-ease) both; }
   #deck li:has(button) { animation: content-enter 280ms var(--motion-ease) both; }
 }
+@keyframes art-reveal { from { opacity: .25; } to { opacity: 1; } }
 @keyframes content-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: 0s !important; scroll-behavior: auto !important; }

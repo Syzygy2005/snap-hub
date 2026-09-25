@@ -342,6 +342,12 @@
   disagree (some say cubes weighted by MMR); the owner plays at high Infinite and confirmed it,
   so the guide says Snap Points.
 - Player-visible changes get an entry in `src/lib/changelog.ts`, newest first, dated the day it reaches main.
+- Visual hierarchy: `Panel` defaults to a soft surface; use `tone="quiet"` for secondary information.
+  Homepage source-check freshness is a single inline description, not a second update timestamp.
+  `WIKI_GROUPS` references every canonical section once; desktop groups and the mobile page picker share it.
+  Detail routes have their own loading shape so opening a card does not flash a card-library grid.
+  `AnimatedCardGrid` uses pre-commit positions and viewport-limited Web Animations, with cancellation
+  on resize, focus, touch, unmount and live reduced-motion changes. Keep transforms off reading surfaces.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
 

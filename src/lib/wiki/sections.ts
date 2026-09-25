@@ -39,3 +39,15 @@ export const WIKI_CRUMBS: Record<string, string> = {
     WIKI_SECTIONS.filter((s) => s.href !== "/wiki").map((s) => [s.href.split("/").pop()!, s.crumb ?? s.label]),
   ),
 };
+
+/** Groups reference canonical sections without adding sitemap pages. */
+export const WIKI_GROUPS = [
+  { label: "Reference", hrefs: ["/wiki", "/wiki/cards", "/wiki/locations"] },
+  { label: "Art & Collection", hrefs: ["/wiki/variants", "/wiki/artists", "/wiki/my-collection"] },
+  { label: "Guides", hrefs: ["/wiki/basics", "/wiki/archetypes", "/wiki/game-modes", "/wiki/terminology", "/wiki/collection"] },
+  { label: "History", hrefs: ["/wiki/history"] },
+];
+
+export function wikiSectionPath(pathname: string) {
+  return WIKI_SECTIONS.find(({ href }) => href === pathname || (href !== "/wiki" && pathname.startsWith(href + "/")))?.href ?? "/wiki";
+}

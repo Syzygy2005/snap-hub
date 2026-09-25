@@ -8,9 +8,9 @@ export function WikiArt({ name, art, featured = false }: { name: string; art: st
   const unavailable = <div className={box} role="img" aria-label={`${name}: artwork unavailable`}>Artwork unavailable</div>;
   const image = <div className="relative">
     {art
-      ? <RetryImage src={artSrc(art)} alt={name} eager={featured} className="aspect-square w-full object-contain"
+      ? <RetryImage src={artSrc(art)} alt={name} eager={featured} reveal className="aspect-square w-full object-contain"
           waiting={<div className={box} role="img" aria-label={`${name}: artwork loading`} />} fallback={unavailable} />
       : unavailable}
   </div>;
-  return featured ? <InteractiveArt>{image}</InteractiveArt> : image;
+  return featured ? <div className="wiki-art-frame"><InteractiveArt>{image}</InteractiveArt></div> : image;
 }
