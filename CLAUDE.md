@@ -228,7 +228,10 @@
   local midnight, so the date moved back a day anywhere east of Greenwich while CI (UTC) and
   the machine that generated the index (UTC-6) both read it correctly. The run prints its
   most-mentioned names for that reason. Regenerating needs network to marvelsnap.com and
-  marvelsnapzone.com, so the committed `Random` rows were stripped by hand in the meantime.
+  marvelsnapzone.com, which the sandbox does not have, so it runs as the manual **Official patch
+  index** workflow (`patch-index.yml`): it pushes a `patch-index/<date>` branch, never main, and
+  the "Most mentioned" line in its log is read before the pull request is merged. The committed
+  `Random` rows were stripped by hand until the first regenerated index replaces them.
 - `claimPlayer` and `claimTracker` both decide in the write, never in a read above it. The
   reads in `claimPlayer` exist to word the error, not to make the decision: `claims.test.ts`
   races two claims through `Promise.all` and PGlite's single connection interleaves them, which

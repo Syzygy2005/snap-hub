@@ -1,0 +1,65 @@
+name: Official patch index
+
+# Rebuilds src/lib/wiki/data/official-patches.json from marvelsnap.com and pushes it to a new
+# branch for review. Run by hand from the Actions tab; nothing schedules it. It never touches
+# main: the branch becomes a pull request, and the "Most mentioned" line in the log is checked
+# before it is merged, because a card whose name is an ordinary word (Random) once matched 55 of
+# 139 articles and nothing else in the run said so.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: official-patch-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Download the card and location lists
+        # Marvel Snap Zone refuses some automated requests (see the reference sync), so ask one
+        # at a time with a pause, and retry a refusal once. A failure here stops the run before
+        # anything is written.
+        run: |
+          for kind in cards locations; do
+            url="https://marvelsnapzone.com/getinfo/?searchtype=${kind}&searchcardstype=true"
+            curl --fail --silent --show-error --retry 2 --retry-delay 10 --retry-all-errors --max-time 60 \
+              -A "Mozilla/5.0 (compatible; SnapHub patch index)" -o "${kind}.json" "$url"
+            jq -e '.success.cards | length > 0' "${kind}.json" > /dev/null \
+              || { echo "::error::The ${kind} list came back empty or malformed."; exit 1; }
+            echo "${kind}: $(jq '.success.cards | length' "${kind}.json") entries"
+            sleep 5
+          done
+
+      - name: Index the official patch articles
+        run: node scripts/index-official-patches.mjs cards.json locations.json
+
+      - name: Push the result to a review branch
+        run: |
+          # indexedAt changes on every run, so compare everything but it.
+          file=src/lib/wiki/data/official-patches.json
+          if cmp -s <(git show "HEAD:$file" | jq -S 'del(.indexedAt)') <(jq -S 'del(.indexedAt)' "$file"); then
+            echo "No article or mention changed since the last index; nothing to push." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          branch="patch-index/$(date -u +%Y-%m-%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add "$file"
+          git commit -m "Regenerate the official patch index"
+          git push origin "$branch"
+          {
+            echo "Pushed **${branch}**. Open a pull request from it and check the \"Most mentioned\" line in this run's log before merging."
+          } >> "$GITHUB_STEP_SUMMARY"
