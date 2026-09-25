@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "./ui";
+import { ScrollToHash } from "./scroll-to-hash";
 import type { WikiGuide as Guide } from "@/lib/wiki/guides";
 
 export function WikiGuide({ guide }: { guide: Guide }) {
@@ -18,5 +19,6 @@ export function WikiGuide({ guide }: { guide: Guide }) {
       </section>)}</div>
     </div>
     <section className="mt-8"><h2 className="mb-3 text-lg font-bold">Keep exploring</h2><div className="flex flex-wrap gap-3">{guide.related.map(l => <Link key={l.href} href={l.href} className="brand-tile rounded-lg border border-line bg-surface px-4 py-3 text-sm text-accent">{l.title} →</Link>)}</div></section>
+    <ScrollToHash key={guide.slug} prefix="" />
   </>;
 }
