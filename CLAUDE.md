@@ -346,6 +346,8 @@
   Homepage source-check freshness is a single inline description, not a second update timestamp.
   `WIKI_GROUPS` references every canonical section once; desktop groups and the mobile page picker share it.
   Detail routes have their own loading shape so opening a card does not flash a card-library grid.
+  Guides mount `ScrollToHash` after their sections arrive, just as streamed variants do; otherwise
+  navigation through a loading boundary can lose search-result anchors such as `#priority`.
   `AnimatedCardGrid` uses pre-commit positions and viewport-limited Web Animations, with cancellation
   on resize, focus, touch, unmount and live reduced-motion changes. Keep transforms off reading surfaces.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.

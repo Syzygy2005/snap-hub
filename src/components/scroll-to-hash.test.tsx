@@ -42,6 +42,17 @@ it("finds an id that was percent-encoded in the link", () => {
   el.remove();
 });
 
+it("lands on a guide section after its loading placeholder is replaced", () => {
+  history.replaceState(null, "", "/wiki/terminology#priority");
+  const section = document.createElement("section");
+  section.id = "priority";
+  offscreen(section);
+  document.body.append(section);
+  act(() => root.render(<ScrollToHash prefix="" />));
+  expect(scrolled).toEqual(["priority"]);
+  section.remove();
+});
+
 it("opens the unreleased disclosure when the target is inside it", () => {
   history.replaceState(null, "", "/wiki/cards/X#variant-9");
   host.innerHTML = '<details><summary>Unreleased</summary><article id="variant-9"></article></details>';
