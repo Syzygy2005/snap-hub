@@ -9,10 +9,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  */
 export const RETRY_MS = 2_000;
 
-export function RetryImage({ src, alt, eager = false, className, waiting, fallback }: {
+export function RetryImage({ src, alt, eager = false, reveal = false, className, waiting, fallback }: {
   src: string;
   alt: string;
   eager?: boolean;
+  reveal?: boolean;
   className: string;
   waiting: ReactNode;
   fallback: ReactNode;
@@ -29,5 +30,5 @@ export function RetryImage({ src, alt, eager = false, className, waiting, fallba
   };
   // The key makes the retry a new element, which is what sends the browser back to the server.
   // eslint-disable-next-line @next/next/no-img-element
-  return <img key={state} src={src} alt={alt} onError={failed} loading={eager ? "eager" : "lazy"} decoding="async" draggable={false} className={className} />;
+  return <img key={state} src={src} alt={alt} onError={failed} onLoad={reveal ? (event) => { event.currentTarget.dataset.revealed = "true"; } : undefined} loading={eager ? "eager" : "lazy"} decoding="async" draggable={false} className={`${className}${reveal ? " art-reveal" : ""}`} />;
 }

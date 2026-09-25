@@ -34,7 +34,7 @@ export function WinRate({ value, games }: { value: number | null; games: number 
  */
 export function SmallSample({ games }: { games: number }) {
   if (games >= LOW_SAMPLE) return null;
-  return <span className="ml-1.5 whitespace-nowrap rounded border border-line px-1 py-px align-middle text-[10px] font-medium uppercase tracking-wide text-muted" title={`Fewer than ${LOW_SAMPLE} games: treat these rates as a rough guess`}>small sample</span>;
+  return <span className="status-badge ml-1.5 align-middle text-muted" title={`Fewer than ${LOW_SAMPLE} games: treat these rates as a rough guess`}>small sample</span>;
 }
 
 export function CubeRate({ value, games }: { value: number | null; games: number }) {
@@ -87,7 +87,7 @@ export function ResultBadge({ result }: { result: "win" | "loss" | "tie" }) {
     tie: "bg-surface-3 text-muted",
   };
   return (
-    <span className={`inline-flex w-11 justify-center rounded-sm px-1.5 py-0.5 text-[11px] font-bold uppercase ${styles[result]}`}>
+    <span className={`status-badge min-w-11 justify-center ${styles[result]}`}>
       {result}
     </span>
   );

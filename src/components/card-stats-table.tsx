@@ -53,12 +53,12 @@ export function CardStatsTable({
         <span className="num ml-auto text-xs text-faint">{rows.length} cards</span>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="card-stats-table w-full min-w-[640px] text-sm" data-sort={sort}>
           <thead>
             <tr className="text-left text-[11px] uppercase tracking-wider text-faint">
               <th className="px-4 py-2 font-medium">Card</th>
               {COLUMNS.map((c) => (
-                <th key={c.key} className="px-2 py-2 text-right font-medium" title={c.title}>
+                <th key={c.key} aria-sort={sort === c.key ? "descending" : undefined} className="px-2 py-2 text-right font-medium" title={c.title}>
                   <button
                     type="button"
                     onClick={() => setSort(c.key)}
