@@ -95,6 +95,9 @@
   current season has a standings row, which is the proof that the old month is really over; do not
   swap that for a settling delay. `rollover.test.ts` covers the turn of the month, the year
   boundary and a failed fetch being retried.
+  The old month is **live**, not Final, until that mark exists (`isSeasonLive` in `queries.ts`).
+  On 1 October 2026 the September board was still changing on every run 16 hours past midnight
+  UTC while October came back empty, and both pages had labelled it Final by calendar month.
 - The snapshot workflow runs every 10 minutes. Shortening it was measured, not guessed: detection
   of real renames went 48% hourly to 81% at ten minutes across eight seeds, and phantoms fell.
 - `scripts/reset-leaderboard.sql` is the one-way leaderboard wipe, run by hand in Supabase.

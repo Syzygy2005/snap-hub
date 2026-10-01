@@ -130,3 +130,24 @@ describe("the turn of the month", () => {
     expect(await db.query(`select 1 from meta where key = 'season_closed:2026-08:global'`)).toHaveLength(1);
   });
 });
+
+describe("a board is live until the job stops refreshing it", () => {
+  it("keeps September live past midnight while October is empty, then marks it final", async () => {
+    const { isSeasonLive } = await import("./queries");
+    serve({ "2026-09": board(["Alpha", "Bravo"]), "2026-08": board(["Carol"]) });
+    await runSnapshot(sept);
+
+    // The 1st, hours in: the game is still moving September and October has nobody.
+    serve({ "2026-09": board(["Bravo", "Alpha"]) });
+    await runSnapshot(octLater);
+    expect(await isSeasonLive("2026-09", "global", octLater)).toBe(true);
+    expect(await isSeasonLive("2026-08", "global", octLater)).toBe(false);
+
+    // October appears, so the run closes September and it becomes final.
+    const later = new Date(octLater.getTime() + 600_000);
+    serve({ "2026-10": board(["Dave"]), "2026-09": board(["Bravo", "Alpha"]) });
+    await runSnapshot(later);
+    expect(await isSeasonLive("2026-09", "global", later)).toBe(false);
+    expect(await isSeasonLive("2026-10", "global", later)).toBe(true);
+  });
+});

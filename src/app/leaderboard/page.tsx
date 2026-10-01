@@ -4,9 +4,9 @@ import { RelativeTime } from "@/components/relative-time";
 import { EmptyState, PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { REGION_LABELS } from "@/lib/config";
 import { boardHref, resolveBoardParams } from "@/lib/leaderboard/params";
-import { getBoard, lastBoardCheck } from "@/lib/leaderboard/queries";
+import { getBoard, isSeasonLive, lastBoardCheck } from "@/lib/leaderboard/queries";
 import { DataFreshness } from "@/components/data-freshness";
-import { currentSeason, seasonKey, seasonLabel } from "@/lib/season";
+import { seasonLabel } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Infinite Leaderboard" };
@@ -26,8 +26,7 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
   }
 
   const { meta, rows } = await getBoard(season, region, 24);
-  const live = season === seasonKey(currentSeason());
-  const checkedAt = await lastBoardCheck(season, region);
+  const [live, checkedAt] = await Promise.all([isSeasonLive(season, region), lastBoardCheck(season, region)]);
   const cutoff = rows.at(-1);
 
   return (
