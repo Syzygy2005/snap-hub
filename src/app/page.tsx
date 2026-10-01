@@ -11,10 +11,10 @@ import { formatReleaseDate } from "@/components/changelog-date";
 
 import { getCards } from "@/lib/cards/queries";
 import { listDecks } from "@/lib/decks/queries";
-import { getBoard, getMovers, listSeasons, lastBoardCheck } from "@/lib/leaderboard/queries";
+import { getBoard, getMovers, isSeasonLive, listSeasons, lastBoardCheck } from "@/lib/leaderboard/queries";
 import { DataFreshness } from "@/components/data-freshness";
 import { param } from "@/lib/leaderboard/params";
-import { seasonLabel, seasonKey, currentSeason } from "@/lib/season";
+import { seasonLabel } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export default async function Home(props: PageProps<"/">) {
   const latest = latestRelease();
   const news = await latestNews();
   const [season] = await listSeasons("global");
-  const checkedAt = season ? await lastBoardCheck(season, "global") : null;
+  const [checkedAt, live] = season ? await Promise.all([lastBoardCheck(season, "global"), isSeasonLive(season, "global")]) : [null, true];
   const [board, movers, decks, cards] = await Promise.all([
     season ? getBoard(season, "global", 24) : null,
     season ? getMovers(season, "global", 24, 6) : null,
@@ -65,7 +65,7 @@ export default async function Home(props: PageProps<"/">) {
         <div className="min-w-0 space-y-6">
         <Panel
           title={season ? `Top 10 · ${seasonLabel(season)}` : "Top 10"}
-          description={<DataFreshness inline checkedAt={checkedAt} archived={!!season && season !== seasonKey(currentSeason())} />}
+          description={<DataFreshness inline checkedAt={checkedAt} archived={!live} />}
         >
           {board ? (
             <>

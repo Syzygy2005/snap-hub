@@ -10,6 +10,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-01",
+    changes: [
+      { title: "Last month's board stays live until the new one starts", detail: "In the first hours of a new month the game keeps updating the old leaderboard. The site used to call it Final and say it no longer refreshed, while it was still being updated. It now stays marked live until the new month's board appears." },
+    ],
+  },
+  {
     date: "2026-09-25",
     changes: [
       { title: "More room for the things that matter", detail: "Quieter cream surfaces, clearer stats and softly lit featured artwork give the site a more relaxed rhythm. The home leaderboard now has one freshness line." },

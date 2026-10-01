@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db";
 import type { Region } from "@/lib/config";
+import { currentSeason, previousSeason, seasonKey } from "@/lib/season";
 
 export interface BoardRow {
   id: number;
@@ -332,4 +333,20 @@ export async function deleteFormerName(playerId: number, nameId: number): Promis
     [nameId, playerId],
   );
   return rows.length > 0;
+}
+
+/**
+ * Whether the snapshot job is still refreshing this board. The calendar month is not the
+ * answer: the game keeps the old month's board moving after the 1st (on 1 October 2026 the
+ * September board was still changing 16 hours in, with October empty), and `runSnapshot`
+ * keeps fetching it until `season_closed` is written. Labelling it Final in that window
+ * told visitors a board that moved every run no longer refreshed.
+ */
+export async function isSeasonLive(season: string, region: Region, now = new Date()): Promise<boolean> {
+  const cur = currentSeason(now);
+  if (season === seasonKey(cur)) return true;
+  if (season !== seasonKey(previousSeason(cur))) return false;
+  const db = await getDb();
+  const closed = await db.query("select 1 from meta where key = $1", [`season_closed:${season}:${region}`]);
+  return closed.length === 0;
 }
