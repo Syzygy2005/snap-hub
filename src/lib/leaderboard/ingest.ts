@@ -304,16 +304,17 @@ async function fetchAndIngest(db: Db, ref: SeasonRef, region: Region, now: Date)
 /**
  * Fetch and store the boards worth fetching.
  *
- * The current month moves all day. The previous month cannot move at all, so it is fetched
- * once after it ends and then left alone, instead of being pulled every tick for a board
- * that is already final. Until that one fetch lands it keeps being retried, so a site that
- * was asleep over the turn of the month still captures the finished board.
+ * The current month moves all day. The previous month is fetched on every run as well until
+ * it is closed, because it does not stop at the calendar boundary: in October 2026 the new
+ * month's board came back empty for days while the old one kept changing. Once closed it is
+ * never asked for again, and a site that was asleep over the turn of the month still
+ * captures the finished board.
  *
- * It is closed only once the new month has a board of its own. Whether the official
- * leaderboard freezes the old month exactly at UTC midnight is not something this code
- * knows, and guessing a settling period would be inventing a number, so it waits for proof
- * instead: the moment anybody has reached Infinite in the new month, the old one is over.
- * The cost of that is a few extra fetches on the first of the month and nothing after.
+ * It is closed only once the new month has a board of its own. When the official
+ * leaderboard stops moving a month is not something this code knows, and guessing a
+ * settling period would be inventing a number, so it waits for proof instead: the moment
+ * anybody has reached Infinite in the new month, the old one is over. Until then each run
+ * costs one extra fetch.
  */
 export async function runSnapshot(now = new Date()): Promise<IngestSummary[]> {
   const db = await getDb();
