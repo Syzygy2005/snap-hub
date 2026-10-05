@@ -210,21 +210,26 @@ process at a time.
 
 ## Snapshots and the turn of the month
 
-The workflow runs every 10 minutes rather than every 30, because a rename is only visible while
-the player's score sits still: a shorter gap catches more of them and leaves coincidence less room
-to look like one. A replay across eight seeds put detection at 48% hourly, 66% half-hourly and 81%
-at ten minutes.
+The workflow runs every 10 minutes rather than every 30, because a rename is only visible while the
+player's score sits still: a shorter gap catches more of them and leaves coincidence less room to
+look like one. A replay across eight seeds put detection at 48% hourly, 66% half-hourly and 81% at
+ten minutes. That is the schedule, not a guarantee: GitHub runs scheduled workflows late, a median
+of 15 minutes apart from 25 September to 1 October 2026, and from 3 to 4 October 2026 it skipped
+most runs and left gaps of up to 7.5 hours.
 
-Only the current month is fetched on every run. The previous month cannot change, so it is fetched
-once after it has ended and then marked `season_closed:<season>:<region>` in `meta` and never asked
-for again. Until that one fetch succeeds it keeps being retried, so a site that was asleep over the
-turn of the month still captures the finished board.
+Both the current month and the previous one are fetched on every run until the previous one is
+closed. The month a board is filed under is not the calendar month the request goes out in: on 1
+October 2026 the October board came back empty while the September board kept changing on every run
+(399 to 929 of the 1000 entries in the runs checked), and it was still doing so on 5 October. So the
+previous month keeps being fetched, and is shown as live rather than Final (`isSeasonLive`), until
+it is marked `season_closed:<season>:<region>` in `meta`; after that it is never asked for again. A
+site that was asleep over the turn of the month still captures the finished board this way.
 
-The old month is closed only once the new one has a board of its own. Nothing here knows whether
-the official leaderboard freezes a month exactly at UTC midnight, and waiting out a guessed settling
-period would be inventing a number, so it waits for proof instead: the moment anybody has reached
-Infinite in the new month, the old one is over. That costs a few extra fetches on the first of the
-month and nothing after it.
+The old month is closed only once the new one has a board of its own. Nothing here knows when the
+official leaderboard stops moving a month, and waiting out a guessed settling period would be
+inventing a number, so it waits for proof instead: the moment the new month's board has anyone on
+it, the old one is over. Until then each run costs one extra fetch, which in October 2026 went on
+for days, not hours.
 
 A rename that happens while a player is off the board, or across the turn of the month, cannot be
 detected at all: in a new season everyone is an arrival and there are no departures to pair them

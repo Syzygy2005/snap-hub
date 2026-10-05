@@ -90,9 +90,9 @@
   real response; there is no identity field to lean on. The envelope carries `offset`, `limit`
   and `total` (about 48k players at Infinite), but `offset` is ignored: asking for 1000 returns
   the top of the board again, so the top 1000 really is a hard ceiling.
-- `runSnapshot` fetches the current month every run and the previous month exactly once, marking
-  it `season_closed:<season>:<region>` in `meta` afterwards. The mark is only written once the
-  current season has a standings row, which is the proof that the old month is really over; do not
+- `runSnapshot` fetches the current month every run and keeps fetching the previous month until
+  it marks it `season_closed:<season>:<region>` in `meta`, then never again. The mark is only
+  written once the current season has a standings row, which is the proof that the old month is really over; do not
   swap that for a settling delay. `rollover.test.ts` covers the turn of the month, the year
   boundary and a failed fetch being retried.
   The old month is **live**, not Final, until that mark exists (`isSeasonLive` in `queries.ts`).
