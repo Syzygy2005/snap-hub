@@ -230,8 +230,11 @@
   most-mentioned names for that reason. Regenerating needs network to marvelsnap.com and
   marvelsnapzone.com, which the sandbox does not have, so it runs as the manual **Official patch
   index** workflow (`patch-index.yml`): it pushes a `patch-index/<date>` branch, never main, and
-  the "Most mentioned" line in its log is read before the pull request is merged. The committed
-  `Random` rows were stripped by hand until the first regenerated index replaces them.
+  the "Most mentioned" line in its log is read before the pull request is merged. That line only
+  catches a word that floods the index: the first regenerated index (PR #55) passed it cleanly
+  and still credited `Random` with three articles (unverified, most likely a sentence or
+  heading opening with the word), stripped by hand again on that PR. Every regeneration brings them back, so diff the
+  mentions against main, not only the top ten, until the script learns to exclude them.
 - `claimPlayer` and `claimTracker` both decide in the write, never in a read above it. The
   reads in `claimPlayer` exist to word the error, not to make the decision: `claims.test.ts`
   races two claims through `Promise.all` and PGlite's single connection interleaves them, which
