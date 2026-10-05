@@ -93,8 +93,8 @@
 - `runSnapshot` fetches the current month every run and keeps fetching the previous month until
   it marks it `season_closed:<season>:<region>` in `meta`, then never again. The mark is only
   written once the current season has a standings row, which is the proof that the old month is
-  really over; do not swap that for a settling delay. `rollover.test.ts` covers the turn of the month, the year
-  boundary and a failed fetch being retried.
+  really over; do not swap that for a settling delay. `rollover.test.ts` covers the turn of the
+  month, the year boundary and a failed fetch being retried.
   The old month is **live**, not Final, until that mark exists (`isSeasonLive` in `queries.ts`).
   On 1 October 2026 the September board was still changing on every run 16 hours past midnight
   UTC while October came back empty, and both pages had labelled it Final by calendar month.
