@@ -32,6 +32,13 @@ describe("official patch index", () => {
     expect(real.mentions).toEqual([{kind:"cards",id:"Random"}]);
   });
 
+  it("reports names that only match with case ignored, without counting them as mentions", () => {
+    const res = parseOfficialArticle(article("<p>Hulk now draws a random card. She-Hulk too.</p>"), "https://marvelsnap.com/p-march-21-2023/", names);
+    expect(res.mentions).toEqual([{kind:"cards",id:"SheHulk"},{kind:"cards",id:"Hulk"}]);
+    expect(res.caseOnly.map((c: {id: string}) => c.id)).toEqual(["Random"]);
+    expect(res.caseOnly[0].text).toContain("draws a random card");
+  });
+
   it("reads the patch date without going through a local-time parse", () => {
     expect(patchDate("Patch Notes - September 15th, 2026")).toBe("2026-09-15");
     expect(patchDate("Patch Notes - March 21, 2023")).toBe("2023-03-21");
