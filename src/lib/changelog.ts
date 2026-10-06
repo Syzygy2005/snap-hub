@@ -10,6 +10,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-06",
+    changes: [
+      { title: "Random is marked as not in the game", detail: "The card wiki lists Random because our card source does, but it can't be collected or played. Its page now says so instead of calling it a mode card, and patch notes won't be linked to it." },
+    ],
+  },
+  {
     date: "2026-10-01",
     changes: [
       { title: "Last month's board stays live until the new one starts", detail: "In the first hours of a new month the game keeps updating the old leaderboard. The site used to call it Final and say it no longer refreshed, while it was still being updated. It now stays marked live until the new month's board appears." },

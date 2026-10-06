@@ -5,12 +5,19 @@ import { JSDOM } from "jsdom";
 const [cardsPath, locationsPath] = process.argv.slice(2);
 if (!cardsPath || !locationsPath) throw new Error("Pass card and location reference JSON files");
 import { normalize, parseOfficialArticle } from "./lib/official-index.mjs";
+// The site's own rule for which cards are real deck cards. Alternate-mode, event and beta cards
+// (Random, the Champion versions) are not indexed: a patch note linked to one is noise on a card
+// page, and Random matched a capitalised sentence-opening "Random" in real articles. Node runs
+// the TypeScript file directly; it has no imports and only erasable types.
+import { isDeckable } from "../src/lib/cards/sync.ts";
 const names = [];
 for (const [kind, path] of [["cards", cardsPath], ["locations", locationsPath]]) {
   const feed = JSON.parse(await readFile(path, "utf8")).success.cards;
   for (const row of feed) {
     const id = row.carddefid || (kind === "locations" ? "SnapZoneLocation_" + row.cid : "");
-    if (id && row.name && row.status === "released") names.push({ kind, id, name: normalize(row.name) });
+    if (!id || !row.name || row.status !== "released") continue;
+    if (kind === "cards" && !isDeckable(row)) continue;
+    names.push({ kind, id, name: normalize(row.name) });
   }
 }
 names.sort((a,b) => b.name.length - a.name.length);

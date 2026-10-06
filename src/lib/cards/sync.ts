@@ -44,9 +44,18 @@ export function cleanAbility(html: string): string {
  */
 // Event/mode cards Snap Zone lists as released that can't be put in a normal deck.
 const NOT_DECKABLE = new Set(["Mephisto", "HellcowFracturedFrontier"]);
+// Cards Snap Zone lists as released that are not in the game at all, in any mode. The owner
+// confirmed Random is not in the game; the card sites date it to September 2022, before the
+// global launch, so it is most likely a beta card that was later removed. Kept by id so it stays
+// out of decks even if the source ever gives it a series.
+const NOT_IN_GAME = new Set(["Random"]);
+
+export function notInGame(defId: string): boolean {
+  return NOT_IN_GAME.has(defId);
+}
 
 export function isDeckable(card: Pick<SnapZoneCard, "name" | "status" | "source" | "carddefid">): boolean {
-  if (card.status !== "released" || NOT_DECKABLE.has(card.carddefid)) return false;
+  if (card.status !== "released" || NOT_DECKABLE.has(card.carddefid) || NOT_IN_GAME.has(card.carddefid)) return false;
   if (card.source !== "None") return true;
   if (/champion|\s-\s|^random$/i.test(card.name)) return false;
   // Internal names that leaked through, e.g. "CaptainAmericaAvengers".

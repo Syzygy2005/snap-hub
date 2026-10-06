@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { toPgParam } from "@/lib/db";
 import { getCards } from "./queries";
-import { cleanAbility, isDeckable } from "./sync";
+import { cleanAbility, isDeckable, notInGame } from "./sync";
 import { syncReference } from "@/lib/wiki/sync";
 import { getDeck, listDecks, saveDeck, countDeckView } from "@/lib/decks/queries";
 
@@ -34,6 +34,13 @@ describe("card helpers", () => {
     expect(isDeckable({ ...base, name: "CaptainAmericaAvengers", carddefid: "CaptainAmericaAvengers" })).toBe(false);
     expect(isDeckable({ ...base, name: "Mephisto", carddefid: "Mephisto" })).toBe(false);
     expect(isDeckable({ ...base, name: "Toad", carddefid: "Toad" })).toBe(true);
+  });
+
+  it("keeps a card that is not in the game out of decks even if the source gives it a series", () => {
+    // The name rule alone only catches Random while the source lists it with no series.
+    expect(isDeckable({ status: "released", name: "Random", carddefid: "Random", source: "Series 4" })).toBe(false);
+    expect(notInGame("Random")).toBe(true);
+    expect(notInGame("Mephisto")).toBe(false);
   });
 
   it("serializes array params as Postgres literals", () => {
