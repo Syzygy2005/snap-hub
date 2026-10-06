@@ -240,8 +240,15 @@
   ordinary case, so case alone does not explain it. The run now also prints every name that
   matched only with case ignored, with the article text around it, and every id the committed
   index linked that the downloaded lists no longer contain. Read both before changing the
-  matcher. The owner says the game has no card named Random, although the marvelsnapzone card
-  list carries a released row by that name; what that row is has not been checked.
+  matcher. The patch index only links cards `isDeckable` accepts (it imports `cards/sync.ts`,
+  which Node runs as TypeScript because the file has no imports and only erasable types), so
+  alternate-mode, event and not-in-the-game cards are never credited with a patch note.
+- `NOT_IN_GAME` in `cards/sync.ts` is for cards the source lists as released that are in no
+  mode of the game. Random is the one known case: the owner confirmed it is not in the game, and
+  card sites date it to September 2022, before launch, so it is most likely a removed beta card.
+  Its wiki page says "Not in the game" rather than "Other / mode card", which is still right for
+  the Champion and event versions. It is kept by id, not by the `^random$` name rule, so it stays
+  out of decks even if the source ever gives it a series.
 - `claimPlayer` and `claimTracker` both decide in the write, never in a read above it. The
   reads in `claimPlayer` exist to word the error, not to make the decision: `claims.test.ts`
   races two claims through `Promise.all` and PGlite's single connection interleaves them, which

@@ -22,6 +22,8 @@ async function main() {
   ])]);
   await db.query("insert into locations(def_id,name,ability,art,rarity,status) values ('Asgard','Asgard','After turn 4, whoever is winning here draws 2 cards.','/brand/emblem.svg','common','released')");
   await db.query("insert into cards(def_id,name,cost,power,ability,art,series,deckable,reference_status) values ('Upcoming','Upcoming Card',1,1,'','','1',false,'unreleased')");
+  // Released at the source but not in the game (see NOT_IN_GAME in cards/sync.ts).
+  await db.query("insert into cards(def_id,name,cost,power,ability,art,series,deckable,reference_status) values ('Random','Random',4,0,'','','Other',false,'released')");
   const season = seasonKey(currentSeason());
   const checked = new Date();
   await db.query("insert into players(name) select 'Browser Player ' || i from generate_series(1,120) as i");

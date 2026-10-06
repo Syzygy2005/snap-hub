@@ -65,3 +65,11 @@ test("wiki separates historical sources from observed changes", async ({ page })
   await expect(page.locator('article a[href^="https://marvelsnap.com/"]').first()).toBeVisible();
   await page.screenshot({ path: test.info().outputPath("patch-archive.png") });
 });
+
+test("a card that is not in the game says so instead of calling itself a mode card", async ({page}) => {
+  await page.goto("/wiki/cards/Random");
+  await expect(page.getByRole("heading", {name: "Random", exact: true, level: 1})).toBeVisible();
+  await expect(page.getByText("Not in the game · this card can't be collected or played.")).toBeVisible();
+  await expect(page.getByText("Other / mode card", {exact: false})).toHaveCount(0);
+  await expect(page.getByRole("link", {name: "Add to builder"})).toHaveCount(0);
+});

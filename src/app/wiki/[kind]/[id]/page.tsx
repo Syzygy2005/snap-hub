@@ -8,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { entry, history } from "@/lib/wiki/queries";
+import { notInGame } from "@/lib/cards/sync";
 import { listDecks } from "@/lib/decks/queries";
 import { WikiArt } from "@/components/wiki-art";
 import { artSrc } from "@/lib/art";
@@ -39,7 +40,7 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
       <div className="min-w-0"><p className="text-xs uppercase tracking-widest text-accent">{kind === "cards" ? e.series : `${e.rarity} location`}</p><h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">{e.name}</h1>
       {kind === "cards" && <div className="my-5 flex gap-8"><p><strong className="num text-3xl text-gem-blue">{e.cost}</strong><span className="ml-2 text-sm text-muted">Energy</span></p><p><strong className="num text-3xl text-accent">{e.power}</strong><span className="ml-2 text-sm text-muted">Power</span></p></div>}
       <p className="mt-5 text-lg leading-relaxed"><AbilityText text={e.ability} /></p>
-      {kind === "cards" && (e.deckable ? <Link className="brand-action hover:brightness-110 mt-6 inline-block rounded bg-jade px-5 py-3 text-sm font-bold text-forest" href={`/decks/builder?add=${encodeURIComponent(id)}`}>Add to builder</Link> : <p className="mt-5 text-sm text-muted">Other / mode card · unavailable for standard deck building.</p>)}
+      {kind === "cards" && (e.deckable ? <Link className="brand-action hover:brightness-110 mt-6 inline-block rounded bg-jade px-5 py-3 text-sm font-bold text-forest" href={`/decks/builder?add=${encodeURIComponent(id)}`}>Add to builder</Link> : <p className="mt-5 text-sm text-muted">{notInGame(e.def_id) ? "Not in the game · this card can't be collected or played." : "Other / mode card · unavailable for standard deck building."}</p>)}
       {kind === "locations" && <p className="mt-5 text-xs text-muted">Rarity is the source’s category, not a guaranteed appearance rate.</p>}</div>
     </div>
     <section className="my-8 rounded-xl border border-line bg-surface/40 p-5">
@@ -47,7 +48,7 @@ export default async function Detail({params}: PageProps<"/wiki/[kind]/[id]">) {
       <dl className="grid gap-4 text-sm sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
         <div><dt className="text-muted">Reference ID</dt><dd className="mt-1 break-all font-medium">{e.def_id}</dd></div>
         <div><dt className="text-muted">{kind === "cards" ? "Collection series" : "Source rarity"}</dt><dd className="mt-1 font-medium">{kind === "cards" ? e.series || "Not specified" : e.rarity}</dd></div>
-        {kind === "cards" ? <div><dt className="text-muted">Standard deck building</dt><dd className="mt-1 font-medium">{e.deckable ? "Available" : "Unavailable / other mode"}</dd></div> : <Suspense fallback={null}><LocationRate id={id} /></Suspense>}
+        {kind === "cards" ? <div><dt className="text-muted">Standard deck building</dt><dd className="mt-1 font-medium">{e.deckable ? "Available" : notInGame(e.def_id) ? "Not in the game" : "Unavailable / other mode"}</dd></div> : <Suspense fallback={null}><LocationRate id={id} /></Suspense>}
       </dl>
       {e.tags.length > 0 && <p className="mt-4 text-sm text-muted">Source tags: {e.tags.join(", ")}</p>}
     </section>
