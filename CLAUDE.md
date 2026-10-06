@@ -235,6 +235,13 @@
   index** workflow (`patch-index.yml`): it pushes a `patch-index/<date>` branch, never main, and
   the "Most mentioned" line in its log is read before the pull request is merged. The committed
   `Random` rows were stripped by hand until the first regenerated index replaces them.
+  The first regenerated index (5 October 2026) dropped about 100 links that the lowercased index
+  had, among them real cards such as Colossus, which the owner confirmed the article writes in
+  ordinary case, so case alone does not explain it. The run now also prints every name that
+  matched only with case ignored, with the article text around it, and every id the committed
+  index linked that the downloaded lists no longer contain. Read both before changing the
+  matcher. The owner says the game has no card named Random, although the marvelsnapzone card
+  list carries a released row by that name; what that row is has not been checked.
 - `claimPlayer` and `claimTracker` both decide in the write, never in a read above it. The
   reads in `claimPlayer` exist to word the error, not to make the decision: `claims.test.ts`
   races two claims through `Promise.all` and PGlite's single connection interleaves them, which

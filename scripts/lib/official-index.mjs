@@ -49,8 +49,20 @@ export function parseOfficialArticle(html, url, names, publishedAt = null) {
       // Prefer complete names: She-Hulk must not also match Hulk.
       content = content.split(phrase).join(" ");
     }
+    // Names that would match if case were ignored, with the text around them. These are not
+    // mentions; they are printed by the indexer so a person can see whether case-sensitive
+    // matching dropped a real card ("the Collector" mid-sentence) or rightly refused an
+    // ordinary word ("random"). Checked against what is left after the real matches, so a
+    // name inside a longer name that did match is not reported.
+    const lower = content.toLowerCase();
+    const caseOnly = [];
+    for (const entry of names) {
+      const at = lower.indexOf(" " + entry.name.toLowerCase() + " ");
+      if (at < 0) continue;
+      caseOnly.push({id: entry.id, name: entry.name, text: content.slice(Math.max(0, at - 30), at + entry.name.length + 32).trim()});
+    }
     // The slug carries the date for titles that omit the year, and DATE_RE is case-insensitive.
     const date = patchDate(title + " " + url.replaceAll("-", " "));
     dom.window.close();
-    return {title, url, date, publishedAt: publishedAt, mentions};
+    return {title, url, date, publishedAt: publishedAt, mentions, caseOnly};
 }

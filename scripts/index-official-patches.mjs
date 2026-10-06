@@ -57,7 +57,15 @@ for (let offset = 0; offset < urls.length; offset += 2) {
 }
 notes.sort((a,b) => (b.date ?? "").localeCompare(a.date ?? "") || a.title.localeCompare(b.title));
 await mkdir("src/lib/wiki/data", {recursive:true});
-await writeFile("src/lib/wiki/data/official-patches.json", JSON.stringify({ indexedAt: new Date().toISOString(), articleCount: notes.length, notes }) + "\n");
+const indexPath = "src/lib/wiki/data/official-patches.json";
+// Before overwriting: an id the committed index linked that is in neither downloaded list was
+// lost to the feed, not to the matching, and no amount of matcher work brings it back.
+const previous = JSON.parse(await readFile(indexPath, "utf8").catch(() => '{"notes":[]}'));
+const known = new Set(names.map(n => n.id));
+const vanished = [...new Set(previous.notes.flatMap(n => n.mentions.map(m => m.id)))].filter(id => !known.has(id)).sort();
+console.log("Linked before but missing from the downloaded lists:", vanished.length ? vanished.join(", ") : "none");
+await writeFile(indexPath, JSON.stringify({ indexedAt: new Date().toISOString(), articleCount: notes.length,
+  notes: notes.map(({title, url, date, publishedAt, mentions}) => ({title, url, date, publishedAt, mentions})) }) + "\n");
 console.log("Complete:",notes.length,"articles;",notes.filter(n=>!n.date).length,"without an explicit year/date");
 // Print the most-mentioned names so a match on an ordinary English word is visible before the
 // file is trusted. The card named Random once led this list with 55 of 139 articles, ahead of
@@ -66,3 +74,13 @@ const counts = new Map();
 for (const note of notes) for (const m of note.mentions) counts.set(m.id, (counts.get(m.id) ?? 0) + 1);
 console.log("Most mentioned:", [...counts].sort((a,b) => b[1]-a[1]).slice(0,10)
   .map(([id,n]) => `${id} ${n} (${Math.round(100*n/notes.length)}%)`).join(", "));
+// Names that matched only with case ignored, most frequent first, each with one sample of the
+// article text. Read this beside "Most mentioned": a real card here was lost by case-sensitive
+// matching, an ordinary word here was rightly refused.
+const caseOnly = new Map();
+for (const note of notes) for (const c of note.caseOnly) {
+  const seen = caseOnly.get(c.id) ?? {n: 0, name: c.name, sample: `${note.url}: "...${c.text}..."`};
+  seen.n++; caseOnly.set(c.id, seen);
+}
+console.log(`Matched only with case ignored (${caseOnly.size} names):`);
+for (const [id, c] of [...caseOnly].sort((a,b) => b[1].n - a[1].n).slice(0, 40)) console.log(`  ${id} "${c.name}" in ${c.n}: ${c.sample}`);
