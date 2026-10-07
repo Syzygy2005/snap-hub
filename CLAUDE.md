@@ -233,8 +233,8 @@
   most-mentioned names for that reason. Regenerating needs network to marvelsnap.com and
   marvelsnapzone.com, which the sandbox does not have, so it runs as the manual **Official patch
   index** workflow (`patch-index.yml`): it pushes a `patch-index/<date>` branch, never main, and
-  the "Most mentioned" line in its log is read before the pull request is merged. The committed
-  `Random` rows were stripped by hand until the first regenerated index replaces them.
+  the "Most mentioned" line in its log is read before the pull request is merged. The index from the
+  7 October 2026 run replaced the hand-stripped one and was the first regenerated index merged.
   The first regenerated index (5 October 2026) dropped about 100 links that the lowercased index
   had, among them real cards such as Colossus, which the owner confirmed the article writes in
   ordinary case, so case alone does not explain it. The run now also prints every name that
