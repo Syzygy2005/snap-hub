@@ -81,13 +81,22 @@ const counts = new Map();
 for (const note of notes) for (const m of note.mentions) counts.set(m.id, (counts.get(m.id) ?? 0) + 1);
 console.log("Most mentioned:", [...counts].sort((a,b) => b[1]-a[1]).slice(0,10)
   .map(([id,n]) => `${id} ${n} (${Math.round(100*n/notes.length)}%)`).join(", "));
-// Names that matched only with case ignored, most frequent first, each with one sample of the
-// article text. Read this beside "Most mentioned": a real card here was lost by case-sensitive
-// matching, an ordinary word here was rightly refused.
-const caseOnly = new Map();
-for (const note of notes) for (const c of note.caseOnly) {
-  const seen = caseOnly.get(c.id) ?? {n: 0, name: c.name, sample: `${note.url}: "...${c.text}..."`};
-  seen.n++; caseOnly.set(c.id, seen);
+// Every mention that came only through a relaxed small word or an all-caps heading, then every
+// name that would match only with case ignored altogether, one line per article with the text
+// around it. Read both beside "Most mentioned": a relaxed match on an ordinary phrase ("the
+// Collector's Vault") is a wrong link to remove, a real card in the second list was lost by
+// case-sensitive matching. The second list used to stop at 40 names and one sample each, which
+// left Colossus missing from 9 articles with only one of them visible.
+for (const [label, key] of [["Matched through a small word or an all-caps heading", "lenient"], ["Matched only with case ignored, not linked", "caseOnly"]]) {
+  const byId = new Map();
+  for (const note of notes) for (const c of note[key]) {
+    const seen = byId.get(c.id) ?? {name: c.name, hits: []};
+    seen.hits.push(`${note.url}: "...${c.text}..."`);
+    byId.set(c.id, seen);
+  }
+  console.log(`${label} (${byId.size} names):`);
+  for (const [id, c] of [...byId].sort((a,b) => b[1].hits.length - a[1].hits.length || a[0].localeCompare(b[0]))) {
+    console.log(`  ${id} "${c.name}" in ${c.hits.length}:`);
+    for (const hit of c.hits) console.log(`    ${hit}`);
+  }
 }
-console.log(`Matched only with case ignored (${caseOnly.size} names):`);
-for (const [id, c] of [...caseOnly].sort((a,b) => b[1].n - a[1].n).slice(0, 40)) console.log(`  ${id} "${c.name}" in ${c.n}: ${c.sample}`);
