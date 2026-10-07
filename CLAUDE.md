@@ -247,10 +247,13 @@
   small joining words in either case ("the Ancient One", "Morgan Le Fay" against the source's
   "Morgan le Fay") and a whole name in capitals (balance-update headings such as SILVER
   SAMURAI). Every other word keeps its case. Each match that needed either is printed under
-  "Matched through a small word or an all-caps heading"; a leading "The" can now catch a
-  phrase such as "the Collector's Vault", so read that list before merging. Colossus (9
-  articles) was still unexplained at that point, and the case-only list is now printed in full,
-  every article, to settle it.
+  "Matched through a small word or an all-caps heading"; read that list before merging.
+  A name's first word keeps its case even when it is "The": relaxed, it linked The Collector to
+  "the Collector's Vault" (3 articles) and The Nexus to "the Nexus Events update", and won back
+  only the Living Tribunal and the Space Throne. Colossus is settled: all 9 lost links are one
+  known-issue sentence copied between patch notes, "such as colossus is played on", lowercase
+  in the source, so it stays unlinked. In the full log, a run of spaces inside a sample is a
+  name that already matched and was removed, not missing text.
 - `NOT_IN_GAME` in `cards/sync.ts` is for cards the source lists as released that are in no
   mode of the game. Random is the one known case: the owner confirmed it is not in the game, and
   card sites date it to September 2022, before launch, so it is most likely a removed beta card.

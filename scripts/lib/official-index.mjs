@@ -5,10 +5,13 @@ import { JSDOM } from "jsdom";
 // A false mention puts wrong facts on a card page, so this trades the cheaper error (a missed
 // link) for the dearer one, the same way rename detection does.
 // Two exceptions, both seen in real articles (index run of 7 October 2026): the small words
-// inside a name may take either case ("the Ancient One" mid-sentence, "Morgan Le Fay" against
-// the source's "Morgan le Fay"), and a whole name in capitals matches, because balance updates
-// head each card that way ("SILVER SAMURAI Old 4 5"). The words that carry the name keep their
+// inside a name may take either case ("Morgan Le Fay" against the source's "Morgan le Fay",
+// "Werewolf by Night"), and a whole name in capitals matches, because balance updates head
+// each card that way ("SILVER SAMURAI Old 4 5"). The words that carry the name keep their
 // case, so "under the hood" is still not The Hood and "a random card" is still not Random.
+// A name's first word keeps its case even when it is "The": relaxing it linked The Collector
+// to "the Collector's Vault" in 3 articles and The Nexus to "the Nexus Events update", and won
+// back only the Living Tribunal and the Space Throne, one article each.
 export const normalize = s => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, " ").trim();
 
 const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
@@ -77,18 +80,18 @@ export function parseOfficialArticle(html, url, names, publishedAt = null) {
     return {title, url, date, publishedAt: publishedAt, mentions, lenient, caseOnly};
 }
 
-// Joining words in English title case. Only these may change case inside a name.
-const SMALL_WORDS = new Set(["a", "an", "and", "at", "de", "for", "in", "le", "of", "on", "the", "to", "with"]);
+// Joining words in English title case. Only these may change case, and never as a name's first word.
+const SMALL_WORDS = new Set(["a", "an", "and", "at", "by", "de", "for", "in", "le", "of", "on", "the", "to", "with"]);
 const caseless = word => [...word].map(ch => /[A-Za-z]/.test(ch) ? `[${ch.toUpperCase()}${ch.toLowerCase()}]` : ch).join("");
 
 /**
- * A normalized name as a pattern: exact words, small words in either case, or the whole name in
- * capitals. Normalized names hold only letters, digits and single spaces, so nothing needs
+ * A normalized name as a pattern: exact words, small words after the first in either case, or
+ * the whole name in capitals. Normalized names hold only letters, digits and single spaces, so nothing needs
  * escaping. Bounded by the spaces normalize puts around every word.
  * @param {string} name
  */
 export function namePattern(name) {
-  const words = name.split(" ").map(w => SMALL_WORDS.has(w.toLowerCase()) ? caseless(w) : w).join(" ");
+  const words = name.split(" ").map((w, i) => i > 0 && SMALL_WORDS.has(w.toLowerCase()) ? caseless(w) : w).join(" ");
   const upper = name.toUpperCase();
   return new RegExp(`(?<= )(?:${words}${upper === name ? "" : "|" + upper})(?= )`);
 }
