@@ -2,9 +2,13 @@ import { JSDOM } from "jsdom";
 // Case is kept on purpose. Card names are proper nouns and patch notes capitalise them, so
 // lowercasing everything made the card named "Random" match "draw a random card" and claim 55
 // of 139 articles, more than Thanos. Armor, Storm, Wave and Hope had the same problem smaller.
-// The cost is a name written in an all-caps heading no longer matching, which loses a link; a
-// false mention puts wrong facts on a card page, so this trades the cheaper error for the
-// dearer one, the same way rename detection does.
+// A false mention puts wrong facts on a card page, so this trades the cheaper error (a missed
+// link) for the dearer one, the same way rename detection does.
+// Two exceptions, both seen in real articles (index run of 7 October 2026): the small words
+// inside a name may take either case ("the Ancient One" mid-sentence, "Morgan Le Fay" against
+// the source's "Morgan le Fay"), and a whole name in capitals matches, because balance updates
+// head each card that way ("SILVER SAMURAI Old 4 5"). The words that carry the name keep their
+// case, so "under the hood" is still not The Hood and "a random card" is still not Random.
 export const normalize = s => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, " ").trim();
 
 const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
@@ -42,12 +46,18 @@ export function parseOfficialArticle(html, url, names, publishedAt = null) {
     for (const block of article.querySelectorAll("p,li,h1,h2,h3,h4,div,br,td")) { block.before(" "); block.after(" "); }
     let content = " " + normalize(article.textContent ?? "") + " ";
     const mentions = [];
+    // Mentions that matched only through a relaxed small word or an all-caps heading, with the
+    // text around them, so the indexer can print them for a person to read.
+    const lenient = [];
     for (const entry of names) {
-      const phrase = " " + entry.name + " ";
-      if (!content.includes(phrase)) continue;
+      const exact = content.includes(" " + entry.name + " ");
+      const pattern = namePattern(entry.name);
+      const found = exact ? -1 : content.search(pattern);
+      if (!exact && found < 0) continue;
       mentions.push({kind:entry.kind, id:entry.id});
+      if (!exact) lenient.push({id: entry.id, name: entry.name, text: around(content, found, entry.name.length)});
       // Prefer complete names: She-Hulk must not also match Hulk.
-      content = content.split(phrase).join(" ");
+      content = content.replace(new RegExp(pattern.source, "g"), " ");
     }
     // Names that would match if case were ignored, with the text around them. These are not
     // mentions; they are printed by the indexer so a person can see whether case-sensitive
@@ -59,10 +69,28 @@ export function parseOfficialArticle(html, url, names, publishedAt = null) {
     for (const entry of names) {
       const at = lower.indexOf(" " + entry.name.toLowerCase() + " ");
       if (at < 0) continue;
-      caseOnly.push({id: entry.id, name: entry.name, text: content.slice(Math.max(0, at - 30), at + entry.name.length + 32).trim()});
+      caseOnly.push({id: entry.id, name: entry.name, text: around(content, at, entry.name.length)});
     }
     // The slug carries the date for titles that omit the year, and DATE_RE is case-insensitive.
     const date = patchDate(title + " " + url.replaceAll("-", " "));
     dom.window.close();
-    return {title, url, date, publishedAt: publishedAt, mentions, caseOnly};
+    return {title, url, date, publishedAt: publishedAt, mentions, lenient, caseOnly};
 }
+
+// Joining words in English title case. Only these may change case inside a name.
+const SMALL_WORDS = new Set(["a", "an", "and", "at", "de", "for", "in", "le", "of", "on", "the", "to", "with"]);
+const caseless = word => [...word].map(ch => /[A-Za-z]/.test(ch) ? `[${ch.toUpperCase()}${ch.toLowerCase()}]` : ch).join("");
+
+/**
+ * A normalized name as a pattern: exact words, small words in either case, or the whole name in
+ * capitals. Normalized names hold only letters, digits and single spaces, so nothing needs
+ * escaping. Bounded by the spaces normalize puts around every word.
+ * @param {string} name
+ */
+export function namePattern(name) {
+  const words = name.split(" ").map(w => SMALL_WORDS.has(w.toLowerCase()) ? caseless(w) : w).join(" ");
+  const upper = name.toUpperCase();
+  return new RegExp(`(?<= )(?:${words}${upper === name ? "" : "|" + upper})(?= )`);
+}
+
+const around = (content, at, length) => content.slice(Math.max(0, at - 30), at + length + 32).trim();

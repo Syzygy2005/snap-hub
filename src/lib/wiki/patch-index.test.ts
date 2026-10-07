@@ -39,6 +39,31 @@ describe("official patch index", () => {
     expect(res.caseOnly[0].text).toContain("draws a random card");
   });
 
+  it("lets small words change case and accepts an all-caps heading, nothing else", () => {
+    // Each of these lost a real link in the index run of 7 October 2026.
+    const more = [
+      {kind:"cards",id:"TheAncientOne",name:normalize("The Ancient One")},
+      {kind:"cards",id:"MorganLeFay",name:normalize("Morgan le Fay")},
+      {kind:"cards",id:"SilverSamurai",name:normalize("Silver Samurai")},
+      {kind:"cards",id:"Hood",name:normalize("The Hood")},
+      ...names,
+    ];
+    const res = parseOfficialArticle(article(
+      "<p>Reverting the Ancient One's Tao Mandala. Destroyed cards like Morgan Le Fay.</p><h3>SILVER SAMURAI</h3><p>Old 4/5. A big change under the hood, and a random card.</p>"),
+      "https://marvelsnap.com/p-march-21-2023/", more);
+    expect(res.mentions.map((m: {id: string}) => m.id)).toEqual(["TheAncientOne", "MorganLeFay", "SilverSamurai"]);
+    expect(res.lenient.map((m: {id: string}) => m.id)).toEqual(["TheAncientOne", "MorganLeFay", "SilverSamurai"]);
+    expect(res.lenient[1].text).toContain("Morgan Le Fay");
+    // The words that carry a name keep their case, so these are still only case-insensitive hits.
+    expect(res.caseOnly.map((c: {id: string}) => c.id)).toEqual(["Hood", "Random"]);
+  });
+
+  it("does not report an exact match as lenient", () => {
+    const res = parseOfficialArticle(article("<p>She-Hulk and HULK.</p>"), "https://marvelsnap.com/p-march-21-2023/", names);
+    expect(res.mentions.map((m: {id: string}) => m.id)).toEqual(["SheHulk", "Hulk"]);
+    expect(res.lenient.map((m: {id: string}) => m.id)).toEqual(["Hulk"]);
+  });
+
   it("reads the patch date without going through a local-time parse", () => {
     expect(patchDate("Patch Notes - September 15th, 2026")).toBe("2026-09-15");
     expect(patchDate("Patch Notes - March 21, 2023")).toBe("2023-03-21");
