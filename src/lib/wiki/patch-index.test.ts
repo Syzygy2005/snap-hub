@@ -42,20 +42,34 @@ describe("official patch index", () => {
   it("lets small words change case and accepts an all-caps heading, nothing else", () => {
     // Each of these lost a real link in the index run of 7 October 2026.
     const more = [
-      {kind:"cards",id:"TheAncientOne",name:normalize("The Ancient One")},
+      {kind:"cards",id:"WerewolfByNight",name:normalize("Werewolf By Night")},
       {kind:"cards",id:"MorganLeFay",name:normalize("Morgan le Fay")},
       {kind:"cards",id:"SilverSamurai",name:normalize("Silver Samurai")},
       {kind:"cards",id:"Hood",name:normalize("The Hood")},
       ...names,
     ];
     const res = parseOfficialArticle(article(
-      "<p>Reverting the Ancient One's Tao Mandala. Destroyed cards like Morgan Le Fay.</p><h3>SILVER SAMURAI</h3><p>Old 4/5. A big change under the hood, and a random card.</p>"),
+      "<p>Destroyed cards like Morgan Le Fay. Werewolf by Night is back.</p><h3>SILVER SAMURAI</h3><p>Old 4/5. A big change under the hood, and a random card.</p>"),
       "https://marvelsnap.com/p-march-21-2023/", more);
-    expect(res.mentions.map((m: {id: string}) => m.id)).toEqual(["TheAncientOne", "MorganLeFay", "SilverSamurai"]);
-    expect(res.lenient.map((m: {id: string}) => m.id)).toEqual(["TheAncientOne", "MorganLeFay", "SilverSamurai"]);
+    expect(res.mentions.map((m: {id: string}) => m.id)).toEqual(["WerewolfByNight", "MorganLeFay", "SilverSamurai"]);
+    expect(res.lenient.map((m: {id: string}) => m.id)).toEqual(["WerewolfByNight", "MorganLeFay", "SilverSamurai"]);
     expect(res.lenient[1].text).toContain("Morgan Le Fay");
     // The words that carry a name keep their case, so these are still only case-insensitive hits.
     expect(res.caseOnly.map((c: {id: string}) => c.id)).toEqual(["Hood", "Random"]);
+  });
+
+  it("keeps the case of a leading The", () => {
+    // Relaxing it linked The Collector to "the Collector's Vault", a menu screen, in 3 real
+    // articles (index run of 7 October 2026).
+    const more = [
+      {kind:"cards",id:"TheCollector",name:normalize("The Collector")},
+      {kind:"cards",id:"Uatu",name:normalize("Uatu the Watcher")},
+    ];
+    const res = parseOfficialArticle(article("<p>Repositioned the X on the Collector's Vault screen. Fixed Uatu The Watcher's effect.</p>"),
+      "https://marvelsnap.com/p-march-21-2023/", more);
+    // A "the" inside a name still relaxes.
+    expect(res.mentions.map((m: {id: string}) => m.id)).toEqual(["Uatu"]);
+    expect(res.caseOnly.map((c: {id: string}) => c.id)).toEqual(["TheCollector"]);
   });
 
   it("does not report an exact match as lenient", () => {
