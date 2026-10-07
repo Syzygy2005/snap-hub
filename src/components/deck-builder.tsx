@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DECK_SIZE, type Card } from "@/lib/cards/types";
 import { decodeDeckInput, encodeDeck, gameClipboardText } from "@/lib/decks/code";
+import type { AccountDeck } from "@/lib/decks/account";
+import { readPrivateDraft, writePrivateDraft } from "@/lib/decks/private-draft";
 import {
   newDeckId,
   readDraft,
@@ -42,6 +44,9 @@ interface Props {
   importCode?: string | null;
   /** id of a deck saved in this browser, from the My decks list on /decks. */
   openLocalId?: string | null;
+  /** Session-scoped private draft loaded by the server, retaining its update target. */
+  openAccountDeck?: AccountDeck | null;
+  accountId?: number | null;
   /** Display name a shared deck will carry, or null when signed out. */
   postAs?: string | null;
   /** Whether a session exists. Never inferred from postAs: that is a display name, it is
@@ -80,9 +85,21 @@ function startingState(
   importCode: Props["importCode"],
   openLocalId: Props["openLocalId"],
   saved: LocalDeck[],
+  accountId: Props["accountId"],
+  privateDeck: Props["openAccountDeck"],
 ) {
   const known = new Set(cards.map((c) => c.defId));
   const keep = (ids: string[]) => ids.filter((id) => known.has(id)).slice(0, DECK_SIZE);
+  if (privateDeck && accountId != null) {
+    const recovery = readPrivateDraft(accountId, privateDeck.id);
+    const changedElsewhere = recovery && recovery.sourceUpdatedAt !== privateDeck.updatedAt;
+    return {
+      deck: keep(recovery?.deck ?? privateDeck.cards), name: recovery?.name ?? privateDeck.name, savedId: null,
+      status: recovery ? { tone: changedElsewhere ? "warn" as const : "ok" as const,
+        text: changedElsewhere ? "Restored your unsaved edits. This account draft has also changed since you last opened it; review before updating."
+          : "Restored your unsaved private draft from this browser." } : null,
+    };
+  }
   // A shared deck or a pasted code is new work, so it isn't tied to a saved deck yet.
   if (initial) {
     return { deck: keep(initial.defIds), name: initial.name, status: null, savedId: null };
@@ -111,13 +128,13 @@ function startingState(
   return { deck: [] as string[], name: "", status: null, savedId: null };
 }
 
-export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, signedIn = false, addCard }: Props) {
+export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccountDeck, accountId, postAs, signedIn = false, addCard }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(cards.map((c) => [c.defId, c])), [cards]);
 
   const [savedDecks, setSavedDecks] = useState<LocalDeck[]>(readLocalDecks);
   const [start] = useState(() => {
-    const restored = startingState(cards, initial, importCode, openLocalId, savedDecks);
+    const restored = startingState(cards, initial, importCode, openLocalId, savedDecks, accountId, openAccountDeck);
     if (!addCard) return restored;
     const card = cards.find(c => c.defId === addCard);
     const text = !card ? "That card is unavailable for deck building." : restored.deck.includes(addCard)
@@ -130,6 +147,20 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
   const [deck, setDeck] = useState<string[]>(start.deck);
   const [name, setName] = useState(start.name);
   const [savedId, setSavedId] = useState<string | null>(start.savedId);
+  const [accountDeck, setAccountDeck] = useState<AccountDeck | null>(openAccountDeck ?? null);
+  const [sourceRevision, setSourceRevision] = useState(0);
+  const currentSourceRevision = useRef(0);
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+  // Source changes cancel only selection from an in-flight save. Editing cards or the
+  // name keeps the same source, so those edits remain recoverable after the save returns.
+  const changeSource = () => {
+    currentSourceRevision.current += 1;
+    setSourceRevision(currentSourceRevision.current);
+  };
 
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -159,16 +190,29 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
       flash(IMPORT_FAILED);
       return false;
     }
+    changeSource();
     setDeck(imported.deck);
-    if (imported.name) setName(imported.name);
+    setName(imported.name ?? "");
     setSavedId(null);
+    setAccountDeck(null);
+    window.history.replaceState(null, "", "/decks/builder");
     flash(imported.status);
     return true;
   };
 
   useEffect(() => {
+    if (accountDeck) {
+      if (accountId == null || !signedIn) return;
+      const changed = (name.trim() || UNTITLED) !== accountDeck.name || !sameCards(deck, accountDeck.cards);
+      const persisted = writePrivateDraft(accountId, accountDeck.id,
+        changed ? { name, deck, sourceUpdatedAt: accountDeck.updatedAt } : null);
+      if (persisted || !changed) return;
+      const warnBeforeReload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+      window.addEventListener("beforeunload", warnBeforeReload);
+      return () => window.removeEventListener("beforeunload", warnBeforeReload);
+    }
     writeDraft({ name, deck, savedId });
-  }, [deck, name, savedId]);
+  }, [deck, name, savedId, accountDeck, accountId, signedIn]);
 
   const keywordIndex = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -277,9 +321,12 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
 
   const loadLocal = (d: LocalDeck) => {
     if (unsaved && !confirm(`You have unsaved changes. Open ${d.name} and lose them?`)) return;
+    changeSource();
     setDeck(d.cards.filter((id) => byId.has(id)).slice(0, DECK_SIZE));
     setName(d.name === UNTITLED ? "" : d.name);
     setSavedId(d.id);
+    setAccountDeck(null);
+    window.history.replaceState(null, "", `/decks/builder?local=${encodeURIComponent(d.id)}`);
     setMyOpen(false);
     flash({ tone: "ok", text: `Opened ${d.name}.` });
   };
@@ -574,9 +621,25 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
                 Browser decks <span className="num">{savedDecks.length}</span>
               </button>
             )}
-            <AccountDecks signedIn={signedIn} name={name} cards={deck} onLoad={(d) => {
-              setDeck(d.cards.filter((id) => byId.has(id))); setName(d.name); setSavedId(null);
-            }} />
+            <AccountDecks signedIn={signedIn} name={name} cards={deck} selected={accountDeck?.id} sourceRevision={sourceRevision}
+              onSaved={(d, savingRevision) => {
+                if (!mounted.current || currentSourceRevision.current !== savingRevision) return false;
+                setAccountDeck(d); setSavedId(null);
+                window.history.replaceState(null, "", `/decks/builder?private=${encodeURIComponent(d.id)}`);
+                return true;
+              }}
+              onLoad={(d) => {
+                changeSource();
+                router.push(`/decks/builder?private=${encodeURIComponent(d.id)}`);
+              }}
+              onDelete={(id) => {
+                if (accountId != null) writePrivateDraft(accountId, id, null);
+                if (accountDeck?.id === id) {
+                  changeSource();
+                  setAccountDeck(null); setDeck([]); setName(""); setSavedId(null);
+                  window.history.replaceState(null, "", "/decks/builder");
+                }
+              }} />
             {myOpen && savedDecks.length > 0 && (
               <ul className="col-span-2 space-y-1">
                 {savedDecks.map((d) => (
@@ -650,9 +713,12 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, postAs, s
               type="button"
               disabled={!deck.length}
               onClick={() => {
+                changeSource();
                 setDeck([]);
                 setName("");
                 setSavedId(null);
+                setAccountDeck(null);
+                window.history.replaceState(null, "", "/decks/builder");
               }}
               className="col-span-2 text-xs text-faint hover:text-down disabled:opacity-40"
             >

@@ -71,7 +71,7 @@ export default async function StatsPage(props: PageProps<"/stats">) {
       </div>
 
       <p className="mb-4 text-sm text-muted">
-        {stats.latestGameAt ? <>Latest included upload: <RelativeTime iso={stats.latestGameAt} />. </> : "No uploads in this selection. "}
+        {stats.latestGameAt ? <>Latest recorded game: <RelativeTime iso={stats.latestGameAt} />. </> : "No games in this selection. "}
         These are tracker contributions, not all Marvel Snap games.
         {stats.summary.games > 0 && stats.summary.games < LOW_SAMPLE && ` Small sample: fewer than ${LOW_SAMPLE} games. Treat rates as early signals.`}
       </p>

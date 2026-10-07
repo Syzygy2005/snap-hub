@@ -103,6 +103,7 @@ export async function recordGame(
   gameStateText: string,
   accountId: string | null,
   now = new Date(),
+  playedAt = now,
 ): Promise<RecordResult> {
   const parsed = parseGameState(gameStateText, accountId);
   if (!parsed.ok) return { ok: false, status: 422, reason: parsed.reason, detail: parsed.detail };
@@ -124,7 +125,7 @@ export async function recordGame(
          first_seen = least(snap_names.first_seen, excluded.first_seen),
          games = snap_names.games + 1,
          account_id = coalesce(excluded.account_id, snap_names.account_id)`,
-      [accountHash, g.playerName, now, tracker.account_id ?? null],
+      [accountHash, g.playerName, playedAt, tracker.account_id ?? null],
     );
   }
 
@@ -141,7 +142,7 @@ export async function recordGame(
       tracker.id,
       accountHash,
       g.gameId,
-      now,
+      playedAt,
       g.league,
       g.battleMode,
       g.friendly,

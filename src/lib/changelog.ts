@@ -10,6 +10,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-07",
+    changes: [
+      { title: "A home for your decks", detail: "My decks brings together private account drafts, decks saved in this browser, and the copies you have shared. Copy a browser deck to your account to keep it across devices. Private drafts stay private, and editing one leaves shared copies unchanged." },
+      { title: "Your tracker keeps games through connection trouble", detail: "The updated PC tracker saves finished games before uploading and retries after outages or restarts. It shows how many games are waiting, keeps rejected games for troubleshooting, and preserves when a game was captured. Download the updated tracker from setup to get these improvements." },
+      { title: "Missed leaderboard refreshes are easier to catch", detail: "Failed refreshes now fail the scheduled job, and a separate freshness check flags active boards that have gone more than 30 minutes without a successful check. The previous month's board still stays live while the new season is starting." },
+    ],
+  },
+  {
     date: "2026-10-06",
     changes: [
       { title: "Random is marked as not in the game", detail: "The card wiki lists Random because our card source does, but it can't be collected or played. Its page now says so instead of calling it a mode card, and patch notes won't be linked to it." },

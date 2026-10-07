@@ -385,3 +385,18 @@
   leaderboard response. Cards/wiki/builder/stats share canonical card rows. Unreleased rows are not deckable.
 - Reference imports preserve known IDs and the last good dataset on validation failure. Do not weaken
   missing-ID checks to accommodate a bad feed. Change history starts after the baseline, not retroactively.
+
+- `/decks/mine` reads private drafts and shared copies only for the session account. A browser-to-account
+  save creates a private copy; public/unlisted sharing remains explicit. Builder `?private=` lookups must
+  check ownership before passing any card or name to the client, and retain that draft's update ID.
+- Snapshot success is not just a successful HTTP response from the route: `snapshotRunSucceeded` requires
+  the active board to succeed in this run. An empty unpublished month is allowed while the previous live
+  board succeeds. The read-only health endpoint uses successful `board_checked` timestamps, never a
+  generic cron timestamp, and must not refresh the source itself. The monitor and snapshot schedules both
+  use GitHub Actions, so neither proves the other ran during a whole-scheduler outage.
+- The tracker queue saves capture-time site/key/account identity before uploading, keeps rejected files,
+  and removes a payload only after a matching game acknowledgement. Retries must not stop file polling or
+  let one failing entry starve later games. Test with real Windows PowerShell 5.1, not just TypeScript mocks.
+  `x-snaphub-captured-at` is optional for old trackers; it sets `played_at`, clamped to receipt time for a
+  clock in the future. `last_upload_at` remains server receipt time. Retry acknowledgements must never
+  rewrite an existing game's played time.

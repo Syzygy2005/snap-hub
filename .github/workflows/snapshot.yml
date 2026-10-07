@@ -6,6 +6,11 @@ name: Leaderboard snapshot
 # Needs two repository secrets: SITE_URL (e.g. https://snap-hub.vercel.app) and CRON_SECRET.
 # GitHub may delay scheduled runs by a few minutes, and pauses schedules in repos with no
 # commits for 60 days (re-enable it from the Actions tab).
+concurrency:
+  group: leaderboard-snapshot
+  cancel-in-progress: false
+permissions:
+  contents: read
 on:
   schedule:
     - cron: "*/10 * * * *"
@@ -42,9 +47,10 @@ jobs:
           echo "HTTP ${status:-no response}"
           head -c 4000 response.txt 2>/dev/null; echo
           case "$status" in
-            200) exit 0 ;;
+            200) jq -e '.ok == true' response.txt; exit $? ;;
             401) echo "::error::401: SITE_URL must be the public address under Vercel > Domains, and CRON_SECRET must match Vercel exactly (redeploy after changing it)." ;;
             404) echo "::error::404: SITE_URL is wrong. Copy it again from Vercel > Domains." ;;
+            503) echo "::error::Leaderboard refresh failed. Check the per-season results above; the previous successful standings remain available." ;;
             500) echo "::error::500: the site hit an error. The reason is in the response above." ;;
             *) echo "::error::No usable response from the site. Check SITE_URL is your Vercel address." ;;
           esac

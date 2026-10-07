@@ -149,6 +149,23 @@ export async function listDecks(opts: DeckQuery = {}): Promise<SavedDeck[]> {
   return rows.map(toDeck);
 }
 
+/** Includes unlisted copies, but only for the signed-in owner supplied by the page. */
+export async function ownedDecks(ownerId: number, requestedPage = 1) {
+  const db = await getDb();
+  const [{ total }] = await db.query<{ total: number }>(
+    "select count(*)::int as total from decks where owner_id = $1", [ownerId],
+  );
+  const pageSize = 24;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(pages, Math.max(1, Number.isFinite(requestedPage) ? Math.floor(requestedPage) : 1));
+  const rows = await db.query<Parameters<typeof toDeck>[0]>(
+    `select ${DECK_COLUMNS} ${DECK_FROM} where d.owner_id = $1
+     order by d.created_at desc, d.id limit $2 offset $3`,
+    [ownerId, pageSize, (page - 1) * pageSize],
+  );
+  return { decks: rows.map(toDeck), total, page, pages };
+}
+
 /** Moderation, not tidying: there is no undo, so only an admin route reaches this. */
 export async function deleteDeck(id: string): Promise<boolean> {
   const db = await getDb();

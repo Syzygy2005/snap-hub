@@ -13,6 +13,8 @@ builder, and win rate / cube rate stats from a PC tracker.
   public link listed on /decks or an unlisted link that is not.
 - **Decks**: browse shared decks, search deck names and the cards inside them, filter by cards a deck contains.
   A deck shared while signed in carries the poster's name.
+- **My decks**: `/decks/mine` brings private account drafts, browser saves and your shared copies together.
+  Saving a browser deck to your account makes a private copy; sharing remains a separate action.
 - **What's new**: `/changelog`, written by hand in `src/lib/changelog.ts`. Add an entry when a change is worth
   a player noticing; the newest one also shows on the home page.
 - **Where your cubes go**: win rate and cube rate split by who raised the stakes, and what a retreat costs
@@ -64,8 +66,8 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
 4. **GitHub repo → Settings → Secrets and variables → Actions → New repository secret**:
    - `SITE_URL`: your Vercel address, e.g. `https://snap-hub.vercel.app`
    - `CRON_SECRET`: the same value as in Vercel
-5. **GitHub repo → Actions → Leaderboard snapshot → Run workflow** for the first snapshot. It then runs every 10
-   minutes. GitHub pauses scheduled workflows after 60 days without commits; re-enable it from the Actions tab.
+5. **GitHub repo → Actions → Leaderboard snapshot → Run workflow** for the first snapshot. It is scheduled every 10
+   minutes. GitHub can delay scheduled runs and pauses them after 60 days without commits; re-enable them from the Actions tab.
 
 Every push to GitHub redeploys the site on Vercel.
 
@@ -311,6 +313,19 @@ Upload deduplication hashes the local Snap account ID resolved by the parser, in
 game file when the account header is absent or does not match a player. Only files with no usable
 account ID fall back to deduplication per tracker key. Existing stored hashes are not rewritten.
 
+The tracker saves each captured game atomically in `%APPDATA%\SnapHub\queue` before attempting an
+upload. It keeps watching during slow requests and retries connection/server failures with backoff,
+including after a restart. Only an acknowledgement for the same game clears its queued payload.
+Queued files include game data and the original site, tracker key and account header: keep this folder
+private. Changing settings does not transfer old games to another key or site. Captured timestamps
+travel with the upload so recovered games stay in their original session; upload status still reports
+the time the server received them. Older tracker versions continue to work without that header.
+
+Rejected games remain queued and show as needing attention. Fix the original key/site or parser
+problem, then use `-RetryHeld` to try them again. The tracker never silently deletes failed games;
+at 256 MB it reports that new captures cannot be saved until space becomes available. `-Once` captures
+the current game and attempts due uploads once, returning a nonzero exit code if work remains.
+
 Players don't run the script by hand. `/api/tracker/download` returns a zip holding the script, a
 `Start Snap Hub Tracker.cmd` that already carries the site address and their key, and a readme, so setup is
 download, unzip, double-click. The zip is built by `src/lib/tracker/zip.ts` (stored entries, no dependency) and
@@ -320,9 +335,9 @@ The launcher holds a live key, so the readme says not to pass the folder on.
 Limits worth knowing:
 
 - **PC only**, and only games that finish while the tracker is running (the game keeps just the last game on disk).
-- **The parser has not yet seen a real game file.** Field paths follow the map published by the open-source Marvel
-  Snap Tracker, and the tests use a synthetic file shaped from it. If a game won't record, run the tracker with
-  `-SaveRaw`; it keeps a copy in `%APPDATA%\SnapHub\raw` to add as a test fixture.
+- The parser is tested against anonymised real game and early-retreat files as well as synthetic cases.
+  Game updates can still change the format. If a game won't record, `-SaveRaw` keeps a diagnostic copy in
+  `%APPDATA%\SnapHub\raw`; review and anonymise that copy before sharing it.
 - Win rate = wins ÷ (wins + losses). Cube rate = average net cubes per game. Decks sharing 9+ of 12 cards form one
   archetype, named after its two most distinctive cards.
 
@@ -356,10 +371,21 @@ does not claim to detect a running tracker. Leaderboard freshness uses a per-sea
 successful source check, including unchanged responses; failures never advance it. After 30 minutes
 (three scheduled checks), the UI labels updates delayed. Archived seasons are labeled separately.
 
+The snapshot endpoint returns HTTP 503 when an active board fails to refresh or an upstream check
+errors. An unpublished new month is expected while the previous live board continues to refresh.
+`/api/cron/snapshot/health` is a read-only check protected by the same `CRON_SECRET`; it returns 503
+when an active board has no successful check or that check is over 30 minutes old.
+The separate **Leaderboard freshness monitor** workflow calls it every 15 minutes using the existing
+`SITE_URL` and `CRON_SECRET`. Failed runs use GitHub Actions notifications, so enable those in your
+GitHub notification preferences. Both workflows rely on GitHub scheduling; a GitHub-wide outage or
+both schedules being paused requires an external monitor to detect independently.
+
 Run `npm run build`, `npx playwright install chromium`, then `npm run test:e2e` for desktop/mobile
 browser tests. The runner creates a fresh `.data/e2e-*` database and a local Discord stub, using ports
 3101 and 3102. It never uses production credentials or writes to production. CI runs these tests and
 retains failure screenshots/traces for seven days. Unit tests remain `npm test`.
+CI also runs `npx vitest run src/lib/tracker/queue.test.ts` on Windows against Windows PowerShell 5.1
+and a local test server, exercising captured games through outages and restarts.
 
 ## Brand
 

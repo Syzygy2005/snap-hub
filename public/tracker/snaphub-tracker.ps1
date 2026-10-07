@@ -1,25 +1,15 @@
 <#
 .SYNOPSIS
   Snap Hub tracker for Marvel Snap on PC.
-
 .DESCRIPTION
-  Watches Marvel Snap's local game file and uploads each finished game to your Snap Hub site,
-  which turns them into win rate, cube rate and match history.
-
-  Reads (never changes):
-    %USERPROFILE%\AppData\LocalLow\Second Dinner\SNAP\Standalone\States\nvprod\GameState.json
-    ...\nvprod\AccountState.json  (only your account ID, which the site stores as a one-way hash)
-
-  Uploads GameState.json after each finished game. The site keeps: result, cubes, game mode, turns,
-  your deck, the cards you drew and played, the locations, and your opponent's name and revealed cards.
-
-  Only games that finish while this window is open are recorded; the game keeps just the last one on disk.
-  Close the window or press Ctrl+C to stop.
-
-  File layout knowledge comes from the open-source Marvel Snap Tracker (github.com/Razviar/marvelsnaptracker).
-
-.EXAMPLE
-  powershell -NoProfile -ExecutionPolicy Bypass -File .\snaphub-tracker.ps1 -Site https://your-site.vercel.app
+  Reads (never changes) GameState.json and AccountState.json in Marvel Snap's nvprod folder.
+  Saves completed games before upload. Captured games survive outages and restarts.
+  Keep this window open while playing: Marvel Snap keeps only its most recent game.
+  The private queue includes your tracker key; do not share it.
+  -Once captures the current file and tries due uploads once (exit 1 if any remain).
+  -RetryHeld retries rejected games with their ORIGINAL site, key and account header.
+  -Reset changes settings for new games only; it never changes or clears queued games.
+  File layout knowledge: github.com/Razviar/marvelsnaptracker.
 #>
 [CmdletBinding()]
 param(
@@ -27,95 +17,66 @@ param(
   [string]$Key,
   [string]$StateDir = (Join-Path $env:USERPROFILE 'AppData\LocalLow\Second Dinner\SNAP\Standalone\States\nvprod'),
   [string]$ConfigDir = (Join-Path $env:APPDATA 'SnapHub'),
-  [int]$IntervalSeconds = 5,
+  [ValidateRange(1, 60)][int]$IntervalSeconds = 5,
   [switch]$SaveRaw,
   [switch]$Once,
-  [switch]$Reset
+  [switch]$Reset,
+  [switch]$RetryHeld
 )
-
 $ErrorActionPreference = 'Stop'
-$Version = '1.0.0'
+$Version = '1.1.0'
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-
+Add-Type -AssemblyName System.Net.Http
+$ConfigDir = [IO.Path]::GetFullPath($ConfigDir)
 $ConfigFile = Join-Path $ConfigDir 'tracker.json'
 $SeenFile = Join-Path $ConfigDir 'uploaded-games.txt'
-New-Item -ItemType Directory -Force -Path $ConfigDir | Out-Null
+$CapturedFile = Join-Path $ConfigDir 'last-captured-game.txt'
+$QueueDir = Join-Path $ConfigDir 'queue'
+New-Item -ItemType Directory -Force -Path $QueueDir | Out-Null
 
 function Write-Status([string]$Message, [string]$Color = 'Gray') {
   Write-Host ('[{0}] {1}' -f (Get-Date -Format 'HH:mm:ss'), $Message) -ForegroundColor $Color
 }
-
+function Write-AtomicText([string]$Path, [string]$Text) {
+  $temporary = "$Path.$([guid]::NewGuid().ToString('N')).tmp"
+  try {
+    $bytes = [Text.Encoding]::UTF8.GetBytes($Text)
+    $stream = [IO.File]::Open($temporary, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+    try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) } finally { $stream.Dispose() }
+    if ([IO.File]::Exists($Path)) { [IO.File]::Replace($temporary, $Path, [NullString]::Value) }
+    else { [IO.File]::Move($temporary, $Path) }
+  } finally { if ([IO.File]::Exists($temporary)) { [IO.File]::Delete($temporary) } }
+}
+function Get-Hash([string]$Text) {
+  $hash = [Security.Cryptography.SHA256]::Create()
+  try { return ([BitConverter]::ToString($hash.ComputeHash([Text.Encoding]::UTF8.GetBytes($Text)))).Replace('-', '').ToLowerInvariant() }
+  finally { $hash.Dispose() }
+}
 function Read-SharedBytes([string]$Path) {
-  # The game keeps its files open, so open for reading while allowing it to keep writing.
   $share = [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete
   $fs = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, $share)
-  try {
-    $ms = New-Object IO.MemoryStream
-    $fs.CopyTo($ms)
-    return , $ms.ToArray()
-  } finally {
-    $fs.Dispose()
-  }
+  $ms = New-Object IO.MemoryStream
+  try { $fs.CopyTo($ms); return , $ms.ToArray() }
+  finally { $fs.Dispose(); $ms.Dispose() }
 }
-
 function ConvertTo-Gzip([byte[]]$Bytes) {
   $ms = New-Object IO.MemoryStream
   $gz = New-Object IO.Compression.GZipStream($ms, [IO.Compression.CompressionMode]::Compress)
-  $gz.Write($Bytes, 0, $Bytes.Length)
-  $gz.Close()
-  return , $ms.ToArray()
+  try { $gz.Write($Bytes, 0, $Bytes.Length); $gz.Close(); return , $ms.ToArray() }
+  finally { $gz.Dispose(); $ms.Dispose() }
 }
-
-function Invoke-SnapHub([string]$Method, [string]$Path, [byte[]]$Body, [hashtable]$Headers = @{}) {
-  $request = [Net.HttpWebRequest]::Create("$($script:Config.site)$Path")
-  $request.Method = $Method
-  $request.Timeout = 60000
-  $request.UserAgent = "SnapHubTracker/$Version"
-  $request.Headers.Add('Authorization', "Bearer $($script:Config.key)")
-  foreach ($name in $Headers.Keys) { $request.Headers.Add($name, [string]$Headers[$name]) }
-  if ($Body) {
-    $request.ContentType = 'application/json'
-    $request.ContentLength = $Body.Length
-    $stream = $request.GetRequestStream()
-    $stream.Write($Body, 0, $Body.Length)
-    $stream.Close()
-  }
-  try {
-    $response = $request.GetResponse()
-  } catch {
-    $ex = $_.Exception
-    while ($ex -and -not ($ex -is [Net.WebException])) { $ex = $ex.InnerException }
-    if ($ex -and $ex.Response) { $response = $ex.Response } else { throw }
-  }
-  try {
-    $reader = New-Object IO.StreamReader($response.GetResponseStream())
-    $text = $reader.ReadToEnd()
-    $status = [int]$response.StatusCode
-  } finally {
-    $response.Close()
-  }
-  $json = $null
-  try { $json = $text | ConvertFrom-Json } catch { }
-  return [pscustomobject]@{ Status = $status; Body = $json; Text = $text }
-}
-
 function Get-AccountId {
   $path = Join-Path $StateDir 'AccountState.json'
-  if (-not (Test-Path $path)) { return $null }
+  if (-not (Test-Path -LiteralPath $path)) { return $null }
   try {
     $text = [Text.Encoding]::UTF8.GetString((Read-SharedBytes $path)).TrimStart([char]0xFEFF)
-  } catch {
-    return $null
-  }
-  $m = [regex]::Match($text, '"Account"\s*:\s*\{[^{}]*?"Id"\s*:\s*"([^"]+)"')
-  if ($m.Success) { return $m.Groups[1].Value }
-  try {
+    $m = [regex]::Match($text, '"Account"\s*:\s*\{[^{}]*?"Id"\s*:\s*"([^"]+)"')
+    if ($m.Success) { return $m.Groups[1].Value }
     $account = $text | ConvertFrom-Json
     if ($account.ServerState.Account.Id) { return [string]$account.ServerState.Account.Id }
   } catch { }
   return $null
 }
-
 function Get-FinishedGameId([string]$Text) {
   $i = $Text.IndexOf('"ClientResultMessage"')
   if ($i -lt 0) { return $null }
@@ -125,126 +86,248 @@ function Get-FinishedGameId([string]$Text) {
   if ($m.Success) { return $m.Groups[1].Value }
   return $null
 }
-
-# --- Settings -------------------------------------------------------------
-
-$script:Config = [ordered]@{ site = ''; key = '' }
-if ((Test-Path $ConfigFile) -and -not $Reset) {
-  try {
-    $saved = Get-Content -Raw -Path $ConfigFile | ConvertFrom-Json
-    $script:Config.site = [string]$saved.site
-    $script:Config.key = [string]$saved.key
-  } catch { }
+function Save-Entry($Entry) { Write-AtomicText $Entry.Path ($Entry.Data | ConvertTo-Json -Depth 6 -Compress) }
+function Show-Queue {
+  $held = @($script:Queue.Values | Where-Object { $_.Data.held }).Count + $script:Unreadable
+  $suffix = if ($held) { " ($held need attention)" } else { '' }
+  Write-Status ("{0} games waiting to upload{1}." -f ($script:Queue.Count + $script:Unreadable), $suffix)
 }
-if ($Site) { $script:Config.site = $Site }
-if ($Key) { $script:Config.key = $Key }
-if (-not $script:Config.site) { $script:Config.site = Read-Host 'Snap Hub address (for example https://snap-hub.vercel.app)' }
-if (-not $script:Config.key) { $script:Config.key = Read-Host 'Paste your tracker key (starts with shk_)' }
-$script:Config.site = $script:Config.site.Trim().TrimEnd('/')
-$script:Config.key = $script:Config.key.Trim()
+function Set-UploadFailure($Entry, [string]$Why, [bool]$Held, [int]$RetryAfter = 0) {
+  $Entry.Data.attempts = 1 + [int]$Entry.Data.attempts
+  $delay = [int][Math]::Min(300, 10 * [Math]::Pow(2, [Math]::Min(5, $Entry.Data.attempts - 1)))
+  $delay = [Math]::Max($delay, [Math]::Min(3600, $RetryAfter))
+  $Entry.Data.nextAttempt = [DateTime]::UtcNow.AddSeconds($delay).ToString('o')
+  $Entry.Data.held = $Held
+  $Entry.Data.lastError = $Why
+  Save-Entry $Entry
+  if ($Held) {
+    Write-Status "Game $($Entry.Data.gameId) needs attention: $Why. Its local copy is kept in $QueueDir." 'Red'
+    Write-Status 'Fix the original key/site or report the parser error, then run with -RetryHeld. A new key only applies to new games.' 'Yellow'
+  } else {
+    Write-Status "Upload unavailable ($Why). Saved locally; retrying in $delay seconds while still watching games." 'DarkYellow'
+  }
+  Show-Queue
+}
+function Start-Upload($Entry) {
+  # Bind requests to capture-time settings. Never reassign a backlog to another account.
+  $request = New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post, "$($Entry.Data.site)/api/tracker/games")
+  $request.Headers.Authorization = New-Object Net.Http.Headers.AuthenticationHeaderValue('Bearer', [string]$Entry.Data.key)
+  [void]$request.Headers.TryAddWithoutValidation('X-Snaphub-Encoding', 'gzip')
+  if ($Entry.Data.created) {
+    # PowerShell 7.5 converts ISO strings to DateTime while 5.1 keeps strings.
+    $capturedAt = if ($Entry.Data.created -is [DateTime]) { $Entry.Data.created.ToUniversalTime().ToString('o', [Globalization.CultureInfo]::InvariantCulture) } else { [string]$Entry.Data.created }
+    [void]$request.Headers.TryAddWithoutValidation('X-Snaphub-Captured-At', $capturedAt)
+  }
+  if ($Entry.Data.accountId) { [void]$request.Headers.TryAddWithoutValidation('X-Snap-Account-Id', [string]$Entry.Data.accountId) }
+  $body = [Convert]::FromBase64String($Entry.Data.body)
+  $request.Content = New-Object Net.Http.ByteArrayContent(, $body)
+  $request.Content.Headers.ContentType = New-Object Net.Http.Headers.MediaTypeHeaderValue('application/json')
+  try { return [pscustomobject]@{ Entry = $Entry; Request = $request; Task = $script:Client.SendAsync($request) } }
+  catch { $request.Dispose(); throw }
+}
+function Complete-Upload($Upload) {
+  $entry = $Upload.Entry
+  $response = $null
+  try {
+    try { $response = $Upload.Task.GetAwaiter().GetResult() }
+    catch { Set-UploadFailure $entry 'connection failed or timed out' $false; return }
+    $status = [int]$response.StatusCode
+    $reply = $null
+    try { $reply = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult() | ConvertFrom-Json } catch { }
+    # A login page returning 200 is not an acknowledgement. Server dedupe returns a game too.
+    if ($status -eq 200 -and $reply.ok -eq $true -and $reply.game.gameId -eq $entry.Data.gameId) {
+      # Persist acknowledgement before removing payload; a lost response safely deduplicates.
+      $history = @(@($script:SeenOrder) + @([string]$entry.Data.gameId) | Select-Object -Last 2000)
+      Write-AtomicText $SeenFile (($history -join "`n") + "`n")
+      $script:SeenOrder = $history
+      [void]$script:Seen.Add([string]$entry.Data.gameId)
+      [IO.File]::Delete($entry.Path)
+      [void]$script:Queue.Remove($entry.Path)
+      if ($reply.duplicate) { Write-Status "Already recorded game $($entry.Data.gameId)" }
+      else {
+        $g = $reply.game
+        $cubes = if ($g.cubes -gt 0) { "+$($g.cubes)" } else { "$($g.cubes)" }
+        $color = switch ($g.result) { 'win' { 'Green' } 'loss' { 'Red' } default { 'Yellow' } }
+        Write-Status ("{0} {1} cubes | {2}" -f ([string]$g.result).ToUpper(), $cubes, $g.deckName) $color
+      }
+      Show-Queue
+    } else {
+      $held = $status -ge 400 -and $status -lt 500 -and $status -notin @(408, 425, 429)
+      $why = "HTTP $status"
+      if ($status -in @(401, 403)) { $why += ' - original tracker key was not accepted' }
+      elseif ($status -eq 422) { $why += ' - the site could not read this game' }
+      elseif ($status -eq 200) { $why += ' - missing game acknowledgement' }
+      $retryAfter = 0
+      if ($response.Headers.RetryAfter) {
+        if ($response.Headers.RetryAfter.Delta) { $retryAfter = [int]$response.Headers.RetryAfter.Delta.TotalSeconds }
+        elseif ($response.Headers.RetryAfter.Date) { $retryAfter = [int]($response.Headers.RetryAfter.Date.UtcDateTime - [DateTime]::UtcNow).TotalSeconds }
+      }
+      Set-UploadFailure $entry $why $held $retryAfter
+    }
+  } finally {
+    if ($response) { $response.Dispose() }
+    $Upload.Request.Dispose()
+  }
+}
 
-Write-Host ''
-Write-Host "  SNAP HUB tracker $Version" -ForegroundColor Yellow
-Write-Host '  Build / Track / Compete' -ForegroundColor DarkYellow
-Write-Host ''
-
+# Multiple windows must not race to capture, acknowledge or remove the same files.
+try { $lock = [IO.File]::Open((Join-Path $ConfigDir 'tracker.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None) }
+catch { Write-Status 'Another tracker is already using this settings folder. Close that window first.' 'Red'; exit 1 }
+$script:Client = $null
+$active = $null
+$exitCode = 0
 try {
-  $check = Invoke-SnapHub 'GET' '/api/tracker/games' $null
-} catch {
-  Write-Status "Can't reach $($script:Config.site): $($_.Exception.Message)" 'Red'
-  exit 1
-}
-if ($check.Status -eq 401) {
-  Write-Status 'That tracker key was not accepted. Make a new one on the Stats > Tracker page, then run again with -Reset.' 'Red'
-  exit 1
-}
-if ($check.Status -ne 200) {
-  Write-Status "Unexpected reply from the site ($($check.Status)). Check the address and try again." 'Red'
-  exit 1
-}
-$script:Config | ConvertTo-Json | Set-Content -Path $ConfigFile -Encoding UTF8
-Write-Status "Connected to $($script:Config.site) as $($check.Body.name)" 'Green'
-
-$GameFile = Join-Path $StateDir 'GameState.json'
-if (-not (Test-Path $StateDir)) {
-  Write-Status "Couldn't find Marvel Snap's game files in $StateDir" 'Red'
-  Write-Status 'Is the PC version of Marvel Snap installed and has it been opened once? Use -StateDir to point at the nvprod folder.' 'Red'
-  exit 1
-}
-Write-Status "Watching $GameFile"
-Write-Status 'Leave this window open while you play. Ctrl+C to stop.'
-
-# --- Watch loop -----------------------------------------------------------
-
-$seen = New-Object 'System.Collections.Generic.HashSet[string]'
-if (Test-Path $SeenFile) { Get-Content $SeenFile | Select-Object -Last 2000 | ForEach-Object { [void]$seen.Add($_) } }
-$attempts = @{}
-$lastWrite = [datetime]::MinValue
-
-while ($true) {
-  try {
-    $info = Get-Item -LiteralPath $GameFile -ErrorAction SilentlyContinue
-    if ($info -and $info.LastWriteTimeUtc -ne $lastWrite) {
-      $lastWrite = $info.LastWriteTimeUtc
-      $bytes = Read-SharedBytes $GameFile
-      $gameId = Get-FinishedGameId ([Text.Encoding]::UTF8.GetString($bytes))
-
-      if ($gameId -and -not $seen.Contains($gameId)) {
-        if ($SaveRaw) {
-          $rawDir = Join-Path $ConfigDir 'raw'
-          New-Item -ItemType Directory -Force -Path $rawDir | Out-Null
-          [IO.File]::WriteAllBytes((Join-Path $rawDir (($gameId -replace '[^\w-]', '_') + '.json')), $bytes)
-        }
-
-        $headers = @{ 'X-Snaphub-Encoding' = 'gzip' }
-        $accountId = Get-AccountId
-        if ($accountId) { $headers['X-Snap-Account-Id'] = $accountId }
-        $reply = Invoke-SnapHub 'POST' '/api/tracker/games' (ConvertTo-Gzip $bytes) $headers
-
-        if ($reply.Status -eq 200) {
-          [void]$seen.Add($gameId)
-          Add-Content -Path $SeenFile -Value $gameId
-          $g = $reply.Body.game
-          if ($reply.Body.duplicate) {
-            Write-Status "Already recorded game $gameId"
-          } else {
-            $cubes = if ($g.cubes -gt 0) { "+$($g.cubes)" } else { "$($g.cubes)" }
-            $color = switch ($g.result) { 'win' { 'Green' } 'loss' { 'Red' } default { 'Yellow' } }
-            $deck = if ($g.deckName) { $g.deckName } else { 'deck' }
-            $vs = if ($g.opponentName) { " vs $($g.opponentName)" } else { '' }
-            Write-Status ("{0} {1} cubes | {2}{3}" -f $g.result.ToUpper(), $cubes, $deck, $vs) $color
-          }
-        } elseif ($reply.Status -eq 401) {
-          Write-Status 'Tracker key was revoked. Make a new one on the site and run again with -Reset.' 'Red'
-          exit 1
-        } else {
-          $why = if ($reply.Body.error) { $reply.Body.error } else { "HTTP $($reply.Status)" }
-          if ($reply.Status -eq 422 -and $reply.Body.reason -eq 'invalid-json') {
-            # Caught the game mid-write. Read it again shortly; give up only if it never becomes valid.
-            $attempts["partial:$gameId"] = 1 + [int]$attempts["partial:$gameId"]
-            if ($attempts["partial:$gameId"] -le 20) { $lastWrite = [datetime]::MinValue }
-          } elseif ($reply.Status -eq 422) {
-            # The site couldn't read this game. Try again only if the file changes, up to 3 times.
-            $attempts[$gameId] = 1 + [int]$attempts[$gameId]
-            if ($attempts[$gameId] -ge 3) {
-              [void]$seen.Add($gameId)
-              Add-Content -Path $SeenFile -Value $gameId
-              Write-Status "Skipped game ${gameId}: $why (run with -SaveRaw and share the file if this keeps happening)" 'Yellow'
-            } else {
-              Write-Status "Couldn't read game ${gameId} yet: $why" 'DarkYellow'
+  $config = [ordered]@{ site = ''; key = '' }
+  if ((Test-Path -LiteralPath $ConfigFile) -and -not $Reset) {
+    try {
+      $saved = Get-Content -Raw -LiteralPath $ConfigFile | ConvertFrom-Json
+      $config.site = [string]$saved.site; $config.key = [string]$saved.key
+    } catch { }
+  }
+  if ($Site) { $config.site = $Site }
+  if ($Key) { $config.key = $Key }
+  if (-not $config.site) { $config.site = Read-Host 'Snap Hub address (for example https://snap-hub.app)' }
+  if (-not $config.key) { $config.key = Read-Host 'Paste your tracker key (starts with shk_)' }
+  $config.site = $config.site.Trim().TrimEnd('/')
+  $config.key = $config.key.Trim()
+  $uri = $null
+  if (-not [Uri]::TryCreate($config.site, [UriKind]::Absolute, [ref]$uri) -or $uri.Scheme -notin @('https', 'http') -or $uri.UserInfo -or $uri.Query -or $uri.Fragment) {
+    throw 'Use a complete http(s) site address without a query or sign-in details.'
+  }
+  Write-AtomicText $ConfigFile ($config | ConvertTo-Json)
+  Write-Host "`n  SNAP HUB tracker $Version`n" -ForegroundColor Yellow
+  $GameFile = Join-Path $StateDir 'GameState.json'
+  Write-Status "Watching $GameFile"
+  Write-Status "Captured games are saved in $QueueDir before upload. Keep this folder private."
+  Write-Status 'Leave this window open while you play. Ctrl+C to stop.'
+  if (-not (Test-Path -LiteralPath $StateDir)) {
+    Write-Status 'Game folder is missing. Open Marvel Snap or use -StateDir for its nvprod folder. Saved uploads will still be retried.' 'Yellow'
+  }
+  $script:Seen = New-Object 'System.Collections.Generic.HashSet[string]'
+  $script:SeenOrder = @()
+  if (Test-Path -LiteralPath $SeenFile) {
+    $script:SeenOrder = @(Get-Content -LiteralPath $SeenFile | Select-Object -Last 2000)
+    foreach ($id in $script:SeenOrder) { [void]$script:Seen.Add($id) }
+  }
+  # Separate from the bounded history: changing settings or draining a large backlog
+  # must not recapture the unchanged current file under a different key/account.
+  $lastCaptured = ''
+  if (Test-Path -LiteralPath $CapturedFile) { $lastCaptured = (Get-Content -Raw -LiteralPath $CapturedFile).Trim() }
+  $script:Queue = @{}
+  $script:Unreadable = 0
+  $known = New-Object 'System.Collections.Generic.HashSet[string]'
+  foreach ($file in @(Get-ChildItem -LiteralPath $QueueDir -Filter '*.json' -Recurse -File)) {
+    try {
+      $data = Get-Content -Raw -LiteralPath $file.FullName | ConvertFrom-Json
+      if ($data.version -ne 1 -or -not $data.gameId -or -not $data.site -or -not $data.key -or -not $data.body) { throw 'Invalid queue record' }
+      $null = [DateTime]::Parse($data.nextAttempt)
+      if ($script:Seen.Contains([string]$data.gameId)) { [IO.File]::Delete($file.FullName); continue }
+      [void]$known.Add([string]$data.gameId)
+      $entry = [pscustomobject]@{ Path = $file.FullName; Data = $data }
+      if ($RetryHeld -and $data.held) { $data.held = $false; $data.nextAttempt = [DateTime]::MinValue.ToString('o'); Save-Entry $entry }
+      $script:Queue[$file.FullName] = $entry
+      if ($data.held) { Write-Status "Saved game $($data.gameId) needs attention ($($data.lastError)). Fix the original key/site or parser issue, then use -RetryHeld." 'Yellow' }
+    } catch {
+      $script:Unreadable++
+      Write-Status "Cannot read queued file $($file.FullName). It has been preserved; other games can still upload." 'Red'
+    }
+  }
+  Show-Queue
+  $handler = New-Object Net.Http.HttpClientHandler
+  $handler.AllowAutoRedirect = $false
+  $script:Client = New-Object Net.Http.HttpClient($handler)
+  $script:Client.Timeout = [TimeSpan]::FromSeconds(30)
+  $script:Client.DefaultRequestHeaders.UserAgent.ParseAdd("SnapHubTracker/$Version")
+  $lastWrite = [DateTime]::MinValue
+  $nextCapture = [DateTime]::MinValue
+  $script:NextUpload = [DateTime]::MinValue
+  $captureError = ''
+  $attempted = New-Object 'System.Collections.Generic.HashSet[string]'
+  $capturedOnce = $false
+  while ($true) {
+    if ((-not $Once -or -not $capturedOnce) -and [DateTime]::UtcNow -ge $nextCapture) {
+      $capturedOnce = $true
+      $nextCapture = [DateTime]::UtcNow.AddSeconds($IntervalSeconds)
+      try {
+        $info = Get-Item -LiteralPath $GameFile -ErrorAction SilentlyContinue
+        if ($info -and $info.LastWriteTimeUtc -ne $lastWrite) {
+          $bytes = Read-SharedBytes $GameFile
+          $text = [Text.Encoding]::UTF8.GetString($bytes).TrimStart([char]0xFEFF)
+          $gameId = Get-FinishedGameId $text
+          if ($gameId -and $gameId -ne $lastCaptured -and -not $known.Contains($gameId) -and -not $script:Seen.Contains($gameId)) {
+            # Reject partial JSON locally, so we never freeze a mid-write payload in the queue.
+            $null = $text | ConvertFrom-Json
+            $scopeDir = Join-Path $QueueDir (Get-Hash ("$($config.site)`n$($config.key)"))
+            New-Item -ItemType Directory -Force -Path $scopeDir | Out-Null
+            $data = [pscustomobject]@{
+              version = 1; gameId = $gameId; site = $config.site; key = $config.key
+              accountId = Get-AccountId; body = [Convert]::ToBase64String((ConvertTo-Gzip $bytes))
+              created = [DateTime]::UtcNow.ToString('o'); attempts = 0
+              nextAttempt = [DateTime]::MinValue.ToString('o'); held = $false; lastError = ''
             }
-          } else {
-            Write-Status "Couldn't upload game ${gameId}: $why. Retrying." 'DarkYellow'
-            $lastWrite = [datetime]::MinValue
+            $entry = [pscustomobject]@{ Path = (Join-Path $scopeDir ((Get-Hash $gameId) + '.json')); Data = $data }
+            $size = (Get-ChildItem -LiteralPath $QueueDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+            if ($size + [Text.Encoding]::UTF8.GetByteCount(($data | ConvertTo-Json -Depth 6 -Compress)) -gt 256MB) {
+              throw "Queue has reached 256 MB. New games cannot be saved until uploads recover or held files are moved out of $QueueDir. No saved games were deleted."
+            }
+            Save-Entry $entry
+            $script:Queue[$entry.Path] = $entry
+            [void]$known.Add($gameId)
+            Write-AtomicText $CapturedFile $gameId
+            $lastCaptured = $gameId
+            Write-Status "Saved game $gameId locally."
+            Show-Queue
+            if ($SaveRaw) {
+              $rawDir = Join-Path $ConfigDir 'raw'
+              New-Item -ItemType Directory -Force -Path $rawDir | Out-Null
+              [IO.File]::WriteAllBytes((Join-Path $rawDir ((Get-Hash $gameId) + '.json')), $bytes)
+            }
           }
+          $lastWrite = $info.LastWriteTimeUtc
         }
+        $captureError = ''
+      } catch {
+        $message = $_.Exception.Message
+        if ($message -ne $captureError) { Write-Status "Could not save the current game: $message. Watching for another read; existing queued games are safe." 'Red' }
+        $captureError = $message
       }
     }
-  } catch {
-    Write-Status "Problem: $($_.Exception.Message). Retrying." 'DarkYellow'
-    $lastWrite = [datetime]::MinValue
+    if ($active -and $active.Task.IsCompleted) {
+      try { Complete-Upload $active }
+      catch {
+        Write-Status 'Could not save upload progress. The queued copy is kept and will be retried after restart.' 'Red'
+        $active.Entry.Data.held = $true
+      }
+      $active = $null
+    }
+    if (-not $active -and [DateTime]::UtcNow -ge $script:NextUpload) {
+      $due = @($script:Queue.Values | Where-Object {
+        -not $_.Data.held -and [DateTime]::Parse($_.Data.nextAttempt).ToUniversalTime() -le [DateTime]::UtcNow -and (-not $Once -or -not $attempted.Contains($_.Path))
+      } | Sort-Object { $_.Data.created } | Select-Object -First 1)
+      if ($due.Count) {
+        [void]$attempted.Add($due[0].Path)
+        # Space requests, but keep retry backoff per game. One failing endpoint must
+        # not starve games captured for a different working endpoint.
+        $script:NextUpload = [DateTime]::UtcNow.AddSeconds(1)
+        try { $active = Start-Upload $due[0] }
+        catch { Set-UploadFailure $due[0] 'could not prepare the saved upload' $true }
+      }
+    }
+    if ($Once -and -not $active) {
+      $remainingDue = @($script:Queue.Values | Where-Object {
+        -not $_.Data.held -and -not $attempted.Contains($_.Path) -and [DateTime]::Parse($_.Data.nextAttempt).ToUniversalTime() -le [DateTime]::UtcNow
+      }).Count
+      if (-not $remainingDue) {
+        if ($script:Queue.Count -or $script:Unreadable -or $captureError) { $exitCode = 1 }
+        break
+      }
+    }
+    Start-Sleep -Milliseconds 200
   }
-
-  if ($Once) { break }
-  Start-Sleep -Seconds $IntervalSeconds
+} catch { Write-Status "Tracker stopped: $($_.Exception.Message)" 'Red'; $exitCode = 1 }
+finally {
+  if ($script:Client) { $script:Client.Dispose() }
+  if ($active) { $active.Request.Dispose() }
+  $lock.Dispose()
 }
+exit $exitCode
