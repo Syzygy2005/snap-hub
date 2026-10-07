@@ -19,6 +19,7 @@ export default async function DecksPage(props: PageProps<"/decks">) {
   return (
     <>
       <PageHeader title="Decks" subtitle="Decks people have shared, plus the ones saved in this browser.">
+        <Link href="/decks/mine" className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-accent hover:bg-surface">My decks</Link>
         <Link href="/decks/builder" className="rounded-lg bg-jade px-4 py-2 text-sm font-semibold text-forest hover:bg-jade-strong">
           Build a deck
         </Link>

@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import type { AccountDeck } from "@/lib/decks/account";
 
-export function AccountDecks({ signedIn, name, cards, onLoad }: {
+export function AccountDecks({ signedIn, name, cards, onLoad, selected, sourceRevision, onSaved, onDelete }: {
   signedIn: boolean; name: string; cards: string[]; onLoad: (deck: AccountDeck) => void;
+  selected?: string; sourceRevision: number;
+  onSaved: (deck: AccountDeck, sourceRevision: number) => boolean; onDelete: (id: string) => void;
 }) {
   const [decks, setDecks] = useState<AccountDeck[]>([]);
-  const [selected, setSelected] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -25,14 +26,18 @@ export function AccountDecks({ signedIn, name, cards, onLoad }: {
   }, [signedIn, reload]);
 
   const save = async (id?: string) => {
+    // Keep the source selected when this request started, even if the builder changes
+    // while the server is saving. Acknowledgement must not reselect abandoned work.
+    const savingRevision = sourceRevision;
     setBusy(true); setError(""); setMessage("");
     try {
       const res = await fetch("/api/decks/private", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, name, cards }) });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "Couldn't save deck.");
       setDecks((items) => [body.deck, ...items.filter((d) => d.id !== body.deck.id)]);
-      setSelected(body.deck.id);
-      setMessage("Saved privately to your account. Available on your other devices.");
+      const stillEditing = onSaved(body.deck, savingRevision);
+      setMessage(stillEditing ? "Saved privately to your account. Available on your other devices."
+        : "Previous deck saved privately. Your current draft was not changed.");
     } catch (err) { setError(err instanceof Error ? err.message : "Couldn't save deck."); }
     finally { setBusy(false); }
   };
@@ -53,7 +58,7 @@ export function AccountDecks({ signedIn, name, cards, onLoad }: {
         <ul className="space-y-2">{decks.map((d) => <li key={d.id} className="flex items-center gap-2">
           <button type="button" disabled={busy} onClick={() => {
             if (cards.length && !confirm("Replace the current builder with this saved deck?")) return;
-            setSelected(d.id); onLoad(d); setMessage("");
+            onLoad(d); setMessage("");
           }} className="min-w-0 flex-1 truncate text-left text-sm text-accent">{d.name} · {d.cards.length}/12</button>
           <button type="button" disabled={busy} aria-label={`Delete private deck ${d.name}`} className="text-xs text-down" onClick={async () => {
             if (!confirm(`Delete private deck “${d.name}” from your account?`)) return;
@@ -62,7 +67,7 @@ export function AccountDecks({ signedIn, name, cards, onLoad }: {
               const res = await fetch(`/api/decks/private?id=${encodeURIComponent(d.id)}`, { method: "DELETE" });
               if (!res.ok) throw new Error("Couldn't delete deck.");
               setDecks((items) => items.filter((item) => item.id !== d.id));
-              if (selected === d.id) setSelected(undefined);
+              onDelete(d.id);
               setMessage("Private deck deleted.");
             } catch { setError("Couldn't delete deck. Try again."); }
             finally { setBusy(false); }

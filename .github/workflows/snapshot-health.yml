@@ -1,0 +1,49 @@
+name: Leaderboard freshness monitor
+
+# Read-only and independent of the snapshot workflow, so a stopped snapshot job is visible.
+# Reuses SITE_URL / CRON_SECRET. Failed runs use GitHub Actions notification preferences.
+# This cannot detect a GitHub-wide scheduler outage or both schedules being disabled/paused.
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: leaderboard-freshness-monitor
+  cancel-in-progress: false
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check successful source-refresh age
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          site=$(printf '%s' "$SITE_URL" | LC_ALL=C tr -cd '\041-\176')
+          secret=$(printf '%s' "$CRON_SECRET" | LC_ALL=C tr -cd '\041-\176')
+          [ -n "$secret" ] && echo "::add-mask::$secret"
+          if [ -z "$site" ] || [ -z "$secret" ]; then
+            echo "::error::Add the SITE_URL and CRON_SECRET repository secrets."
+            exit 1
+          fi
+          case "$site" in http://*|https://*) ;; *) site="https://$site" ;; esac
+          site="${site%/}"
+          if ! printf '%s' "$site" | grep -Eq '^https?://[A-Za-z0-9.-]+(:[0-9]+)?$'; then
+            echo "::error::SITE_URL must be just the public site address, with nothing after it."
+            exit 1
+          fi
+
+          status=$(curl --silent --show-error --max-time 60 --output response.txt --write-out "%{http_code}" \
+            -H "Authorization: Bearer ${secret}" "$site/api/cron/snapshot/health") || true
+          echo "HTTP ${status:-no response}"
+          head -c 4000 response.txt 2>/dev/null; echo
+          if [ "$status" = 200 ] && jq -e '.ok == true' response.txt; then
+            exit 0
+          fi
+          echo "::error::Leaderboard freshness check failed: an active board has no successful check within 30 minutes, or the monitor could not reach it. Inspect this response and the Leaderboard snapshot workflow."
+          exit 1
