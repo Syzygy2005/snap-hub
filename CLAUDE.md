@@ -146,6 +146,19 @@
   the account from the session and never from the request. It carries a foreign key to `players`, so it is in the
   reset script's truncate list and in `rollover.test.ts`'s; a claim does not survive a reset,
   because the row it pointed at does not either.
+- `deleteTracker` removes the key's `snap_names` rows too, or "delete every game" left the uploader's
+  Snap name, account hash and Discord link behind. `snap_names` has no key column, so a row goes when
+  its account hash has no games left under any other key. The tracker page promises this, and lists
+  both files the script reads (`GameState.json`, and `AccountState.json` for the account ID only), that
+  the whole game file is sent but not stored, and that the script talks to the site and nowhere else.
+  Keep the page in step with the script and with what `recordGame` keeps.
+  `TRACKER_REPORT_DISCORD_URL` sets where `-SaveRaw` files are sent; only an https discord.gg or
+  discord.com address is shown. A search excerpt of Marvel Snap's terms (the June 2025 version on
+  seconddinnertech.com) puts using "automated scripts, software, code or systems to collect
+  information from or otherwise interact with the Services" and text and data mining of the Game in
+  its Code of Conduct. That wording is unverified: the sandbox cannot fetch the document and a second
+  search did not find it. No statement from Second Dinner about trackers was found, so the page says
+  the tracker is not approved; never write that it is allowed without one.
 - The name on a tracker key is a label for the key ("Gaming PC"), not a Snap name. The form used
   to say "Display name / Your Snap name", which read as though keys were identified by it.
 - Admin is `ADMIN_DISCORD_IDS`, checked with `isAdmin` inside every admin route handler. Hiding a
