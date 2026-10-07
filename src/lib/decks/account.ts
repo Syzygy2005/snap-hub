@@ -18,6 +18,14 @@ export async function accountDecks(ownerId: number): Promise<AccountDeck[]> {
   return (await db.query<Row>("select id, name, cards, updated_at from account_decks where owner_id = $1 order by updated_at desc", [ownerId])).map(view);
 }
 
+/** A private builder link grants no access by itself; the session owner must also match. */
+export async function getAccountDeck(ownerId: number, id: string): Promise<AccountDeck | null> {
+  const [row] = await (await getDb()).query<Row>(
+    "select id, name, cards, updated_at from account_decks where owner_id = $1 and id = $2", [ownerId, id],
+  );
+  return row ? view(row) : null;
+}
+
 export async function saveAccountDeck(ownerId: number, input: { id?: unknown; name?: unknown; cards?: unknown }) {
   if (!Array.isArray(input.cards) || !input.cards.every((c) => typeof c === "string")) {
     return { ok: false as const, error: "Cards must be a list of card IDs.", status: 400 };

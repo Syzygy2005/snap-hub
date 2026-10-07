@@ -42,12 +42,15 @@ export async function fetchBoard(season: SeasonRef, region: Region): Promise<Fet
   try {
     body = JSON.parse(text);
   } catch {
-    // Unsupported regions come back as a PHP warning page instead of JSON.
-    return { ok: false, reason: "unavailable", detail: `Non-JSON response (${res.status})` };
+    // A warning page is a failed check, not evidence that a season has not started.
+    return { ok: false, reason: "error", detail: `Non-JSON response (${res.status})` };
   }
 
-  if (body.code === "invalid_month") {
+  if (body.code === "invalid_month" && (res.ok || res.status === 400)) {
     return { ok: false, reason: "unavailable", detail: body.message ?? "invalid_month" };
+  }
+  if (!res.ok) {
+    return { ok: false, reason: "error", detail: `Source returned HTTP ${res.status}` };
   }
   if (!Array.isArray(body.results)) {
     return { ok: false, reason: "error", detail: `Unexpected response (${res.status})` };

@@ -10,6 +10,19 @@ export async function POST(request: Request) {
   const tracker = await authenticate(request);
   if (!tracker) return Response.json({ ok: false, error: "Unknown tracker key" }, { status: 401 });
 
+  const receivedAt = new Date();
+  const captured = request.headers.get("x-snaphub-captured-at");
+  let playedAt = receivedAt;
+  if (captured !== null) {
+    const millis = Date.parse(captured);
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?Z$/.test(captured) || !Number.isFinite(millis)) {
+      return Response.json({ ok: false, error: "Invalid capture time" }, { status: 400 });
+    }
+    // Queued games belong to their original session, not the day a connection recovers.
+    // A PC clock ahead of the server must not place a game in the future.
+    playedAt = new Date(Math.min(millis, receivedAt.getTime()));
+  }
+
   let bytes = Buffer.from(await request.arrayBuffer());
   if (request.headers.get("x-snaphub-encoding") === "gzip") {
     try {
@@ -21,7 +34,7 @@ export async function POST(request: Request) {
   if (bytes.length > MAX_BYTES) return Response.json({ ok: false, error: "Upload too large" }, { status: 413 });
 
   const accountId = request.headers.get("x-snap-account-id")?.trim().slice(0, 100) || null;
-  const result = await recordGame(tracker, bytes.toString("utf8"), accountId);
+  const result = await recordGame(tracker, bytes.toString("utf8"), accountId, receivedAt, playedAt);
   if (!result.ok) {
     return Response.json({ ok: false, reason: result.reason, error: result.detail }, { status: result.status });
   }

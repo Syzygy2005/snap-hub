@@ -203,6 +203,25 @@ export function TrackerSetup({ inviteRequired, signedIn }: { inviteRequired: boo
           Your games appear in <Link href="/stats/me" className="text-accent hover:underline">My stats</Link> and count towards
           the <Link href="/stats" className="text-accent hover:underline">meta stats</Link>.
         </p>
+        <p className="mt-2 text-sm text-muted">
+          If your connection drops, captured games stay on this PC and the window shows how many are waiting to upload.
+          They retry automatically, including after you restart the tracker. Keep the window open while playing so each
+          game can be captured before Marvel Snap replaces it.
+        </p>
+        <details className="mt-3 text-sm text-muted">
+          <summary className="cursor-pointer hover:text-ink">A saved game needs attention</summary>
+          <p className="mt-2">
+            Rejected games stay in <code>%APPDATA%\SnapHub\queue</code> while other games continue uploading.
+            The window explains the problem. After fixing access to the original key or site, or updating the tracker
+            for a game-reading fix, run the script with <code>-RetryHeld</code> to try them again.
+            Changing your key only applies to new games; saved games keep their original key and account.
+          </p>
+          <p className="mt-2">
+            Keep the queue folder private: it contains your tracker keys and game files. Successfully uploaded copies
+            are removed. If the queue reaches 256 MB, the window warns you and pauses new captures until there is room;
+            it never deletes waiting games to make space.
+          </p>
+        </details>
       </Step>
     </ol>
   );
