@@ -10,6 +10,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-07",
+    changes: [
+      { title: "Patch-note links on card pages are more accurate", detail: "Card pages no longer link patch notes that only used the card's name as an ordinary word, like \"a huge surge in popularity\" or \"under the hood\". Cards named with a lowercase word, such as Morgan le Fay, or in an all-caps balance-update heading, such as Silver Samurai, now pick up the notes that mention them, and the latest balance update is included." },
+    ],
+  },
+  {
     date: "2026-10-06",
     changes: [
       { title: "Random is marked as not in the game", detail: "The card wiki lists Random because our card source does, but it can't be collected or played. Its page now says so instead of calling it a mode card, and patch notes won't be linked to it." },
