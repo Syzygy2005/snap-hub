@@ -405,8 +405,18 @@
 - Snapshot success is not just a successful HTTP response from the route: `snapshotRunSucceeded` requires
   the active board to succeed in this run. An empty unpublished month is allowed while the previous live
   board succeeds. The read-only health endpoint uses successful `board_checked` timestamps, never a
-  generic cron timestamp, and must not refresh the source itself. The monitor and snapshot schedules both
-  use GitHub Actions, so neither proves the other ran during a whole-scheduler outage.
+  generic cron timestamp, and must not refresh the source itself. The monitor runs on GitHub Actions only,
+  so a GitHub-wide outage silences it even though Vercel Cron keeps taking snapshots.
+- Snapshots have two callers, Vercel Cron (`vercel.json`, Pro plan) and the GitHub workflow, so every
+  run goes through `withSnapshotLease` (`lease.ts`). Without it, two overlapping runs on real Postgres
+  stored every new player twice: `players.name` is not unique and each run decides who is new from a
+  read made before the other's inserts commit. PGlite serializes transactions and cannot show this;
+  `overlap.test.ts` and `lease.test.ts` run in the reference-postgres CI job for that reason.
+  `overlap.test.ts` was checked failing without the lease on a local Postgres 16. A skipped call returns 200 with
+  `skipped`, not 503: the run in progress is doing the work and the freshness monitor reads
+  `board_checked`, so a stuck run still shows. `SNAPSHOT_LEASE_SECONDS` must stay above the route's
+  `maxDuration`; a test compares them. Any new scheduled writer that decides from a read needs the
+  same treatment.
 - The tracker queue saves capture-time site/key/account identity before uploading, keeps rejected files,
   and removes a payload only after a matching game acknowledgement. Retries must not stop file polling or
   let one failing entry starve later games. Test with real Windows PowerShell 5.1, not just TypeScript mocks.

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { runSnapshot } from "@/lib/leaderboard/ingest";
 import { getSnapshotHealth } from "@/lib/leaderboard/health";
+import { getDb } from "@/lib/db";
 import { GET } from "./route";
 
 vi.mock("@/lib/leaderboard/ingest", () => ({ runSnapshot: vi.fn() }));
@@ -39,4 +40,27 @@ it("returns 200 for expected new-season emptiness when the previous board refres
   const response = await GET(request());
   expect(response.status).toBe(200);
   expect((await response.json()).ok).toBe(true);
+});
+
+it("does nothing, and says so, when another snapshot holds the lease", async () => {
+  // Vercel Cron and the GitHub workflow can both call at the same moment.
+  const db = await getDb();
+  await db.query(`insert into meta (key, value, updated_at) values ('snapshot_lease', '{"token":"other-run"}'::jsonb, now())
+    on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at`);
+  try {
+    const response = await GET(request());
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ ok: true, skipped: expect.any(String) });
+    expect(runSnapshot).not.toHaveBeenCalled();
+  } finally {
+    await db.query(`delete from meta where key = 'snapshot_lease'`);
+  }
+});
+
+it("releases the lease after a run, so the next scheduled call goes ahead", async () => {
+  vi.mocked(runSnapshot).mockResolvedValue([{ season: "2026-09", region: "global", status: "unchanged" }]);
+  expect((await GET(request())).status).toBe(200);
+  expect((await GET(request())).status).toBe(200);
+  expect(runSnapshot).toHaveBeenCalledTimes(2);
 });
