@@ -85,6 +85,19 @@ export function trackerInviteRequired(): boolean {
   return !!cleanEnv("TRACKER_INVITE_CODE");
 }
 
+/** Where tracker problem reports go. Only an https Discord address is shown; anything else is dropped. */
+export function trackerReportUrl(): string | null {
+  const url = cleanEnv("TRACKER_REPORT_DISCORD_URL");
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const discord = /(^|\.)(discord\.gg|discord\.com)$/.test(parsed.hostname);
+    return parsed.protocol === "https:" && discord ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function authenticate(request: Request): Promise<Tracker | null> {
   const header = request.headers.get("authorization") ?? "";
   const token = /^Bearer\s+(shk_[\w-]{20,})$/.exec(header.trim())?.[1];
@@ -186,6 +199,16 @@ export async function recordGame(
 export async function deleteTracker(trackerId: number): Promise<void> {
   const db = await getDb();
   await db.transaction(async (tx) => {
+    // The names this key reported go with it, or "delete every game" leaves the uploader's Snap
+    // name, account hash and Discord link behind. snap_names has no key column, so a row goes
+    // when the account it describes has no games left under any other key; a person's second
+    // device keeps the record it also supports.
+    await tx.query(
+      `delete from snap_names s
+        where s.account_hash in (select account_hash from tracked_games where tracker_id = $1)
+          and not exists (select 1 from tracked_games g where g.account_hash = s.account_hash and g.tracker_id <> $1)`,
+      [trackerId],
+    );
     await tx.query(`delete from tracked_games where tracker_id = $1`, [trackerId]);
     await tx.query(`delete from trackers where id = $1`, [trackerId]);
   });

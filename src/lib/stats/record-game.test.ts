@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
 import { getDb } from "@/lib/db";
-import { createTracker, recordGame } from "./tracker";
+import { createTracker, deleteTracker, recordGame } from "./tracker";
 import { parseGameState } from "./parse-game";
 
 const text = readFileSync("src/lib/stats/fixtures/real-game.json", "utf8");
@@ -45,5 +45,31 @@ describe("upload identity and deduplication", () => {
     expect(await recordGame(a, withoutIds, null)).toMatchObject({ duplicate: false });
     expect(await recordGame(a, withoutIds, null)).toMatchObject({ duplicate: true });
     expect(await recordGame(b, withoutIds, null)).toMatchObject({ duplicate: false });
+  });
+});
+
+describe("deleting a key", () => {
+  it("removes the names it reported, not only its games", async () => {
+    const tracker = await key();
+    await recordGame(tracker, text, accountId);
+    const db = await getDb();
+    expect(await db.query("select name from snap_names")).toHaveLength(1);
+    await deleteTracker(tracker.id);
+    expect(await db.query("select id from tracked_games")).toHaveLength(0);
+    expect(await db.query("select name from snap_names")).toHaveLength(0);
+  });
+
+  it("keeps the record while another key still has games for that account", async () => {
+    const pc = await key();
+    const laptop = await key();
+    await recordGame(pc, text, accountId);
+    // A different game from the same account, uploaded by the person's other key.
+    const other = text.replaceAll(parsed.game.gameId, "another-game-id");
+    expect(await recordGame(laptop, other, accountId)).toMatchObject({ duplicate: false });
+    await deleteTracker(pc.id);
+    const db = await getDb();
+    expect(await db.query("select name from snap_names")).toHaveLength(1);
+    await deleteTracker(laptop.id);
+    expect(await db.query("select name from snap_names")).toHaveLength(0);
   });
 });

@@ -10,6 +10,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-13",
+    changes: [
+      { title: "Deleting your tracker key now removes everything it recorded", detail: "Deleting your key from My stats already removed its games. It now also removes the Snap name it recorded for your account. The tracker page now says exactly which files the tracker reads, what is sent and kept, where problem reports go, and how to remove it." },
+    ],
+  },
+  {
     date: "2026-10-07",
     changes: [
       { title: "A home for your decks", detail: "My decks brings together private account drafts, decks saved in this browser, and the copies you have shared. Copy a browser deck to your account to keep it across devices. Private drafts stay private, and editing one leaves shared copies unchanged." },
