@@ -2,12 +2,15 @@ import { runSnapshot } from "@/lib/leaderboard/ingest";
 import { describeDbError } from "@/lib/db/errors";
 import { cleanEnv } from "@/lib/env";
 import { getSnapshotHealth, snapshotRunSucceeded } from "@/lib/leaderboard/health";
+import { withSnapshotLease } from "@/lib/leaderboard/lease";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 
-// Called every ~10 minutes by the GitHub Actions workflow (production) or every 30 by the dev scheduler.
+// Called every 10 minutes by Vercel Cron (vercel.json) and by the GitHub Actions workflow in
+// production, or every 30 by the dev scheduler. Two schedulers can land at the same moment,
+// so the run holds a lease and a call that finds one held does nothing.
 export async function GET(request: Request) {
   const secret = cleanEnv("CRON_SECRET");
   const authorized = secret
@@ -16,7 +19,16 @@ export async function GET(request: Request) {
   if (!authorized) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
   try {
-    const leaderboard = await runSnapshot();
+    const run = await withSnapshotLease(() => runSnapshot());
+    if (!run.ran) {
+      // Not a failure: the run already underway is doing this work, and the freshness monitor
+      // still catches a board that stops refreshing, since it reads board_checked, not this.
+      return Response.json(
+        { ok: true, skipped: "Another snapshot is already running.", runningSince: run.heldSince },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    const leaderboard = run.value;
     const health = await getSnapshotHealth();
     const ok = snapshotRunSucceeded(leaderboard, health);
     return Response.json({ ok, leaderboard, health }, {
