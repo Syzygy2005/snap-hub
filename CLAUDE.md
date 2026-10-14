@@ -90,6 +90,15 @@
   real response; there is no identity field to lean on. The envelope carries `offset`, `limit`
   and `total` (about 48k players at Infinite), but `offset` is ignored: asking for 1000 returns
   the top of the board again, so the top 1000 really is a hard ceiling.
+- `fetchBoard` checks every row (an integer rank of 0 or more, a string name, an integer score)
+  and fails the whole board on a single bad one. It used to drop bad rows, which is not harmless:
+  a dropped player reads as a departure, departures are what rename detection pairs, and a board
+  whose every row was bad came back as an empty success that marked everybody gone while
+  `board_checked` kept the monitor green. Rank was never checked, and a string rank `"10"` was
+  stored as 101. A failed board keeps the last good one and the snapshot route answers 503. If
+  the source ever sends a bad row routinely, the board stalls and the monitor says so: read the
+  `detail` before loosening this, and never go back to dropping rows quietly. `ingestBoard`
+  refuses an empty list for the same reason.
 - `runSnapshot` fetches the current month every run and keeps fetching the previous month until
   it marks it `season_closed:<season>:<region>` in `meta`, then never again. The mark is only
   written once the current season has a standings row, which is the proof that the old month is
