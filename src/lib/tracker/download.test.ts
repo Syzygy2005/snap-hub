@@ -49,4 +49,16 @@ describe("trackerBundle", () => {
     expect(launcher).toContain("could upload");
     expect(String(byName["README.txt"])).toContain("Do not send it to anyone");
   });
+
+  it("says that only deleting a leaked key switches it off", () => {
+    // The launcher used to say "If you share it by mistake, make a new key", which leaves
+    // the shared key working: nothing revokes a key except deleting it on My stats.
+    const readme = String(byName["README.txt"]);
+    for (const text of [launcher, readme]) {
+      expect(text).not.toMatch(/by mistake, make a new key/);
+      expect(text).toContain("does not switch");
+      expect(text).toContain("My stats");
+    }
+    expect(readme).toContain("delete the key, which deletes its games too");
+  });
 });

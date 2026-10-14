@@ -81,7 +81,9 @@ export function TrackerSetup({ inviteRequired, signedIn }: { inviteRequired: boo
           <div className="space-y-2">
             <p className="text-sm text-muted">
               This is your key. It&apos;s saved in this browser for <Link href="/stats/me" className="text-accent hover:underline">My stats</Link>,
-              and the tracker asks for it the first time it runs. Keep it private; anyone with it can add games to your stats.
+              and the tracker asks for it the first time it runs. Keep it private: anyone with it can upload games as you, see
+              the stats it recorded, and delete it with every game it uploaded. If it gets out, delete it on My stats and
+              make a new one. A new key on its own does not switch the old one off.
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <code className="min-w-0 break-all rounded-md border border-accent/40 bg-bg px-3 py-2 font-mono text-sm text-accent">{token}</code>
@@ -142,7 +144,7 @@ export function TrackerSetup({ inviteRequired, signedIn }: { inviteRequired: boo
           <>
             <p className="mb-2 text-sm text-muted">
               A zip with the tracker and a file that starts it. Your key is already in it, so there&apos;s nothing to paste.
-              Don&apos;t pass the folder on: anyone who has it can add games to your stats.
+              Don&apos;t pass the folder on, even to a friend who wants the tracker: it carries your key. Send them here to make their own.
             </p>
             <button
               type="button"
