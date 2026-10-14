@@ -15,7 +15,7 @@ export type FetchResult =
 
 interface ApiResponse {
   total?: number;
-  results?: { rank: number; playerName: string; score: number }[];
+  results?: unknown[];
   code?: string;
   message?: string;
 }
@@ -59,10 +59,38 @@ export async function fetchBoard(season: SeasonRef, region: Region): Promise<Fet
     return { ok: false, reason: "unavailable", detail: "Empty board" };
   }
 
-  const entries = body.results
-    .filter((r) => typeof r.playerName === "string" && Number.isFinite(r.score))
-    .map((r) => ({ rank: r.rank + 1, name: r.playerName, score: r.score }))
-    .sort((a, b) => a.rank - b.rank);
+  const entries: BoardEntry[] = [];
+  const bad: string[] = [];
+  body.results.forEach((r, i) => {
+    const row = readRow(r);
+    if (typeof row === "string") bad.push(`row ${i} ${row}`);
+    else entries.push(row);
+  });
+  if (bad.length) {
+    return { ok: false, reason: "error", detail: `Malformed board: ${bad.length} of ${body.results.length} rows, first ${bad[0]}` };
+  }
+  entries.sort((a, b) => a.rank - b.rank);
 
   return { ok: true, total: typeof body.total === "number" ? body.total : null, entries };
+}
+
+const show = (v: unknown) => (JSON.stringify(v) ?? String(v)).slice(0, 40);
+
+/**
+ * One row of the board, or what is wrong with it. A single bad row fails the whole board.
+ * Dropping it, which this used to do, is not harmless: a player missing from the board reads
+ * as a departure, departures are what rename detection pairs, and a wrong pairing joins two
+ * strangers for good. A board whose every row was bad came back as a successful empty one,
+ * so everybody left, the next run found nothing changed, and `board_checked` kept the
+ * freshness monitor green on an empty board. Rank was never checked, and `"10" + 1` is
+ * `"101"`. Failing keeps the last good board, leaves `board_checked` where it was, and makes
+ * the snapshot route answer 503, so a source that changes its format is seen, not absorbed.
+ */
+function readRow(r: unknown): BoardEntry | string {
+  if (!r || typeof r !== "object") return `is ${show(r)}`;
+  const { rank, playerName, score } = r as Record<string, unknown>;
+  if (typeof rank !== "number" || !Number.isInteger(rank) || rank < 0) return `has rank ${show(rank)}`;
+  if (typeof playerName !== "string") return `has playerName ${show(playerName)}`;
+  if (typeof score !== "number" || !Number.isInteger(score)) return `has score ${show(score)}`;
+  return { rank: rank + 1, name: playerName, score };
 }

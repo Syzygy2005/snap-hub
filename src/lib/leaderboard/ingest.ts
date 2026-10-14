@@ -34,6 +34,10 @@ export async function ingestBoard(
   now: Date,
 ): Promise<IngestSummary> {
   const season = seasonKey(ref);
+  // Read as a board, nothing on it means every stored player left, and the next run would
+  // find nothing changed and mark the board freshly checked. An empty month is "unavailable"
+  // in fetchBoard and never reaches here; anything else that passes no entries is a bug.
+  if (!entries.length) throw new Error("An empty board is not a snapshot");
 
   return db.transaction(async (tx) => {
     const known = await tx.query<KnownRow>(
