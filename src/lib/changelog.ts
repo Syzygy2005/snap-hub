@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-10-14",
     changes: [
+      { title: "Clearer advice if your tracker key gets out", detail: "The file that starts the tracker said to make a new key if you shared yours by mistake, but a new key never switched the old one off. Setup and the download now say what anyone holding your key can do, that deleting it on My stats is what stops it (its games go with it), and to send friends here to make their own key rather than passing on your copy." },
       { title: "The leaderboard refreshes more steadily", detail: "Refreshes were scheduled every 10 minutes but often ran late, about 18 minutes apart last week and 30 on 13 to 14 October. A second scheduler now runs them too, so the board, rank changes and Movers stay closer to the game." },
     ],
   },

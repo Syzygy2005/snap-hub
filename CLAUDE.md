@@ -170,6 +170,12 @@
   the tracker is not approved; never write that it is allowed without one.
 - The name on a tracker key is a label for the key ("Gaming PC"), not a Snap name. The form used
   to say "Display name / Your Snap name", which read as though keys were identified by it.
+- A tracker key can upload games, read the stats it recorded and delete itself with every game it
+  uploaded, all by the key alone. Nothing else revokes a key: making a new one leaves the old one
+  working, which the launcher used to get wrong ("If you share it by mistake, make a new key").
+  The launcher, the README in the zip and the setup page all say so, and `download.test.ts` keeps
+  the old advice out. If key replacement or revocation without deletion is ever added, change all
+  three together.
 - Admin is `ADMIN_DISCORD_IDS`, checked with `isAdmin` inside every admin route handler. Hiding a
   control in the UI is not the boundary; if a new admin action appears, it checks server side too.
 - Merging players is destructive and one-way, reachable from the profile page as an admin and as
