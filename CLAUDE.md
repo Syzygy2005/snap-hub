@@ -358,6 +358,11 @@
   and `seed` for a stable daily pick. Callers ask for what they show; the spotlight used to
   aggregate every artist to display one. An artist page defaults to the release status the
   artist has work in. The gallery's artist filter is case-insensitive on purpose and tested.
+- `hookTimeout` matches `testTimeout` (30s) in `vitest.config.mts`. Most files make their first
+  database call in a hook, and that call boots PGlite and applies the schema: about 2.7s idle and
+  8 to 9.5s under load, against vitest's 10s default. Three suites run at once failed 18 files with
+  "Hook timed out in 10000ms", reported as failed files plus extra skipped tests, until it was raised.
+  A run with failed files and more than the usual 8 skips is this, or a hook that really hangs.
 - The browser tests run `next start`, which serves the **last build**. Changing a source file
   and rerunning them tests the old code. Rebuild first; a check written to catch a bug passed
   against the buggy page for exactly this reason until it was rebuilt.
