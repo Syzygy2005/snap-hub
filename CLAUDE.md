@@ -397,6 +397,15 @@
   `AnimatedCardGrid` uses pre-commit positions and viewport-limited Web Animations, with cancellation
   on resize, focus, touch, unmount and live reduced-motion changes. Keep transforms off reading surfaces.
 - Don't write `﻿` escapes with file-writing tools; it has been saved as a literal BOM. Use `String.fromCharCode(0xfeff)`.
+- `npm ci` prints an audit summary in every CI log; read it. Next.js 16.3.5 carried a critical remote
+  code execution flaw in `next/og` ImageResponse on the Node runtime (GHSA-vcvr-r3jv-pc5j), which is
+  what both share cards use, and the Movers card draws player names, which anyone can choose. It sat
+  in the logs for weeks. 16.3.8 fixed it and six other Next advisories. The five highs that remain are
+  one chain (`braces` → `micromatch` → `fast-glob` under `eslint-config-next`), lint-time only, with no
+  fixed `braces` release; npm's "fix" is a two-major downgrade of the lint config, so do not take it.
+  After a Next or renderer upgrade, render the share cards from a build that has board data: the
+  Movers card is drawn at build time (`revalidate = 600`), so a build against an empty database only
+  ever shows its empty state.
 - Keep `src/lib/credits.ts` and the README Credits section in sync when adding sources or dependencies.
 
 - Reference imports run independently at `/api/cron/reference`; never hide failures inside a successful
