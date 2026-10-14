@@ -10,9 +10,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-14",
+    changes: [
+      { title: "The leaderboard refreshes more steadily", detail: "Refreshes were scheduled every 10 minutes but often ran late, about 18 minutes apart last week and 30 on 13 to 14 October. A second scheduler now runs them too, so the board, rank changes and Movers stay closer to the game." },
+    ],
+  },
+  {
     date: "2026-10-13",
     changes: [
-      { title: "The leaderboard refreshes more steadily", detail: "Refreshes were scheduled every 10 minutes but often ran late, about 18 minutes apart on average last week. A second scheduler now runs them too, so the board, rank changes and Movers stay closer to the game." },
       { title: "Deleting your tracker key now removes everything it recorded", detail: "Deleting your key from My stats already removed its games. It now also removes the Snap name it recorded for your account. The tracker page now says exactly which files the tracker reads, what is sent and kept, where problem reports go, and how to remove it." },
     ],
   },

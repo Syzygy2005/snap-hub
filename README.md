@@ -221,8 +221,10 @@ look like one. A replay across eight seeds put detection at 48% hourly, 66% half
 ten minutes. That is the schedule, not a guarantee: GitHub runs scheduled workflows late, a median
 of 15 minutes apart from 25 September to 1 October 2026, and from 3 to 4 October 2026 it skipped
 most runs and left gaps of up to 7.5 hours. From 7 to 13 October 2026 it ran 452 times where the
-schedule asks for about 849: a median of 18 minutes apart, 46 at most. Vercel Cron was added as a
-second caller on 13 October 2026 for that reason, with the GitHub workflow kept as a backup.
+schedule asks for about 849: a median of 18 minutes apart, 46 at most. In the 24 hours after that
+it ran 47 times where the schedule asks for 144, a median of 30 minutes apart, and the freshness
+monitor flagged a stale board five times. Vercel Cron was added as a second caller on 14 October
+2026 for that reason, with the GitHub workflow kept as a backup.
 
 Two callers can arrive at once, so a run takes a lease first (`withSnapshotLease`, a
 `snapshot_lease` row in `meta`) and a call that finds it held returns 200 with `skipped` and does
