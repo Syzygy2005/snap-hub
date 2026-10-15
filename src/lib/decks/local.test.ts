@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  draftSource,
   parseDraft,
   parseLocalDecks,
   removeLocalDeck,
@@ -56,7 +57,14 @@ describe("parseDraft", () => {
       name: "Destroy",
       deck: ["AntMan"],
       savedId: null,
+      // A draft from before links were recorded never takes over a link it was not made from.
+      from: null,
     });
+  });
+
+  it("keeps the link a draft was made from", () => {
+    expect(parseDraft(JSON.stringify({ name: "", deck: ["AntMan"], savedId: "a", from: "local:a" }))?.from).toBe("local:a");
+    expect(parseDraft(JSON.stringify({ name: "", deck: ["AntMan"], from: 7 }))?.from).toBeNull();
   });
 
   it("rejects a draft with no usable card list", () => {
@@ -92,5 +100,19 @@ describe("sameCards", () => {
     expect(sameCards(["a", "b"], ["a", "b"])).toBe(true);
     expect(sameCards(["a", "b"], ["b", "a"])).toBe(false);
     expect(sameCards(["a"], ["a", "b"])).toBe(false);
+  });
+});
+
+describe("draftSource", () => {
+  it("names the link the builder opened, in the order the builder page reads them", () => {
+    expect(draftSource("?local=abc")).toBe("local:abc");
+    expect(draftSource("?deck=xyz&local=abc")).toBe("deck:xyz");
+    expect(draftSource("?code=a%2Bb%3D")).toBe("code:a+b=");
+  });
+
+  it("is null for the plain builder, including one opened only to add a card", () => {
+    expect(draftSource("")).toBeNull();
+    expect(draftSource("?add=AntMan")).toBeNull();
+    expect(draftSource("?local=")).toBeNull();
   });
 });

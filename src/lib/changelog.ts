@@ -10,6 +10,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-15",
+    changes: [
+      { title: "Reloading the deck builder keeps your unsaved edits", detail: "Editing a deck you opened from a link, a deck saved in this browser, a shared deck or a pasted code, then reloading the page used to bring back the original and lose your changes. Phones do this on their own when you switch to the game and back. Your edits now come back, with a Discard edits button if you want the original instead. Saving in two tabs also no longer removes the deck the other tab saved." },
+    ],
+  },
+  {
     date: "2026-10-14",
     changes: [
       { title: "Clearer advice if your tracker key gets out", detail: "The file that starts the tracker said to make a new key if you shared yours by mistake, but a new key never switched the old one off. Setup and the download now say what anyone holding your key can do, that deleting it on My stats is what stops it (its games go with it), and to send friends here to make their own key rather than passing on your copy." },

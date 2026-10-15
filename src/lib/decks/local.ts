@@ -17,6 +17,8 @@ export interface Draft {
   deck: string[];
   /** id of the saved deck being edited, or null when this is a new one. */
   savedId: string | null;
+  /** The link this draft was being edited from (`draftSource`), or null for the plain builder. */
+  from: string | null;
 }
 
 export const DECKS_KEY = "snaphub:decks";
@@ -72,7 +74,27 @@ export function parseDraft(raw: string | null): Draft | null {
     name: typeof d.name === "string" ? d.name : "",
     deck: d.deck as string[],
     savedId: typeof d.savedId === "string" ? d.savedId : null,
+    from: typeof d.from === "string" ? d.from : null,
   };
+}
+
+/**
+ * Which link the builder was opened from: a deck saved in this browser, a shared deck or a
+ * pasted code, in the order the builder page reads them. Null for the plain builder.
+ *
+ * The draft records this so a reload of the same link resumes the edits. Without it the link's
+ * original loaded on every load and the autosave wrote it straight over the draft, so a reload,
+ * or a phone waking a tab it had put to sleep, threw the edits away. Every move inside the
+ * builder rewrites the address with `replaceState`, so the address is always what a reload
+ * would open.
+ */
+export function draftSource(search: string): string | null {
+  const params = new URLSearchParams(search);
+  for (const key of ["deck", "local", "code"]) {
+    const value = params.get(key);
+    if (value) return `${key}:${value}`;
+  }
+  return null;
 }
 
 /** Replaces the deck with this id, or adds it when the id is new. */

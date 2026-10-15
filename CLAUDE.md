@@ -428,6 +428,18 @@
 - Reference imports preserve known IDs and the last good dataset on validation failure. Do not weaken
   missing-ID checks to accommodate a bad feed. Change history starts after the baseline, not retroactively.
 
+- The builder's browser draft (`snaphub:deck-draft`) records the link it was edited from
+  (`draftSource`: `deck:`, `local:` or `code:` plus the value). On load, a draft from the same
+  link wins over the link's original, with "Discard edits" to go back; a draft from any other link
+  does not. Before this, opening from a link loaded the original and the autosave wrote it over the
+  draft on mount, so every reload lost the edits, and phones reload a tab they have put to sleep.
+  It works because every move inside the builder rewrites the address with `replaceState`
+  (saving to the browser now goes to `?local=`), so the address is what a reload opens; a new
+  move that changes what is open without doing that breaks recovery. `saveLocal` and `deleteLocal`
+  re-read storage before writing and the list follows the `storage` event, or a save in one tab
+  wrote its stale list over another tab's save. The draft is still one per browser, so two tabs
+  editing from different links share it and the last edit wins. `builder-recovery.spec.ts` covers
+  all of this and failed on the old builder.
 - `/decks/mine` reads private drafts and shared copies only for the session account. A browser-to-account
   save creates a private copy; public/unlisted sharing remains explicit. Builder `?private=` lookups must
   check ownership before passing any card or name to the client, and retain that draft's update ID.

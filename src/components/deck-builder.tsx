@@ -9,6 +9,8 @@ import { decodeDeckInput, encodeDeck, gameClipboardText } from "@/lib/decks/code
 import type { AccountDeck } from "@/lib/decks/account";
 import { readPrivateDraft, writePrivateDraft } from "@/lib/decks/private-draft";
 import {
+  DECKS_KEY,
+  draftSource,
   newDeckId,
   readDraft,
   readLocalDecks,
@@ -73,6 +75,18 @@ function importDeck(text: string, cards: Card[]): { deck: string[]; name: string
   };
 }
 
+const RESTORED: Status = { tone: "ok", text: "Restored your unsaved edits from this browser." };
+
+/** What the builder holds when it opens. `original` is set only when edits were restored over a
+ *  link, and is what "Discard edits" goes back to. */
+interface Opening {
+  deck: string[];
+  name: string;
+  status: Status;
+  savedId: string | null;
+  original: { deck: string[]; name: string; savedId: string | null } | null;
+}
+
 const IMPORT_FAILED: Status = {
   tone: "warn",
   text: "Couldn't read a deck from that. Paste a Marvel Snap deck code or the copied deck text.",
@@ -87,9 +101,26 @@ function startingState(
   saved: LocalDeck[],
   accountId: Props["accountId"],
   privateDeck: Props["openAccountDeck"],
-) {
+  source: string | null,
+): Opening {
   const known = new Set(cards.map((c) => c.defId));
   const keep = (ids: string[]) => ids.filter((id) => known.has(id)).slice(0, DECK_SIZE);
+  // A draft made from this same link means the page was reloaded mid-edit, so the edits win over
+  // the link's original. A draft from any other link is other work, and opening a new link
+  // starts from that link, as it always has.
+  const draft = readDraft();
+  const resume = source && draft?.from === source && draft.deck.length ? draft : null;
+  const fromLink = (opened: Omit<Opening, "original">): Opening => {
+    const label = (n: string) => n.trim() || UNTITLED;
+    if (!resume || (sameCards(keep(resume.deck), opened.deck) && label(resume.name) === label(opened.name))) {
+      return { ...opened, original: null };
+    }
+    const savedId = resume.savedId && saved.some((d) => d.id === resume.savedId) ? resume.savedId : opened.savedId;
+    return {
+      deck: keep(resume.deck), name: resume.name, savedId, status: RESTORED,
+      original: { deck: opened.deck, name: opened.name, savedId: opened.savedId },
+    };
+  };
   if (privateDeck && accountId != null) {
     const recovery = readPrivateDraft(accountId, privateDeck.id);
     const changedElsewhere = recovery && recovery.sourceUpdatedAt !== privateDeck.updatedAt;
@@ -98,34 +129,34 @@ function startingState(
       status: recovery ? { tone: changedElsewhere ? "warn" as const : "ok" as const,
         text: changedElsewhere ? "Restored your unsaved edits. This account draft has also changed since you last opened it; review before updating."
           : "Restored your unsaved private draft from this browser." } : null,
+      original: null,
     };
   }
   // A shared deck or a pasted code is new work, so it isn't tied to a saved deck yet.
   if (initial) {
-    return { deck: keep(initial.defIds), name: initial.name, status: null, savedId: null };
+    return fromLink({ deck: keep(initial.defIds), name: initial.name, status: null, savedId: null });
   }
   const opened = openLocalId ? saved.find((d) => d.id === openLocalId) : undefined;
   if (opened) {
-    return {
+    return fromLink({
       deck: keep(opened.cards),
       name: opened.name === UNTITLED ? "" : opened.name,
       status: null,
       savedId: opened.id,
-    };
+    });
   }
   if (importCode) {
     const imported = importDeck(importCode, cards);
-    return imported
+    return fromLink(imported
       ? { deck: imported.deck, name: imported.name ?? "", status: imported.status, savedId: null }
-      : { deck: [], name: "", status: IMPORT_FAILED, savedId: null };
+      : { deck: [], name: "", status: IMPORT_FAILED, savedId: null });
   }
-  const draft = readDraft();
   if (draft?.deck.length) {
     // Drop the link if the saved deck it points at has since been deleted.
     const savedId = draft.savedId && saved.some((d) => d.id === draft.savedId) ? draft.savedId : null;
-    return { deck: keep(draft.deck), name: draft.name, status: null, savedId };
+    return { deck: keep(draft.deck), name: draft.name, status: null, savedId, original: null };
   }
-  return { deck: [] as string[], name: "", status: null, savedId: null };
+  return { deck: [] as string[], name: "", status: null, savedId: null, original: null };
 }
 
 export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccountDeck, accountId, postAs, signedIn = false, addCard }: Props) {
@@ -134,7 +165,8 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccou
 
   const [savedDecks, setSavedDecks] = useState<LocalDeck[]>(readLocalDecks);
   const [start] = useState(() => {
-    const restored = startingState(cards, initial, importCode, openLocalId, savedDecks, accountId, openAccountDeck);
+    const restored = startingState(cards, initial, importCode, openLocalId, savedDecks, accountId, openAccountDeck,
+      draftSource(window.location.search));
     if (!addCard) return restored;
     const card = cards.find(c => c.defId === addCard);
     const text = !card ? "That card is unavailable for deck building." : restored.deck.includes(addCard)
@@ -148,6 +180,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccou
   const [name, setName] = useState(start.name);
   const [savedId, setSavedId] = useState<string | null>(start.savedId);
   const [accountDeck, setAccountDeck] = useState<AccountDeck | null>(openAccountDeck ?? null);
+  const [original, setOriginal] = useState(start.original);
   const [sourceRevision, setSourceRevision] = useState(0);
   const currentSourceRevision = useRef(0);
   const mounted = useRef(false);
@@ -160,7 +193,18 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccou
   const changeSource = () => {
     currentSourceRevision.current += 1;
     setSourceRevision(currentSourceRevision.current);
+    setOriginal(null);
   };
+
+  // Another tab saving or deleting a browser deck. Without this the list here stayed as it was
+  // when the page opened, and the next save from this tab wrote that old list back over theirs.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === DECKS_KEY || e.key === null) setSavedDecks(readLocalDecks());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -211,7 +255,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccou
       window.addEventListener("beforeunload", warnBeforeReload);
       return () => window.removeEventListener("beforeunload", warnBeforeReload);
     }
-    writeDraft({ name, deck, savedId });
+    writeDraft({ name, deck, savedId, from: draftSource(window.location.search) });
   }, [deck, name, savedId, accountDeck, accountId, signedIn]);
 
   const keywordIndex = useMemo(() => {
@@ -309,13 +353,18 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccou
       cards: deck,
       updatedAt: new Date().toISOString(),
     };
-    const next = upsertLocalDeck(savedDecks, entry);
+    // Read storage again rather than trusting the list this tab loaded: another tab may have
+    // saved since, and writing the old list back would delete what it saved.
+    const next = upsertLocalDeck(readLocalDecks(), entry);
     if (!writeLocalDecks(next)) {
       flash({ tone: "warn", text: "This browser won't store decks. Private browsing blocks it." });
       return;
     }
     setSavedDecks(next);
     setSavedId(entry.id);
+    setOriginal(null);
+    // So a reload reopens this save, not the shared deck or code the edit started from.
+    if (!accountDeck) window.history.replaceState(null, "", `/decks/builder?local=${encodeURIComponent(entry.id)}`);
     flash({ tone: "ok", text: savedId ? `Updated ${entry.name}.` : `Saved ${entry.name} to this browser.` });
   };
 
@@ -333,7 +382,7 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccou
 
   const deleteLocal = (d: LocalDeck) => {
     if (!confirm(`Delete ${d.name}? This can't be undone.`)) return;
-    const next = removeLocalDeck(savedDecks, d.id);
+    const next = removeLocalDeck(readLocalDecks(), d.id);
     writeLocalDecks(next);
     setSavedDecks(next);
     if (savedId === d.id) setSavedId(null);
@@ -729,6 +778,24 @@ export function DeckBuilder({ cards, initial, importCode, openLocalId, openAccou
           <p aria-live="polite" className={`min-h-5 px-3 pb-2 text-xs ${status?.tone === "warn" ? "text-down" : "text-up"}`}>
             {status?.text}
           </p>
+          {original && (
+            <div className="px-3 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!confirm("Discard your unsaved edits and go back to the deck as it was opened?")) return;
+                  setDeck(original.deck);
+                  setName(original.name);
+                  setSavedId(original.savedId);
+                  setOriginal(null);
+                  flash({ tone: "ok", text: "Back to the deck as it was opened." });
+                }}
+                className="text-xs font-semibold text-accent hover:underline"
+              >
+                Discard edits
+              </button>
+            </div>
+          )}
 
           {inspected && (
             <div className="flex gap-3 border-t border-line p-3">
