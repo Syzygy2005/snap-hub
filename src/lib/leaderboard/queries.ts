@@ -175,7 +175,8 @@ export async function getMovers(season: string, region: Region, windowHours: num
     newEntries: onBoard.filter((r) => r.isNew || r.pastRank === null).slice(0, limit),
     droppedOut,
     scoreGainers: onBoard
-      .filter((r) => typeof r.pastScore === "number" && r.score !== r.pastScore)
+      // Gained, not just changed: "changed" let a player who lost points into "Most points gained".
+      .filter((r) => typeof r.pastScore === "number" && r.score > r.pastScore)
       .sort((a, b) => b.score - (b.pastScore as number) - (a.score - (a.pastScore as number)))
       .slice(0, limit),
   };

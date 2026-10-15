@@ -73,6 +73,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx vitest run src/lib/wiki/sync.test.ts src/lib/wiki/discovery.test.ts src/lib/wiki/collection.test.ts src/lib/decks/mine.test.ts src/lib/leaderboard/health.test.ts src/lib/leaderboard/lease.test.ts src/lib/leaderboard/overlap.test.ts src/lib/leaderboard/malformed.test.ts src/app/api/cron/snapshot/route.test.ts src/app/api/tracker/games/route.test.ts --maxWorkers=1
+      - run: npx vitest run src/lib/wiki/sync.test.ts src/lib/wiki/discovery.test.ts src/lib/wiki/collection.test.ts src/lib/decks/mine.test.ts src/lib/leaderboard/health.test.ts src/lib/leaderboard/lease.test.ts src/lib/leaderboard/overlap.test.ts src/lib/leaderboard/malformed.test.ts src/app/api/cron/snapshot/route.test.ts src/app/api/tracker/games/route.test.ts src/lib/stats/record-game.test.ts --maxWorkers=1
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/snaphub_test

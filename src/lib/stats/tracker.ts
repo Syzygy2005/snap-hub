@@ -127,60 +127,69 @@ export async function recordGame(
 
   const db = await getDb();
 
-  // What this account calls itself, recorded whether or not the game itself is new. It is the
-  // only direct evidence of a rename the site can get, and it costs one upsert.
-  if (g.playerName) {
-    await db.query(
-      `insert into snap_names (account_hash, name, first_seen, last_seen, games, account_id)
-       values ($1, $2, $3, $3, 1, $4)
-       on conflict (account_hash, name) do update set
-         last_seen = greatest(snap_names.last_seen, excluded.last_seen),
-         first_seen = least(snap_names.first_seen, excluded.first_seen),
-         games = snap_names.games + 1,
-         account_id = coalesce(excluded.account_id, snap_names.account_id)`,
-      [accountHash, g.playerName, playedAt, tracker.account_id ?? null],
+  // The game, the name its account played under and the key's last upload go in together or
+  // not at all. The name used to be written first and on its own, so a game that then failed to
+  // insert left a snap_names row behind, and deleteTracker finds names only through games, so
+  // deleting the key could never remove it.
+  const inserted = await db.transaction(async (tx) => {
+    const rows = await tx.query<{ id: number }>(
+      `insert into tracked_games (tracker_id, account_hash, game_id, played_at, league, battle_mode, friendly, result,
+                                  cubes, final_cube_value, snapped, opponent_snapped, conceded, opponent_conceded, turns, total_turns,
+                                  deck_name, deck_cards, deck_key, opponent_name, opponent_cards, cards_drawn,
+                                  cards_played, locations, board)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::text[], $19, $20,
+               $21::text[], $22::text[], $23::text[], $24::text[], $25::jsonb)
+       on conflict (game_id, account_hash) do nothing
+       returning id`,
+      [
+        tracker.id,
+        accountHash,
+        g.gameId,
+        playedAt,
+        g.league,
+        g.battleMode,
+        g.friendly,
+        g.result,
+        g.cubes,
+        g.finalCubeValue,
+        g.snapped,
+        g.opponentSnapped,
+        g.conceded,
+        g.opponentConceded,
+        g.turns,
+        g.totalTurns,
+        g.deckName,
+        g.deckCards,
+        deckKey(g.deckCards),
+        g.opponentName,
+        g.opponentCards,
+        g.cardsDrawn,
+        g.cardsPlayed,
+        g.locations,
+        // Passed as text and cast, so the same call works on postgres.js and PGlite.
+        JSON.stringify(g.board),
+      ],
     );
-  }
 
-  const inserted = await db.query<{ id: number }>(
-    `insert into tracked_games (tracker_id, account_hash, game_id, played_at, league, battle_mode, friendly, result,
-                                cubes, final_cube_value, snapped, opponent_snapped, conceded, opponent_conceded, turns, total_turns,
-                                deck_name, deck_cards, deck_key, opponent_name, opponent_cards, cards_drawn,
-                                cards_played, locations, board)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::text[], $19, $20,
-             $21::text[], $22::text[], $23::text[], $24::text[], $25::jsonb)
-     on conflict (game_id, account_hash) do nothing
-     returning id`,
-    [
-      tracker.id,
-      accountHash,
-      g.gameId,
-      playedAt,
-      g.league,
-      g.battleMode,
-      g.friendly,
-      g.result,
-      g.cubes,
-      g.finalCubeValue,
-      g.snapped,
-      g.opponentSnapped,
-      g.conceded,
-      g.opponentConceded,
-      g.turns,
-      g.totalTurns,
-      g.deckName,
-      g.deckCards,
-      deckKey(g.deckCards),
-      g.opponentName,
-      g.opponentCards,
-      g.cardsDrawn,
-      g.cardsPlayed,
-      g.locations,
-      // Passed as text and cast, so the same call works on postgres.js and PGlite.
-      JSON.stringify(g.board),
-    ],
-  );
-  await db.query(`update trackers set last_upload_at = $1 where id = $2`, [now, tracker.id]);
+    // What this account calls itself, recorded whether or not the game itself is new: it is the
+    // only direct evidence of a rename the site can get. Only a new game adds to the count, which
+    // the admin panel shows as games played under the name; it used to add one per upload, so a
+    // retry and the same game from a second key each counted it again.
+    if (g.playerName) {
+      await tx.query(
+        `insert into snap_names (account_hash, name, first_seen, last_seen, games, account_id)
+         values ($1, $2, $3, $3, 1, $4)
+         on conflict (account_hash, name) do update set
+           last_seen = greatest(snap_names.last_seen, excluded.last_seen),
+           first_seen = least(snap_names.first_seen, excluded.first_seen),
+           games = snap_names.games + $5::int,
+           account_id = coalesce(excluded.account_id, snap_names.account_id)`,
+        [accountHash, g.playerName, playedAt, tracker.account_id ?? null, rows.length ? 1 : 0],
+      );
+    }
+    await tx.query(`update trackers set last_upload_at = $1 where id = $2`, [now, tracker.id]);
+    return rows;
+  });
 
   return {
     ok: true,

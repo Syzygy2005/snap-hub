@@ -54,7 +54,7 @@ export default async function MoversPage(props: PageProps<"/leaderboard/movers">
         <div className="grid gap-4 lg:grid-cols-2">
           <MoverList title="Climbers" rows={movers.climbers} empty="Nobody climbed." />
           <MoverList title="Fallers" rows={movers.fallers} empty="Nobody fell." />
-          <MoverList title="Most points gained" rows={movers.scoreGainers} empty="No point changes." showScore />
+          <MoverList title="Most points gained" rows={movers.scoreGainers} empty="Nobody gained points." showScore />
           <div className="grid gap-4">
             <MoverList title="New on the board" rows={movers.newEntries} empty="No new entries." />
             <Panel title="Dropped off">
