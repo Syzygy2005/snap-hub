@@ -12,6 +12,8 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-10-15",
     changes: [
+      { title: "Most points gained only lists players who gained points", detail: "It listed anyone whose score had changed, so when only a few players had gained, players who had lost points filled the rest of the list." },
+      { title: "The names your tracker has seen count each game once", detail: "The game count beside each name added one for every upload, so a retried upload, or the same game sent from a second PC, was counted again. New games count once. Counts from before this change can still be too high, because the games stored then do not say which name they were played under." },
       { title: "Reloading the deck builder keeps your unsaved edits", detail: "Editing a deck you opened from a link, a deck saved in this browser, a shared deck or a pasted code, then reloading the page used to bring back the original and lose your changes. Phones do this on their own when you switch to the game and back. Your edits now come back, with a Discard edits button if you want the original instead. Saving in two tabs also no longer removes the deck the other tab saved." },
     ],
   },

@@ -83,11 +83,12 @@ describe("recording a real upload", () => {
     const rows = await db.query<{ name: string; games: number }>(`select name, games from snap_names`);
     expect(rows).toEqual([{ name: "LOCAL_PLAYER", games: 1 }]);
 
-    // A second upload of the same game is a duplicate, but the name sighting still counts:
-    // it is evidence the account was still using that name at that time.
+    // A second upload of the same game is a duplicate. It still moves last_seen, as evidence the
+    // account was using that name then, but it is the same game, so the count the panels show
+    // as games does not go up. It used to, and a retry or a second key counted every game twice.
     await recordGame({ id: t.id, name: t.name, account_id: null }, text, "acct-1", new Date("2026-09-21T00:00:00Z"));
     const [again] = await db.query<{ games: number; last_seen: Date }>(`select games, last_seen from snap_names`);
-    expect(Number(again.games)).toBe(2);
+    expect(Number(again.games)).toBe(1);
     expect(again.last_seen.toISOString()).toBe("2026-09-21T00:00:00.000Z");
   });
 });

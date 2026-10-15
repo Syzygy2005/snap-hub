@@ -73,3 +73,56 @@ describe("deleting a key", () => {
     expect(await db.query("select name from snap_names")).toHaveLength(0);
   });
 });
+
+describe("a game that cannot be stored", () => {
+  it("leaves nothing behind, so deleting the key still removes everything it sent", async () => {
+    // The name used to be written first and on its own. A game insert that then failed left the
+    // name behind, and deleteTracker finds names only through games, so it could never remove it.
+    const db = await getDb();
+    const tracker = await key();
+    await db.query(`create or replace function refuse_game() returns trigger language plpgsql as $$ begin raise exception 'refused for the test'; end $$`);
+    await db.query(`create trigger refuse_game before insert on tracked_games for each row execute function refuse_game()`);
+    try {
+      await expect(recordGame(tracker, text, accountId)).rejects.toThrow("refused for the test");
+    } finally {
+      await db.query(`drop trigger refuse_game on tracked_games`);
+      await db.query(`drop function refuse_game()`);
+    }
+    expect(await db.query("select name from snap_names")).toHaveLength(0);
+    const [row] = await db.query<{ last_upload_at: Date | null }>("select last_upload_at from trackers where id = $1", [tracker.id]);
+    expect(row.last_upload_at).toBeNull();
+  });
+
+  it("is refused as unreadable when its cube value cannot be stored, before anything is written", async () => {
+    // A 422 is held by the tracker as "needs attention"; the insert failing instead was a 500,
+    // which the tracker retries for ever.
+    for (const bad of ["1e12", "2.5"]) {
+      const result = await recordGame(await key(), text.replaceAll('"FinalCubeValue":4', `"FinalCubeValue":${bad}`), accountId);
+      expect(result).toMatchObject({ ok: false, status: 422, reason: "invalid-fields" });
+    }
+    const db = await getDb();
+    expect(await db.query("select id from tracked_games")).toHaveLength(0);
+    expect(await db.query("select name from snap_names")).toHaveLength(0);
+  });
+
+  it("keeps a game whose turn count cannot be stored, without the turn count", async () => {
+    const result = await recordGame(await key(), text.replaceAll('"TurnsTaken":6', '"TurnsTaken":1e12'), accountId);
+    expect(result).toMatchObject({ ok: true, duplicate: false });
+    const db = await getDb();
+    expect(await db.query("select turns, total_turns from tracked_games")).toEqual([{ turns: null, total_turns: 6 }]);
+  });
+});
+
+describe("the names an account played under", () => {
+  it("counts a game once, however many times or from however many keys it arrives", async () => {
+    const pc = await key();
+    await recordGame(pc, text, accountId);
+    // A retry whose acknowledgement was lost, then the same game from the person's other key.
+    await recordGame(pc, text, accountId);
+    await recordGame(await key(), text, accountId);
+    const db = await getDb();
+    expect(await db.query("select games from snap_names")).toEqual([{ games: 1 }]);
+    await recordGame(pc, text.replaceAll(parsed.game.gameId, "another-game-id"), accountId);
+    expect(await db.query("select games from snap_names")).toEqual([{ games: 2 }]);
+  });
+});

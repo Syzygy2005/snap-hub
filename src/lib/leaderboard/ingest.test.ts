@@ -91,6 +91,27 @@ describe("ingestBoard", () => {
   });
 });
 
+describe("movers", () => {
+  it("lists only players who gained points under Most points gained", async () => {
+    // The filter was "score changed", so a player who lost points could appear there too.
+    const s = { year: 2026, month: 12 };
+    const start = new Date("2026-12-05T00:00:00Z");
+    await ingestBoard(db, s, "global", [
+      { rank: 1, name: "Gainer", score: 9000 },
+      { rank: 2, name: "Loser", score: 8900 },
+      { rank: 3, name: "Steady", score: 8800 },
+    ], 3, start);
+    await ingestBoard(db, s, "global", [
+      { rank: 1, name: "Gainer", score: 9200 },
+      { rank: 2, name: "Steady", score: 8800 },
+      { rank: 3, name: "Loser", score: 8700 },
+    ], 3, new Date(start.getTime() + 30 * 3600_000));
+    const movers = await getMovers("2026-12", "global", 24);
+    expect(movers.scoreGainers.map((r) => r.name)).toEqual(["Gainer"]);
+    expect(movers.fallers.map((r) => r.name)).toEqual(["Loser"]);
+  });
+});
+
 describe("renames", () => {
   const s = { year: 2026, month: 11 };
   const start = new Date("2026-11-01T00:00:00Z");

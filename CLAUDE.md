@@ -161,6 +161,14 @@
   both files the script reads (`GameState.json`, and `AccountState.json` for the account ID only), that
   the whole game file is sent but not stored, and that the script talks to the site and nowhere else.
   Keep the page in step with the script and with what `recordGame` keeps.
+  `recordGame` writes the game, its `snap_names` row and the key's `last_upload_at` in one
+  transaction. The name used to go first and alone, so a failed game insert left a name that
+  `deleteTracker` could never find. `snap_names.games` adds one only for a new game; it added
+  one per upload, so retries and a second key sending the same game inflated it, and counts
+  stored before that fix stay high because `tracked_games` keeps no name to recount from. The
+  parser refuses a `FinalCubeValue` that is not a whole number within a Postgres int as
+  `invalid-fields` (422, which the tracker holds) and reads an unstorable turn count as null;
+  an int overflow used to reach the insert as a 500, which the tracker retries for ever.
   `TRACKER_REPORT_DISCORD_URL` sets where `-SaveRaw` files are sent; only an https discord.gg or
   discord.com address is shown. A search excerpt of Marvel Snap's terms (the June 2025 version on
   seconddinnertech.com) puts using "automated scripts, software, code or systems to collect

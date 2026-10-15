@@ -54,7 +54,7 @@ export interface BoardZone {
 
 export type ParseResult =
   | { ok: true; game: ParsedGame }
-  | { ok: false; reason: "invalid-json" | "no-result" | "missing-fields"; detail: string };
+  | { ok: false; reason: "invalid-json" | "no-result" | "missing-fields" | "invalid-fields"; detail: string };
 
 type Json = unknown;
 
@@ -162,6 +162,12 @@ export function parseGameState(text: string, accountId?: string | null): ParseRe
   const finalCubeValue = Number(get(result, "FinalCubeValue"));
   if (!Number.isFinite(finalCubeValue)) {
     return { ok: false, reason: "missing-fields", detail: "No FinalCubeValue in the game result" };
+  }
+  // Stored in a Postgres int. A cube value that is not a whole number, or will not fit, comes
+  // from a broken or hand-made file. Refusing it here makes it a 422, which the tracker holds as
+  // "needs attention"; left to the insert it was a 500, which the tracker retries for ever.
+  if (!Number.isInteger(finalCubeValue) || Math.abs(finalCubeValue) > INT_MAX) {
+    return { ok: false, reason: "invalid-fields", detail: "FinalCubeValue is not a whole number the site can store" };
   }
 
   // Cards each side had at the three locations at the end of the game, kept per location so
@@ -313,7 +319,11 @@ function unique(values: (string | null)[]): string[] {
   return [...new Set(values.filter((v): v is string => !!v))];
 }
 
+/** The largest value a Postgres int column holds. */
+const INT_MAX = 2_147_483_647;
+
+/** A whole number for an int column, or null when there is none or it will not fit. */
 function toInt(v: unknown): number | null {
-  const n = Number(v);
-  return Number.isFinite(n) ? Math.trunc(n) : null;
+  const n = Math.trunc(Number(v));
+  return Number.isFinite(n) && Math.abs(n) <= INT_MAX ? n : null;
 }
