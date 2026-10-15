@@ -7,7 +7,7 @@ import { detectRenames, matchEntries } from "./match";
 export interface IngestSummary {
   season: string;
   region: Region;
-  status: "updated" | "unchanged" | "unavailable" | "error" | "skipped";
+  status: "updated" | "unchanged" | "held" | "unavailable" | "error" | "skipped";
   entries?: number;
   changed?: number;
   newPlayers?: number;
@@ -24,6 +24,26 @@ interface KnownRow {
   on_board: boolean;
   history_at: Date;
 }
+
+/**
+ * The official board sometimes comes back with its lower part swapped for an old copy. In the
+ * first two weeks of October 2026 it happened seven times: the bottom 100, 200, 400, 500, 700
+ * or 900 rows, always whole blocks of 100, each put right by the next run 12 to 34 minutes
+ * later. Stored, each one marked hundreds of players as gone and brought back hundreds who had
+ * left, and fed rename detection exactly the departures and new names it pairs. Ordinary runs
+ * that month never had more than 17 players leave at once and the bad ones never fewer than
+ * 100, so a board that would remove this many or more is held rather than stored.
+ */
+export const SUSPECT_DEPARTURES = 50;
+
+/**
+ * A held board is stored once suspect boards have kept arriving for this long with no normal
+ * one in between: a real change stays, and the longest bad spell measured was 34 minutes. The
+ * freshness monitor alerts after 30, which a change that size deserves anyway.
+ */
+export const HOLD_MINUTES = 60;
+
+const heldKey = (season: string, region: Region) => `board_held:${season}:${region}`;
 
 export async function ingestBoard(
   db: Db,
@@ -56,6 +76,26 @@ export async function ingestBoard(
     // A rename looks like a departure and an arrival in the same tick. Catch it here, before
     // anything decides the arrival is a new player, so the history stays on one row.
     const claimed = new Set(ids.filter((id): id is number => id !== null));
+
+    // Counted before rename detection runs, so a held board writes nothing at all, renames
+    // included. The hold remembers when the first suspect board arrived; later ones do not
+    // restart the wait, and any normal board clears it.
+    const departing = known.filter((k) => k.on_board && !claimed.has(k.player_id)).length;
+    if (departing >= SUSPECT_DEPARTURES) {
+      await tx.query(
+        `insert into meta (key, value, updated_at) values ($1, $2::text::jsonb, $3) on conflict (key) do nothing`,
+        [heldKey(season, region), JSON.stringify({ departing }), now],
+      );
+      const [held] = await tx.query<{ updated_at: Date | string }>(`select updated_at from meta where key = $1`, [heldKey(season, region)]);
+      const since = new Date(held.updated_at);
+      if (now.getTime() - since.getTime() < HOLD_MINUTES * 60_000) {
+        return {
+          season, region, status: "held", entries: entries.length, left: departing,
+          detail: `${departing} players would leave at once. Keeping the stored board until a normal one arrives, or until this has lasted ${HOLD_MINUTES} minutes (since ${since.toISOString()}).`,
+        } as const;
+      }
+    }
+    await tx.query(`delete from meta where key = $1`, [heldKey(season, region)]);
     const renames = detectRenames(
       known
         .filter((k) => k.on_board && !claimed.has(k.player_id))
@@ -290,6 +330,7 @@ async function fetchAndIngest(db: Db, ref: SeasonRef, region: Region, now: Date)
   if (!result.ok) return { season: seasonKey(ref), region, status: result.reason, detail: result.detail };
   try {
     const summary = await ingestBoard(db, ref, region, result.entries, result.total, now);
+    if (summary.status === "held") console.warn("[snapshot] board held", summary.season, summary.region, summary.detail);
     if (summary.status === "updated" || summary.status === "unchanged") {
       // $2::text::jsonb, not a bare $2. postgres.js sends a JS string for a jsonb column as a
       // JSON string, so the row stores "{\"at\":...}" rather than an object and value.at reads

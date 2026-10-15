@@ -49,6 +49,8 @@ export function snapshotRunSucceeded(summaries: IngestSummary[], health: Snapsho
   return health.ok && !summaries.some((summary) => summary.status === "error") &&
     health.boards.every((board) => summaries.some((summary) =>
       summary.season === board.season && summary.region === board.region &&
-      (summary.status === "updated" || summary.status === "unchanged"),
+      // A held board is the guard doing its job, not a failure; if holds go on past the
+      // freshness limit, health.ok is false and the run fails anyway.
+      (summary.status === "updated" || summary.status === "unchanged" || summary.status === "held"),
     ));
 }

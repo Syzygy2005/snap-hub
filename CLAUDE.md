@@ -99,6 +99,18 @@
   the source ever sends a bad row routinely, the board stalls and the monitor says so: read the
   `detail` before loosening this, and never go back to dropping rows quietly. `ingestBoard`
   refuses an empty list for the same reason.
+- The official board sometimes sends its lower part from an old copy: seven times from 10 to 14
+  October 2026, the bottom 100 to 900 rows in whole blocks of 100, each put right by the next run
+  12 to 34 minutes later (measured in Supabase from `history`; no rename was recorded at any of
+  them). `ingestBoard` holds a board that would remove `SUSPECT_DEPARTURES` (50) or more players
+  at once: nothing is written, renames included, `board_checked` does not move, and the run
+  reports `held` with 200. A normal board clears the hold; suspect boards that keep arriving for
+  `HOLD_MINUTES` (60) from the first one are stored as real. Both numbers come from that data:
+  ordinary runs never had more than 17 leave at once and bad ones never fewer than 100, and the
+  longest bad spell was 34 minutes, so a real mass change also trips the 30-minute freshness
+  alert while it waits. Waiting for two matching boards is not enough, because a bad copy can be
+  served twice in a row. The hold's start is the `board_held:<season>:<region>` row's `updated_at`.
+  The bad boards stored before this still sit in `history`.
 - `runSnapshot` fetches the current month every run and keeps fetching the previous month until
   it marks it `season_closed:<season>:<region>` in `meta`, then never again. The mark is only
   written once the current season has a standings row, which is the proof that the old month is

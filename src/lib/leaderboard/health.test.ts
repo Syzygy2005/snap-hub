@@ -71,3 +71,10 @@ it("allows an empty new month only when the active previous board refreshed in t
   expect(snapshotRunSucceeded([summaries[0], { ...summaries[1], status: "unavailable" }], health)).toBe(false);
   expect(snapshotRunSucceeded(summaries, { ...health, ok: false })).toBe(false);
 });
+
+it("counts a held board as the guard working while the board is still fresh, and as a failure once it is not", () => {
+  const fresh: SnapshotHealth = { ok: true, maxAgeMinutes: 30, boards: [{ season: "2026-10", region: "global", checkedAt: now.toISOString(), status: "fresh" }] };
+  const held: IngestSummary[] = [{ season: "2026-10", region: "global", status: "held", left: 500 }];
+  expect(snapshotRunSucceeded(held, fresh)).toBe(true);
+  expect(snapshotRunSucceeded(held, { ...fresh, ok: false, boards: [{ ...fresh.boards[0], status: "stale" }] })).toBe(false);
+});
