@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AbilityText, CardArt, EnergyCurve } from "@/components/cards";
 import { DeckAdmin } from "@/components/deck-admin";
+import { DeckOwnerActions } from "@/components/deck-owner-actions";
 import { CopyButton } from "@/components/deck-actions";
 import { CountView } from "@/components/count-view";
 import { RelativeTime } from "@/components/relative-time";
@@ -10,7 +11,7 @@ import { PageHeader, Panel } from "@/components/ui";
 import { getCards } from "@/lib/cards/queries";
 import type { Card } from "@/lib/cards/types";
 import { encodeDeck, gameClipboardText } from "@/lib/decks/code";
-import { getDeck } from "@/lib/decks/queries";
+import { getDeck, ownsDeck } from "@/lib/decks/queries";
 import { isAdmin } from "@/lib/auth/admin";
 import { currentAccount } from "@/lib/auth/session";
 
@@ -26,6 +27,7 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
   const [deck, allCards, account] = await Promise.all([getDeck(id), getCards(), currentAccount()]);
   if (!deck) notFound();
   const admin = isAdmin(account);
+  const mine = await ownsDeck(deck.id, account?.id);
 
   const byId = new Map(allCards.map((c) => [c.defId, c]));
   const cards = deck.cards
@@ -71,6 +73,14 @@ export default async function DeckPage(props: PageProps<"/decks/[id]">) {
         </Link>
       </PageHeader>
 
+      {mine && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface px-4 py-3">
+          <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-muted">You shared this</span>
+          <DeckOwnerActions id={deck.id} name={deck.name} listed={deck.listed} afterDelete="/decks/mine"
+            buttonClass="rounded-md border border-line px-3 py-1.5 text-sm font-medium hover:border-accent disabled:opacity-50"
+            deleteClass="rounded-md border border-down/50 px-3 py-1.5 text-sm font-medium text-down hover:bg-down/10 disabled:opacity-50" />
+        </div>
+      )}
       {admin && <DeckAdmin id={deck.id} name={deck.name} />}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">

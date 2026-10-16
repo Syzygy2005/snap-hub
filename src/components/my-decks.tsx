@@ -8,6 +8,7 @@ import type { AccountDeck } from "@/lib/decks/account";
 import type { SavedDeck } from "@/lib/decks/queries";
 import { DECKS_KEY, parseLocalDecks, type LocalDeck } from "@/lib/decks/local";
 import { CardArt } from "./cards";
+import { DeckOwnerActions } from "./deck-owner-actions";
 import { RelativeTime } from "./relative-time";
 
 function storedDecks() {
@@ -19,6 +20,7 @@ function subscribe(onChange: () => void) {
 }
 const serverDecks = () => null;
 const actionClass = "inline-flex min-h-11 items-center rounded-lg border border-line px-3 py-2 text-sm font-semibold text-accent hover:bg-surface-2 disabled:opacity-50";
+const deleteClass = "inline-flex min-h-11 items-center rounded-lg border border-down/40 px-3 py-2 text-sm font-semibold text-down hover:bg-down/10 disabled:opacity-50";
 
 function DeckCard({ name, ids, byId, badge, at, children }: {
   name: string; ids: string[]; byId: Map<string, Card>; badge: string; at: string; children: React.ReactNode;
@@ -95,10 +97,11 @@ export function MyDecks({ cards, drafts, shared, sharedTotal, signedIn, signInEn
 
     <section aria-labelledby="shared-copies-title">
       <h2 id="shared-copies-title" className="font-display text-xl font-bold">Shared copies{signedIn && ` · ${sharedTotal}`}</h2>
-      <p className="mb-4 mt-1 text-sm text-muted">Public copies appear in Explore decks. Unlisted copies are accessible to anyone with their link. Editing a private draft does not update a shared copy.</p>
+      <p className="mb-4 mt-1 text-sm text-muted">Public copies appear in Explore decks. Unlisted copies are accessible to anyone with their link. Editing a private draft does not update a shared copy. You can unlist or delete any copy you shared; deleting breaks its link.</p>
       {shared.length ? <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{shared.map((d) => <DeckCard key={d.id} name={d.name} ids={d.cards} byId={byId} badge={d.listed ? "Public" : "Unlisted"} at={d.createdAt}>
         <Link href={`/decks/${d.id}`} className={actionClass}>Open shared copy</Link>
         <Link href={`/decks/builder?deck=${d.id}`} className={actionClass}>Edit a new copy</Link>
+        <DeckOwnerActions id={d.id} name={d.name} listed={d.listed} buttonClass={actionClass} deleteClass={deleteClass} />
       </DeckCard>)}</ul> : <p className="rounded-xl border border-dashed border-line p-5 text-sm text-muted">{signedIn ? "No shared copies on your account. Sharing a deck is a separate action in the builder." : "Sign in to see copies shared from your account."}</p>}
     </section>
   </div>;
