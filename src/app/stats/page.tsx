@@ -47,8 +47,8 @@ export default async function StatsPage(props: PageProps<"/stats">) {
         >
           My stats
         </Link>
-        <Link href="/stats/tracker" className="rounded-md bg-jade px-4 py-2 text-sm font-semibold text-forest hover:bg-jade-strong">
-          Get the tracker
+        <Link href="/stats/tracker" className="rounded-md border border-line px-4 py-2 text-sm font-semibold text-muted hover:border-accent hover:text-ink">
+          PC tracker (experimental)
         </Link>
       </PageHeader>
 

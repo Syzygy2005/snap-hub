@@ -9,8 +9,10 @@ const GROUPS = [
   { href: "/wiki", label: "Wiki", children: WIKI_SECTIONS.map((s) => [s.href, s.label, s.description]) },
   { href: "/leaderboard", label: "Leaderboard", children: [["/leaderboard", "Rankings", "See the Infinite leaderboard"], ["/leaderboard/movers", "Movers", "Follow the biggest rank changes"], ["/players", "Find a player", "Search player profiles"]] },
   { href: "/decks", label: "Decks", children: [["/decks", "Explore decks", "Discover community builds"], ["/decks/mine", "My decks", "Open your drafts and shared copies"], ["/decks/builder", "Deck Builder", "Create and refine your next deck"]] },
-  { href: "/stats", label: "Stats", children: [["/stats", "Community stats", "Explore the shared game data"], ["/stats/me", "My Stats", "Review your own games"], ["/stats/tracker", "Tracker setup", "Connect your PC game tracker"]] },
   { href: "/news", label: "News", children: [] },
+  // Last on purpose: the PC tracker is an experimental, Windows-only script, so its pages stay
+  // reachable for the people using it without being what the site leads with.
+  { href: "/stats", label: "Stats", children: [["/stats", "Community stats", "Games from PC tracker users"], ["/stats/me", "My Stats", "Games your tracker recorded"], ["/stats/tracker", "Tracker setup", "Experimental, Windows PC only"]] },
 ];
 
 function NavIcon({ section }: { section: string }) {

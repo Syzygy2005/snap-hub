@@ -198,6 +198,14 @@
   its Code of Conduct. That wording is unverified: the sandbox cannot fetch the document and a second
   search did not find it. No statement from Second Dinner about trackers was found, so the page says
   the tracker is not approved; never write that it is allowed without one.
+- The PC tracker is demoted, by the owner's call on 16 October 2026: no home page card or shortcut,
+  Stats sits last in the header and its links say "Experimental, Windows PC only", and the setup
+  page says why Windows may warn. Against Untapped.gg and snap.fan, which install as real apps and
+  draw an in-match overlay, a PowerShell script started with the execution policy bypassed loses on
+  trust and features, and fixing that means a signed app with an overlay, a different project.
+  The site's own edge is the leaderboard (the top 1000 every 10 minutes, with history and renames),
+  which needs no install. Keep the tracker working for its users; do not promote it again unless
+  that changes.
 - The name on a tracker key is a label for the key ("Gaming PC"), not a Snap name. The form used
   to say "Display name / Your Snap name", which read as though keys were identified by it.
 - A tracker key can upload games, read the stats it recorded and delete itself with every game it
