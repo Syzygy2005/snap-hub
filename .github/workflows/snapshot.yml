@@ -1,19 +1,19 @@
 name: Leaderboard snapshot
 
-# Calls the deployed site every 10 minutes so it saves a copy of the Infinite leaderboard.
-# Ten rather than thirty because a rename is only visible while the player's score sits still,
-# so a shorter gap catches more of them and gives coincidence less room to look like one.
+# Takes one snapshot of the Infinite leaderboard when run by hand from the Actions tab.
+# It has no schedule. Vercel Cron (vercel.json) calls the same endpoint every 10 minutes, and the
+# freshness monitor takes one snapshot whenever it finds a board stale. This workflow used to run
+# every 10 minutes as well, and every run was a full fetch of the official board (45 in about 46
+# hours on 15 and 16 October 2026) while the monitor found the board fresh on all 41 of its checks.
+# Marvel Snap's terms rule out automated collection from their sites, so the site asks for nothing
+# it does not need. On Vercel's Hobby plan, which cannot run a 10-minute cron, add a schedule back here.
 # Needs two repository secrets: SITE_URL (e.g. https://snap-hub.vercel.app) and CRON_SECRET.
-# GitHub may delay scheduled runs by a few minutes, and pauses schedules in repos with no
-# commits for 60 days (re-enable it from the Actions tab).
 concurrency:
   group: leaderboard-snapshot
   cancel-in-progress: false
 permissions:
   contents: read
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
