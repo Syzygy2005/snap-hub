@@ -1,8 +1,15 @@
 name: Leaderboard freshness monitor
 
-# Read-only and independent of the snapshot workflow, so a stopped snapshot job is visible.
+# Checks that the board is refreshing, and stands in for the scheduler when it is not.
+# Vercel Cron (vercel.json) takes the scheduled snapshots. When this check finds an active board
+# stale, it takes one snapshot itself so the board does not stay stale while you look, then fails
+# anyway, because a board it had to refresh is one Vercel Cron did not. It never snapshots a fresh
+# board: every snapshot is a request to the official site, and Marvel Snap's terms rule out
+# automated collection, so the site asks for nothing it does not need. The health endpoint itself
+# stays read-only; the snapshot is a separate call.
 # Reuses SITE_URL / CRON_SECRET. Failed runs use GitHub Actions notification preferences.
-# This cannot detect a GitHub-wide scheduler outage or both schedules being disabled/paused.
+# GitHub pauses schedules in repos with no commits for 60 days (re-enable it from the Actions tab).
+# This cannot detect a GitHub-wide scheduler outage or this schedule being disabled or paused.
 on:
   schedule:
     - cron: "7,22,37,52 * * * *"
@@ -17,7 +24,8 @@ concurrency:
 jobs:
   freshness:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    # The check can take 60 seconds and a stand-in snapshot 120.
+    timeout-minutes: 5
     steps:
       - name: Check successful source-refresh age
         env:
@@ -45,5 +53,17 @@ jobs:
           if [ "$status" = 200 ] && jq -e '.ok == true' response.txt; then
             exit 0
           fi
-          echo "::error::Leaderboard freshness check failed: an active board has no successful check within 30 minutes, or the monitor could not reach it. Inspect this response and the Leaderboard snapshot workflow."
+
+          # Only for a board the check names as stale or missing. A failed check names no board, and
+          # a snapshot would fail the same way, so it is not tried there.
+          if [ "$status" = 503 ] && jq -e '(.boards // []) | any(.status != "fresh")' response.txt > /dev/null 2>&1; then
+            echo "A board is stale, so taking one snapshot from here."
+            snap=$(curl --silent --show-error --max-time 120 --output snapshot.txt --write-out "%{http_code}" \
+              -H "Authorization: Bearer ${secret}" "$site/api/cron/snapshot") || true
+            echo "Snapshot: HTTP ${snap:-no response}"
+            head -c 4000 snapshot.txt 2>/dev/null; echo
+            echo "::error::An active board had no successful check within 30 minutes. This run took one snapshot (result above), but Vercel Cron takes the scheduled ones: check its cron runs and the snapshot function's logs in Vercel."
+            exit 1
+          fi
+          echo "::error::Leaderboard freshness check failed, or the monitor could not reach it. Inspect this response and the snapshot function's logs in Vercel."
           exit 1

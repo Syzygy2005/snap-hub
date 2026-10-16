@@ -43,7 +43,7 @@ it("returns 200 for expected new-season emptiness when the previous board refres
 });
 
 it("does nothing, and says so, when another snapshot holds the lease", async () => {
-  // Vercel Cron and the GitHub workflow can both call at the same moment.
+  // Vercel Cron and a GitHub run (by hand, or the freshness monitor's stand-in) can call at once.
   const db = await getDb();
   await db.query(`insert into meta (key, value, updated_at) values ('snapshot_lease', '{"token":"other-run"}'::jsonb, now())
     on conflict (key) do update set value = excluded.value, updated_at = excluded.updated_at`);

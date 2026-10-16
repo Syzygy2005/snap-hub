@@ -8,9 +8,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 
-// Called every 10 minutes by Vercel Cron (vercel.json) and by the GitHub Actions workflow in
-// production, or every 30 by the dev scheduler. Two schedulers can land at the same moment,
-// so the run holds a lease and a call that finds one held does nothing.
+// Called every 10 minutes by Vercel Cron (vercel.json) in production, or every 30 by the dev
+// scheduler. GitHub Actions calls it only by hand or when the freshness monitor finds a board
+// stale. Any of those can land at the same moment as a cron run, so the run holds a lease and a
+// call that finds one held does nothing.
 export async function GET(request: Request) {
   const secret = cleanEnv("CRON_SECRET");
   const authorized = secret

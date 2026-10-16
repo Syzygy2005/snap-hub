@@ -129,7 +129,7 @@
   The old month is **live**, not Final, until that mark exists (`isSeasonLive` in `queries.ts`).
   On 1 October 2026 the September board was still changing on every run 16 hours past midnight
   UTC while October came back empty, and both pages had labelled it Final by calendar month.
-- The snapshot workflow runs every 10 minutes. Shortening it was measured, not guessed: detection
+- Snapshots run every 10 minutes, on Vercel Cron. That cadence was measured, not guessed: detection
   of real renames went 48% hourly to 81% at ten minutes across eight seeds, and phantoms fell.
 - `scripts/reset-leaderboard.sql` is the one-way leaderboard wipe, run by hand in Supabase.
   `reset.test.ts` asserts what it clears and what it must leave standing; if a new table gains a
@@ -192,12 +192,18 @@
   `invalid-fields` (422, which the tracker holds) and reads an unstorable turn count as null;
   an int overflow used to reach the insert as a 500, which the tracker retries for ever.
   `TRACKER_REPORT_DISCORD_URL` sets where `-SaveRaw` files are sent; only an https discord.gg or
-  discord.com address is shown. A search excerpt of Marvel Snap's terms (the June 2025 version on
-  seconddinnertech.com) puts using "automated scripts, software, code or systems to collect
-  information from or otherwise interact with the Services" and text and data mining of the Game in
-  its Code of Conduct. That wording is unverified: the sandbox cannot fetch the document and a second
-  search did not find it. No statement from Second Dinner about trackers was found, so the page says
-  the tracker is not approved; never write that it is allowed without one.
+  discord.com address is shown. Marvel Snap's terms (last updated 2 June 2025, pasted in full by the
+  owner on 16 October 2026) list under Code of Conduct, "You may not": "use automated scripts,
+  software, code or systems to collect information from or otherwise interact with the Services" and
+  "conduct text and data mining (TDM) activities on the Services". The Services include Second
+  Dinner's "related websites", so the same clause reaches the leaderboard snapshot of marvelsnap.com,
+  and the licence section ("may not be downloaded, copied, reproduced, distributed, transmitted,
+  broadcast, displayed ... without our ... prior written consent") reaches the card art served
+  through `/art`. No statement from Second Dinner about trackers or fan sites was found, so the
+  tracker page quotes the clause and says the tracker is not approved; never write that it is
+  allowed without one. The owner emailed Second Dinner on 16 October 2026 to ask whether the site
+  is acceptable. Until there is an answer, add no requests to their sites: no shorter cadence, no
+  new endpoint, no second routine caller.
 - The PC tracker is demoted, by the owner's call on 16 October 2026: no home page card or shortcut,
   Stats sits last in the header and its links say "Experimental, Windows PC only", and the setup
   page says why Windows may warn. Against Untapped.gg and snap.fan, which install as real apps and
@@ -493,8 +499,15 @@
   board succeeds. The read-only health endpoint uses successful `board_checked` timestamps, never a
   generic cron timestamp, and must not refresh the source itself. The monitor runs on GitHub Actions only,
   so a GitHub-wide outage silences it even though Vercel Cron keeps taking snapshots.
-- Snapshots have two callers, Vercel Cron (`vercel.json`, Pro plan) and the GitHub workflow, so every
-  run goes through `withSnapshotLease` (`lease.ts`). Without it, two overlapping runs on real Postgres
+- Only Vercel Cron schedules snapshots (`vercel.json`, Pro plan). The GitHub snapshot workflow is
+  manual, and the freshness monitor takes one snapshot when the health check names a board stale or
+  missing, then fails anyway so the alert still goes out. GitHub's 10-minute schedule was removed on
+  16 October 2026: in the 46 hours before, it made 45 runs, every one a full fetch of the official
+  board, while the monitor found the board fresh on all 41 of its checks, and the terms rule out
+  automated collection. Do not add a routine second caller back; `snapshot-workflows.test.ts` runs
+  the monitor's step with bash, curl and jq against a stub site and checks the schedule. A cron run
+  and a manual or stand-in run can still overlap, so every run goes through `withSnapshotLease`
+  (`lease.ts`). Without it, two overlapping runs on real Postgres
   stored every new player twice: `players.name` is not unique and each run decides who is new from a
   read made before the other's inserts commit. PGlite serializes transactions and cannot show this;
   `overlap.test.ts` and `lease.test.ts` run in the reference-postgres CI job for that reason.
