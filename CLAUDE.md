@@ -110,7 +110,15 @@
   longest bad spell was 34 minutes, so a real mass change also trips the 30-minute freshness
   alert while it waits. Waiting for two matching boards is not enough, because a bad copy can be
   served twice in a row. The hold's start is the `board_held:<season>:<region>` row's `updated_at`.
-  The bad boards stored before this still sit in `history`.
+  `scripts/cleanup-bad-boards-2026-10.sql` removes what the seven stored before the hold wrote,
+  run by hand in Supabase after its read-only `-preview.sql`. A bad run's rows from
+  `first_stale_rank` down are stale; a departure there is junk when the player is back at the
+  next run; a departure at the next run is junk for a stale player who was off the board before.
+  It deletes those, the standings and players only they ever recorded, and rebuilds rank, score
+  and times from the remaining history where a bad board wrote them last.
+  `cleanup-bad-boards.test.ts` replays a bad board through `ingestBoard` and checks the preview
+  and the cleanup against each other. Its temp tables are dropped as `pg_temp.*`, because a bare
+  `drop table if exists` falls through to a permanent table of the same name.
 - `runSnapshot` fetches the current month every run and keeps fetching the previous month until
   it marks it `season_closed:<season>:<region>` in `meta`, then never again. The mark is only
   written once the current season has a standings row, which is the proof that the old month is
