@@ -115,7 +115,9 @@
   `first_stale_rank` down are stale; a departure there is junk when the player is back at the
   next run; a departure at the next run is junk for a stale player who was off the board before.
   It deletes those, the standings and players only they ever recorded, and rebuilds rank, score
-  and times from the remaining history where a bad board wrote them last.
+  and times from the remaining history where a bad board wrote them last. It was run in
+  production on 16 October 2026: 9,539 history rows and 900 October standings removed, no
+  players, and the printed table matched the preview exactly. A second run finds nothing to do.
   `cleanup-bad-boards.test.ts` replays a bad board through `ingestBoard` and checks the preview
   and the cleanup against each other. Its temp tables are dropped as `pg_temp.*`, because a bare
   `drop table if exists` falls through to a permanent table of the same name.
