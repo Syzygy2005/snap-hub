@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 const FEATURES = [
   { href: "/decks/builder", title: "Deck Builder", blurb: "Create. Optimize. Climb." },
   { href: "/leaderboard", title: "Leaderboard", blurb: "See where you stand." },
-  { href: "/stats", title: "Stats Tracker", blurb: "Track your progress." },
+  { href: "/leaderboard/movers", title: "Movers", blurb: "See who's climbing." },
 ];
 
 export default async function Home(props: PageProps<"/">) {
@@ -46,7 +46,7 @@ export default async function Home(props: PageProps<"/">) {
         <div className="p-5 sm:p-8 lg:p-10">
           <p className="brand-eyebrow text-muted">Snap Hub <span className="mx-2 text-accent-deep">/</span> Build. Track. Compete.</p>
           <h1 className="mt-4 max-w-xl font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">Build your next<br className="hidden sm:block" /> winning deck.</h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-muted sm:text-base">Explore the cards. Learn from your games. Find your place on the leaderboard.</p>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-muted sm:text-base">Explore the cards. Share your decks. Follow the top 1000 as the board moves.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/decks/builder" className="brand-action rounded-lg bg-jade px-5 py-3 text-sm font-bold text-forest hover:bg-jade-strong">Build a deck <span className="ml-3" aria-hidden>↗</span></Link>
             <Link href="/wiki" className="brand-action rounded-lg border border-line px-5 py-3 text-sm font-semibold text-ink hover:bg-surface-2">Explore the wiki</Link>
@@ -188,20 +188,6 @@ export default async function Home(props: PageProps<"/">) {
             </Panel>
           )}
 
-          <Link
-            href="/stats/tracker"
-            className="group relative block overflow-hidden rounded-xl border border-line bg-surface px-4 py-4 transition-colors hover:border-accent"
-          >
-            <div className="brand-slashes absolute inset-y-0 right-0 w-16 opacity-25" aria-hidden />
-            <div className="relative">
-              <div className="font-display text-sm font-bold uppercase tracking-wider text-accent">Stats Tracker</div>
-              <p className="mt-1 text-sm text-muted">
-                Play on PC? Run the tracker while you play to get your win rate, cube rate and match history, and add
-                your games to the meta stats.
-              </p>
-              <span className="mt-2 inline-block text-xs font-semibold text-ink group-hover:text-accent">Set it up →</span>
-            </div>
-          </Link>
         </div>
       </div>
     </>

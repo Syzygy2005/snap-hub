@@ -14,7 +14,7 @@ export default async function TrackerPage() {
     <>
       <PageHeader
         title="Stats Tracker"
-        subtitle="Track your progress. Record your Marvel Snap games on PC for win rate, cube rate and match history."
+        subtitle="Experimental, Windows PC only. Records your Marvel Snap games for win rate, cube rate and match history. It is a downloaded script rather than a signed app, so Windows may warn you before it runs."
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
