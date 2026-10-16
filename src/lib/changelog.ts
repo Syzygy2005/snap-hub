@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-10-16",
     changes: [
+      { title: "Take back a deck you shared", detail: "Decks you share can now be made unlisted, made public again or deleted, from My decks or from the deck's own page. Unlisted keeps the link working but takes the deck off the Decks page. Deleting breaks the link for everyone and leaves your drafts alone." },
       { title: "Player history from 10 to 14 October is cleaned up", detail: "The seven bad copies of the leaderboard from those days are gone from player history: 9,539 rows of players appearing to drop off and come back, and 900 October entries for players who were never really on the October board. Profiles and Movers no longer show those drops." },
     ],
   },

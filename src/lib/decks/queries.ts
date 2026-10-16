@@ -166,11 +166,56 @@ export async function ownedDecks(ownerId: number, requestedPage = 1) {
   return { decks: rows.map(toDeck), total, page, pages };
 }
 
-/** Moderation, not tidying: there is no undo, so only an admin route reaches this. */
-export async function deleteDeck(id: string): Promise<boolean> {
+/** Who is changing a shared deck: an admin moderating, or a signed-in account acting on its own. */
+export type DeckActor = { admin: true } | { accountId: number };
+export type DeckChange = "done" | "not-yours" | "missing" | "duplicate";
+
+/** The owner check, as part of the write: an admin may touch any deck, anyone else only their own. */
+const ownedBy = (by: DeckActor, param: string) => ("admin" in by ? "true" : `owner_id = ${param}`);
+const actorParams = (by: DeckActor) => ("admin" in by ? [] : [by.accountId]);
+
+async function why(id: string): Promise<"not-yours" | "missing"> {
   const db = await getDb();
-  const rows = await db.query<{ id: string }>(`delete from decks where id = $1 returning id`, [id]);
-  return rows.length > 0;
+  return (await db.query(`select 1 from decks where id = $1`, [id])).length ? "not-yours" : "missing";
+}
+
+/**
+ * Withdraws a shared deck: its owner taking a share back, or an admin moderating. There is no
+ * undo, and the link stops working for everyone who has it. The owner check is in the delete
+ * itself, so nobody removes a deck by knowing its id; the read after it only words the refusal.
+ * A deck shared signed out has no owner, so only an admin can remove it.
+ */
+export async function removeDeck(id: string, by: DeckActor): Promise<Exclude<DeckChange, "duplicate">> {
+  const db = await getDb();
+  const rows = await db.query(`delete from decks where id = $1 and ${ownedBy(by, "$2")} returning id`, [id, ...actorParams(by)]);
+  return rows.length ? "done" : why(id);
+}
+
+/**
+ * Moves a shared deck on or off the Decks page; the link works either way. Visibility is part
+ * of the dedupe key, so an owner can already hold a public and an unlisted copy of the same name
+ * and cards, and moving one onto the other's side would break the unique index. That is refused
+ * as a duplicate rather than merged, because merging would drop one copy's link and views.
+ */
+export async function setDeckListed(id: string, listed: boolean, by: DeckActor): Promise<DeckChange> {
+  const db = await getDb();
+  try {
+    const rows = await db.query(
+      `update decks set listed = $2 where id = $1 and ${ownedBy(by, "$3")} returning id`,
+      [id, listed, ...actorParams(by)],
+    );
+    return rows.length ? "done" : why(id);
+  } catch (err) {
+    if ((err as { code?: string }).code === "23505") return "duplicate";
+    throw err;
+  }
+}
+
+/** Whether this account shared the deck, for showing the owner its controls. Never sent as an id. */
+export async function ownsDeck(id: string, accountId: number | null | undefined): Promise<boolean> {
+  if (accountId == null) return false;
+  const db = await getDb();
+  return (await db.query(`select 1 from decks where id = $1 and owner_id = $2`, [id, accountId])).length > 0;
 }
 
 /**

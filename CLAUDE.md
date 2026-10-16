@@ -470,6 +470,13 @@
   wrote its stale list over another tab's save. The draft is still one per browser, so two tabs
   editing from different links share it and the last edit wins. `builder-recovery.spec.ts` covers
   all of this and failed on the old builder.
+- The account that shared a deck can unlist, re-list or delete it (`/api/decks/[id]` PATCH
+  `{listed}` and DELETE); an admin can do the same to any deck, and renaming stays admin-only.
+  `removeDeck` and `setDeckListed` put the owner check in the write, and the read after only words
+  the refusal. A deck shared signed out has no owner, so only an admin can touch it. Visibility is
+  in the dedupe key, so flipping a copy onto the side where its owner already has an identical one
+  is a 409, never a merge. `ownsDeck` gives the deck page a boolean; owner ids are not sent to the
+  browser. `shared-deck-owner.spec.ts` failed on the old My decks, which had no such controls.
 - `/decks/mine` reads private drafts and shared copies only for the session account. A browser-to-account
   save creates a private copy; public/unlisted sharing remains explicit. Builder `?private=` lookups must
   check ownership before passing any card or name to the client, and retain that draft's update ID.
