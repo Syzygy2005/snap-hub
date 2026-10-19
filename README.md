@@ -66,11 +66,12 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
 4. **GitHub repo → Settings → Secrets and variables → Actions → New repository secret**:
    - `SITE_URL`: your Vercel address, e.g. `https://snap-hub.vercel.app`
    - `CRON_SECRET`: the same value as in Vercel
-5. **GitHub repo → Actions → Leaderboard snapshot → Run workflow** for the first snapshot. Two schedulers then call it
-   every 10 minutes: Vercel Cron (`vercel.json`), which sends `CRON_SECRET` itself, and the GitHub workflow as a
-   backup. GitHub can delay scheduled runs and pauses them after 60 days without commits; re-enable them from the
-   Actions tab. Vercel only allows a 10-minute cron on the Pro plan; on Hobby, crons may run at most once a day and
-   a deploy with this `vercel.json` fails, so remove the `crons` entry there and rely on the workflow.
+5. **GitHub repo → Actions → Leaderboard snapshot → Run workflow** for the first snapshot. Vercel Cron (`vercel.json`)
+   then calls it every 10 minutes and sends `CRON_SECRET` itself. The workflow has no schedule: it is for running by
+   hand, and the freshness monitor takes one snapshot whenever it finds the board stale. GitHub pauses scheduled
+   workflows after 60 days without commits; re-enable them from the Actions tab. Vercel only allows a 10-minute cron
+   on the Pro plan; on Hobby, crons may run at most once a day and a deploy with this `vercel.json` fails, so remove
+   the `crons` entry there and add a schedule back to the Leaderboard snapshot workflow.
 
 Every push to GitHub redeploys the site on Vercel.
 
@@ -215,7 +216,7 @@ process at a time.
 
 ## Snapshots and the turn of the month
 
-The workflow runs every 10 minutes rather than every 30, because a rename is only visible while the
+Snapshots run every 10 minutes rather than every 30, because a rename is only visible while the
 player's score sits still: a shorter gap catches more of them and leaves coincidence less room to
 look like one. A replay across eight seeds put detection at 48% hourly, 66% half-hourly and 81% at
 ten minutes. That is the schedule, not a guarantee: GitHub runs scheduled workflows late, a median
@@ -226,9 +227,17 @@ it ran 47 times where the schedule asks for 144, a median of 30 minutes apart, a
 monitor flagged a stale board five times. Vercel Cron was added as a second caller on 14 October
 2026 for that reason, with the GitHub workflow kept as a backup.
 
-Two callers can arrive at once, so a run takes a lease first (`withSnapshotLease`, a
-`snapshot_lease` row in `meta`) and a call that finds it held returns 200 with `skipped` and does
-nothing. Without it, two overlapping runs on real Postgres stored every new player on the board
+That backup cost more than it gave. From 15 to 16 October 2026 it ran 45 times in about 46 hours,
+and every run was a full fetch of the official board, while the freshness monitor found the board
+fresh on all 41 of its checks: Vercel Cron was keeping it fresh on its own. Marvel Snap's terms say
+players may not use automated scripts to collect information from Second Dinner's services, which
+include its websites, so on 19 October 2026 the GitHub schedule was removed and the site asks the
+official board for nothing it does not need. The freshness monitor takes one snapshot when it finds
+a board stale, and fails anyway so the alert still goes out.
+
+A cron run and a GitHub one (by hand, or the monitor's stand-in) can still arrive at once, so a run
+takes a lease first (`withSnapshotLease`, a `snapshot_lease` row in `meta`) and a call that finds it
+held returns 200 with `skipped` and does nothing. Without it, two overlapping runs on real Postgres stored every new player on the board
 twice, because each read the board before the other's inserts committed and `players.name` is not
 unique; `overlap.test.ts` reproduces that in the reference-postgres CI job. PGlite runs one
 transaction at a time, so it cannot show the race. The lease lasts 120 seconds, longer than the
@@ -390,11 +399,12 @@ The snapshot endpoint returns HTTP 503 when an active board fails to refresh or 
 errors. An unpublished new month is expected while the previous live board continues to refresh.
 `/api/cron/snapshot/health` is a read-only check protected by the same `CRON_SECRET`; it returns 503
 when an active board has no successful check or that check is over 30 minutes old.
-The separate **Leaderboard freshness monitor** workflow calls it every 15 minutes using the existing
-`SITE_URL` and `CRON_SECRET`. Failed runs use GitHub Actions notifications, so enable those in your
-GitHub notification preferences. Snapshots no longer depend on GitHub alone, since Vercel Cron calls
-too, but the monitor does: a GitHub-wide outage stops the alerts, and only an external monitor would
-notice that.
+The separate **Leaderboard freshness monitor** workflow calls it on a 15-minute schedule using the
+existing `SITE_URL` and `CRON_SECRET`. When the check names a board as stale or missing, the workflow
+takes one snapshot (a separate call; the health endpoint never refreshes anything) and still fails.
+Failed runs use GitHub Actions notifications, so enable those in your GitHub notification
+preferences. Snapshots do not depend on GitHub, since Vercel Cron takes them, but the monitor does:
+a GitHub-wide outage stops the alerts, and only an external monitor would notice that.
 
 Run `npm run build`, `npx playwright install chromium`, then `npm run test:e2e` for desktop/mobile
 browser tests. The runner creates a fresh `.data/e2e-*` database and a local Discord stub, using ports

@@ -10,6 +10,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-19",
+    changes: [
+      { title: "The tracker page quotes Marvel Snap's terms", detail: "It said the terms limit software that collects information from the game. They say players may not use it, so the page now quotes the rule word for word." },
+    ],
+  },
+  {
     date: "2026-10-16",
     changes: [
       { title: "The PC tracker is marked experimental", detail: "It is a Windows-only script rather than a signed app, so the home page now leads with the leaderboard instead. It keeps working for anyone using it, and its setup, your stats and the community stats are still under Stats." },

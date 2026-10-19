@@ -88,9 +88,10 @@ export default async function TrackerPage() {
               </li>
               <li>
                 <strong className="text-ink">Not approved by Second Dinner.</strong> The tracker only reads files the game
-                writes and never touches the game itself, but Marvel Snap&apos;s terms limit software that collects
-                information from the game, and Second Dinner has not said whether a tracker like this is allowed. Read the
-                terms in the game&apos;s settings and decide for yourself.
+                writes and never touches the game itself, but Marvel Snap&apos;s terms say players may not &ldquo;use
+                automated scripts, software, code or systems to collect information from or otherwise interact with the
+                Services&rdquo;, and the Services include the game. Second Dinner has not said whether a tracker like this
+                is allowed. Read the terms in the game&apos;s settings and decide for yourself.
               </li>
               <li>
                 <strong className="text-ink">To remove it,</strong> close the tracker window, then delete the folder you
