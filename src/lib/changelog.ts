@@ -10,9 +10,14 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
-    date: "2026-10-16",
+    date: "2026-10-19",
     changes: [
       { title: "The tracker page quotes Marvel Snap's terms", detail: "It said the terms limit software that collects information from the game. They say players may not use it, so the page now quotes the rule word for word." },
+    ],
+  },
+  {
+    date: "2026-10-16",
+    changes: [
       { title: "The PC tracker is marked experimental", detail: "It is a Windows-only script rather than a signed app, so the home page now leads with the leaderboard instead. It keeps working for anyone using it, and its setup, your stats and the community stats are still under Stats." },
       { title: "Take back a deck you shared", detail: "Decks you share can now be made unlisted, made public again or deleted, from My decks or from the deck's own page. Unlisted keeps the link working but takes the deck off the Decks page. Deleting breaks the link for everyone and leaves your drafts alone." },
       { title: "Player history from 10 to 14 October is cleaned up", detail: "The seven bad copies of the leaderboard from those days are gone from player history: 9,539 rows of players appearing to drop off and come back, and 900 October entries for players who were never really on the October board. Profiles and Movers no longer show those drops." },

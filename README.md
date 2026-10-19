@@ -231,7 +231,7 @@ That backup cost more than it gave. From 15 to 16 October 2026 it ran 45 times i
 and every run was a full fetch of the official board, while the freshness monitor found the board
 fresh on all 41 of its checks: Vercel Cron was keeping it fresh on its own. Marvel Snap's terms say
 players may not use automated scripts to collect information from Second Dinner's services, which
-include its websites, so on 16 October 2026 the GitHub schedule was removed and the site asks the
+include its websites, so on 19 October 2026 the GitHub schedule was removed and the site asks the
 official board for nothing it does not need. The freshness monitor takes one snapshot when it finds
 a board stale, and fails anyway so the alert still goes out.
 

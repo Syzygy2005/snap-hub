@@ -502,7 +502,7 @@
 - Only Vercel Cron schedules snapshots (`vercel.json`, Pro plan). The GitHub snapshot workflow is
   manual, and the freshness monitor takes one snapshot when the health check names a board stale or
   missing, then fails anyway so the alert still goes out. GitHub's 10-minute schedule was removed on
-  16 October 2026: in the 46 hours before, it made 45 runs, every one a full fetch of the official
+  19 October 2026. In 46 hours on 15 and 16 October, it made 45 runs, every one a full fetch of the official
   board, while the monitor found the board fresh on all 41 of its checks, and the terms rule out
   automated collection. Do not add a routine second caller back; `snapshot-workflows.test.ts` runs
   the monitor's step with bash, curl and jq against a stub site and checks the schedule. A cron run
