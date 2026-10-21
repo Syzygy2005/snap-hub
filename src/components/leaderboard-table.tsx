@@ -1,15 +1,51 @@
 "use client";
 
+import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardRow } from "@/lib/leaderboard/queries";
+import { sameRecord, type PlayerRecord } from "@/lib/leaderboard/watchlist";
 import { PlayerName, RankDelta, ScoreDelta } from "./ui";
 import { formatLastMoved, useNow } from "./relative-time";
+import { useWatchlist } from "./watchlist";
 
 const PAGE = 100;
 /** Rows kept on the page below a player the board was opened at, so they are seen in context. */
 const BELOW_FOCUS = 10;
 
-type Filter = "all" | "active" | "climbing";
+type Filter = "all" | "active" | "climbing" | "watching";
+const NONE: number[] = [];
+
+/**
+ * The record behind each watched id, from this site's own database (`/api/players`), so a saved
+ * id is never shown as a player it no longer names. Each id is asked for once; null until every
+ * one has an answer, so nothing is filtered on a guess.
+ */
+function useRecords(ids: number[]) {
+  const [state, setState] = useState(() => ({ asked: new Set<number>(), byId: new Map<number, PlayerRecord>() }));
+  const missing = ids.filter((id) => !state.asked.has(id)).join(",");
+  useEffect(() => {
+    if (!missing) return;
+    let live = true;
+    fetch(`/api/players?ids=${missing}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { players?: PlayerRecord[] } | null) => {
+        if (!live || !body?.players) return;
+        const found = body.players;
+        setState((s) => {
+          const asked = new Set(s.asked);
+          const byId = new Map(s.byId);
+          for (const id of missing.split(",")) asked.add(Number(id));
+          for (const p of found) byId.set(p.id, p);
+          return { asked, byId };
+        });
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [missing]);
+  return missing ? null : state.byId;
+}
 
 /**
  * How many rows to show at first. The board pages 100 at a time, so a player further down was
@@ -39,6 +75,17 @@ export function LeaderboardTable({
   const deferredQuery = useDeferredValue(query);
   const now = useNow();
   const focusRow = useRef<HTMLTableRowElement>(null);
+  const { list: watchlist, remove } = useWatchlist();
+  const records = useRecords(compact ? NONE : watchlist.map((w) => w.id));
+  // Saved entries whose record still is the player who was saved, and the ones it no longer is.
+  const { watched, gone } = useMemo(() => {
+    if (!records) return { watched: null, gone: [] };
+    const still = (w: (typeof watchlist)[number]) => records.has(w.id) && sameRecord(w, records.get(w.id)!);
+    return { watched: watchlist.filter(still), gone: watchlist.filter((w) => !still(w)) };
+  }, [records, watchlist]);
+  const watchedIds = useMemo(() => new Set(watched?.map((w) => w.id)), [watched]);
+  // Unwatching the last player removes the button, so the view goes back to everybody.
+  const view: Filter = filter === "watching" && watchlist.length === 0 ? "all" : filter;
 
   useEffect(() => {
     // Once, when the board arrives. Centred, so a sticky header never covers the row.
@@ -49,11 +96,14 @@ export function LeaderboardTable({
     const q = deferredQuery.trim().toLowerCase();
     return rows.filter((r) => {
       if (q && !r.name.toLowerCase().includes(q) && String(r.rank) !== q) return false;
-      if (filter === "active") return typeof r.pastScore === "number" ? r.pastScore !== r.score : r.isNew;
-      if (filter === "climbing") return typeof r.pastRank === "number" && r.pastRank > r.rank;
+      if (view === "active") return typeof r.pastScore === "number" ? r.pastScore !== r.score : r.isNew;
+      if (view === "climbing") return typeof r.pastRank === "number" && r.pastRank > r.rank;
+      if (view === "watching") return watchedIds.has(r.id);
       return true;
     });
-  }, [rows, deferredQuery, filter]);
+  }, [rows, deferredQuery, view, watchedIds]);
+  const onBoard = useMemo(() => new Set(rows.map((r) => r.id)), [rows]);
+  const offBoard = view === "watching" && watched && records ? watched.filter((w) => !onBoard.has(w.id)).map((w) => records.get(w.id)!) : [];
 
   const visible = compact ? filtered : filtered.slice(0, limit);
 
@@ -72,12 +122,14 @@ export function LeaderboardTable({
             aria-label="Filter leaderboard"
             className="min-w-0 flex-1 basis-full rounded-lg border border-line bg-bg px-3 py-1.5 text-base placeholder:text-faint focus:border-accent focus:outline-none sm:max-w-xs sm:basis-auto sm:text-sm"
           />
-          <div className="flex gap-1 text-sm" role="group" aria-label="Show">
+          <div className="flex flex-wrap gap-1 text-sm" role="group" aria-label="Show">
             {(
               [
                 ["all", "All"],
                 ["active", "Played 24h"],
                 ["climbing", "Climbing"],
+                // Only once something is watched; the profile's Watch button is how a list starts.
+                ...(watchlist.length > 0 ? [["watching", `Watching (${watchlist.length})`] as const] : []),
               ] as const
             ).map(([value, label]) => (
               <button
@@ -87,9 +139,11 @@ export function LeaderboardTable({
                   setFilter(value);
                   setLimit(PAGE);
                 }}
-                aria-pressed={filter === value}
-                className={`rounded-md border px-2.5 py-1 font-medium transition-colors ${
-                  filter === value
+                aria-pressed={view === value}
+                // Waits for the records, so the list is never filtered on an id that names somebody else.
+                disabled={value === "watching" && !records}
+                className={`rounded-md border px-2.5 py-1 font-medium transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                  view === value
                     ? "border-accent bg-accent/15 text-ink"
                     : "border-line text-muted hover:text-ink"
                 }`}
@@ -179,7 +233,48 @@ export function LeaderboardTable({
           </button>
         </div>
       )}
-      {!compact && filtered.length === 0 && <p className="p-8 text-center text-sm text-muted">No players match.</p>}
+      {!compact && filtered.length === 0 && (
+        <p className="p-8 text-center text-sm text-muted">
+          {view === "watching" && !deferredQuery.trim() ? "Nobody you watch is on this board." : "No players match."}
+        </p>
+      )}
+      {offBoard.length > 0 && (
+        <p className="border-t border-line px-4 py-3 text-sm text-muted">
+          Not on this board:{" "}
+          {offBoard.map((p, i) => (
+            <span key={p.id}>
+              {i > 0 && ", "}
+              <Link href={`/players/${p.id}`} className="font-medium text-ink hover:text-accent">
+                {p.name.trim() || "(blank)"}
+              </Link>
+            </span>
+          ))}
+        </p>
+      )}
+      {view === "watching" && (
+        // Tooltips do not show on a phone, and a list made there is not on the PC.
+        <p className="border-t border-line px-4 py-2 text-xs text-faint">Your watchlist is kept in this browser only.</p>
+      )}
+      {view === "watching" && gone.length > 0 && (
+        <div className="border-t border-line px-4 py-3 text-sm text-muted">
+          <p>No longer on record. The leaderboard was started over or the player was merged into another since you saved them.</p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {gone.map((w) => (
+              <li key={w.id} className="inline-flex items-center gap-2 rounded-md border border-line px-2 py-1">
+                <span className="text-ink">{w.name.trim() || "(blank)"}</span>
+                <button
+                  type="button"
+                  onClick={() => remove(w.id)}
+                  className="text-xs font-medium text-accent hover:underline"
+                  aria-label={`Remove ${w.name.trim() || "(blank)"} from your watchlist`}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

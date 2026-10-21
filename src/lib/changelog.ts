@@ -12,6 +12,7 @@ export const CHANGELOG: Release[] = [
   {
     date: "2026-10-21",
     changes: [
+      { title: "Watch players on the leaderboard", detail: "A Watch button on a player's profile adds them to a Watching tab on the leaderboard, so the players you follow are one tap away. It lists who is not on that board and anyone who is no longer on record, for example after the leaderboard is started over. Your watchlist is kept in this browser only." },
       { title: "See a player on the board", detail: "A player's profile now links to their row on the leaderboard. The board opens at that row and marks it, even past the first 100, instead of opening at the top. A link to someone who is not on that board says so." },
     ],
   },

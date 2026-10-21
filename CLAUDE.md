@@ -282,6 +282,19 @@
   keyed by that id, so moving to another player starts fresh. A player who exists but is not on
   that board gets a notice above the stat tiles: on a phone the tiles fill the first screen, and
   the test passed with the notice out of sight until it checked the viewport.
+- The watchlist is browser-only (`snaphub:watchlist`, `lib/leaderboard/watchlist.ts`), so it has
+  no table and no foreign key to `players` for the reset script, the merge and the cleanups to
+  carry. An id is not a person: `reset-leaderboard.sql` restarts the ids and a merge deletes the
+  absorbed one, and a name is not either, since a detected rename changes it. Each entry keeps the
+  record's `first_seen` as the server gave it, and `sameRecord` accepts the record now behind the
+  id only if it was first seen no later than that: a rename leaves the date alone, a merge only
+  moves the kept record's earlier (`least`), and a record made after the watch cannot be the player
+  watched. The board asks `/api/players?ids=` (this site's database, never the source; at most
+  `MAX_WATCHED`, a chosen bound) for each id once, and the Watching button stays disabled until
+  every id has an answer, so nothing is shown on a guess. Entries that fail are listed as no longer
+  on record with Remove, never dropped silently. The route takes an `int[]` parameter, so it runs
+  in the reference-postgres CI job. `watchlist.spec.ts` plants a stale entry for a real id and
+  checks that player is never shown as watched.
 - `LeaderboardTable`'s `compact` means no search bar and no paging, not fewer columns: hiding
   Best and Last played left three auto-width columns splitting 600px of slack, so the numbers
   floated apart with a void between the name and the score. The Player column carries `w-full`
