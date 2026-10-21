@@ -12,7 +12,7 @@ import { otherNamesUsedWith } from "@/lib/stats/identity";
 import { isAdmin } from "@/lib/auth/admin";
 import { currentAccount } from "@/lib/auth/session";
 import { isRegion, REGION_LABELS } from "@/lib/config";
-import { param } from "@/lib/leaderboard/params";
+import { boardHref, param } from "@/lib/leaderboard/params";
 import { getPlayer, getPlayerHistory } from "@/lib/leaderboard/queries";
 import { seasonLabel } from "@/lib/season";
 
@@ -124,7 +124,21 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
         <Stat
           label={selected.onBoard ? "Current rank" : "Last rank"}
           value={`#${selected.rank}`}
-          hint={selected.onBoard ? `${seasonLabel(selected.season)}` : "no longer in the top 1000"}
+          hint={
+            selected.onBoard ? (
+              <>
+                {seasonLabel(selected.season)}
+                <Link
+                  href={boardHref("/leaderboard", { season: selected.season, region: selected.region, player: String(player.id) })}
+                  className="mt-1 block w-fit text-accent hover:underline"
+                >
+                  Show on the board
+                </Link>
+              </>
+            ) : (
+              "no longer in the top 1000"
+            )
+          }
         />
         <Stat label="Points" value={<span className="text-gold">{selected.score.toLocaleString()}</span>} />
         <Stat label="Best rank" value={`#${selected.bestRank}`} hint={seasonLabel(selected.season)} />

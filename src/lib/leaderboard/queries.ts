@@ -253,6 +253,13 @@ export async function getPlayer(id: number) {
   };
 }
 
+/** Just the name, for saying who a link meant when they are not on the board it opened. */
+export async function getPlayerName(id: number): Promise<string | null> {
+  const db = await getDb();
+  const [row] = await db.query<{ name: string }>(`select name from players where id = $1`, [id]);
+  return row?.name ?? null;
+}
+
 export async function getPlayerHistory(id: number, season: string, region: Region): Promise<HistoryPoint[]> {
   const db = await getDb();
   const rows = await db.query<{ taken_at: Date; rank: number | null; score: number }>(

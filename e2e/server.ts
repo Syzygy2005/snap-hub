@@ -30,6 +30,8 @@ async function main() {
   await db.query(`insert into standings(season,region,player_id,rank,score,best_rank,peak_score,first_seen,updated_at,score_changed_at,history_at)
     select $1,'global',id,id,10000-id,id,10000-id,$2,$2,$2,$2 from players`,[season,checked]);
   await db.query("insert into snapshots(season,region,taken_at,total_players,entries,changed) values ($1,'global',$2,120,120,120)",[season,checked]);
+  // A recorded player who is not on this board, added after the standings so it gets none.
+  await db.query("insert into players(name) values ('Retired Player')");
   // A JSONB string reproduces the production metadata representation that broke rendering.
   await db.query("insert into meta(key,value,updated_at) values ($1,to_jsonb($2::text),$3)",
     [`board_checked:${season}:global`,JSON.stringify({at:checked.toISOString()}),checked]);

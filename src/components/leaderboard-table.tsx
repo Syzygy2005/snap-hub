@@ -1,29 +1,49 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardRow } from "@/lib/leaderboard/queries";
 import { PlayerName, RankDelta, ScoreDelta } from "./ui";
 import { formatLastMoved, useNow } from "./relative-time";
 
 const PAGE = 100;
+/** Rows kept on the page below a player the board was opened at, so they are seen in context. */
+const BELOW_FOCUS = 10;
 
 type Filter = "all" | "active" | "climbing";
+
+/**
+ * How many rows to show at first. The board pages 100 at a time, so a player further down was
+ * not on the page at all: whole pages are shown up to and just past their row instead.
+ */
+export function initialLimit(rows: BoardRow[], focusId: number | null) {
+  const index = focusId === null ? -1 : rows.findIndex((r) => r.id === focusId);
+  return index < 0 ? PAGE : Math.ceil((index + 1 + BELOW_FOCUS) / PAGE) * PAGE;
+}
 
 export function LeaderboardTable({
   rows,
   compact = false,
   latestUpdate = null,
+  focusId = null,
 }: {
   rows: BoardRow[];
   compact?: boolean;
   /** taken_at of the newest snapshot. A score that changed then moved in the last push. */
   latestUpdate?: string | null;
+  /** A player to open the board at: their row is shown, marked and scrolled to. */
+  focusId?: number | null;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-  const [limit, setLimit] = useState(PAGE);
+  const [limit, setLimit] = useState(() => initialLimit(rows, focusId));
   const deferredQuery = useDeferredValue(query);
   const now = useNow();
+  const focusRow = useRef<HTMLTableRowElement>(null);
+
+  useEffect(() => {
+    // Once, when the board arrives. Centred, so a sticky header never covers the row.
+    focusRow.current?.scrollIntoView({ block: "center" });
+  }, []);
 
   const filtered = useMemo(() => {
     const q = deferredQuery.trim().toLowerCase();
@@ -103,8 +123,15 @@ export function LeaderboardTable({
           </thead>
           <tbody>
             {visible.map((r) => (
-              <tr key={r.id} className="border-t border-line/60 hover:bg-surface-2/60">
-                <td className="num px-4 py-2">
+              <tr
+                key={r.id}
+                ref={r.id === focusId ? focusRow : undefined}
+                aria-current={r.id === focusId ? "true" : undefined}
+                className={`border-t border-line/60 ${r.id === focusId ? "bg-accent/15" : "hover:bg-surface-2/60"}`}
+              >
+                {/* The tint alone was barely darker than hover on the forest palette, so the row
+                    the board was opened at also carries a bar down its left edge. */}
+                <td className={`num px-4 py-2 ${r.id === focusId ? "shadow-[inset_3px_0_0_var(--color-accent)]" : ""}`}>
                   <RankBadge rank={r.rank} />
                 </td>
                 <td className="px-2 py-2 text-xs">

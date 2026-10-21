@@ -1,18 +1,28 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { RelativeTime } from "@/components/relative-time";
 import { EmptyState, PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { REGION_LABELS } from "@/lib/config";
-import { boardHref, resolveBoardParams } from "@/lib/leaderboard/params";
-import { getBoard, isSeasonLive, lastBoardCheck } from "@/lib/leaderboard/queries";
+import { boardHref, param, resolveBoardParams } from "@/lib/leaderboard/params";
+import { getBoard, getPlayerName, isSeasonLive, lastBoardCheck } from "@/lib/leaderboard/queries";
 import { DataFreshness } from "@/components/data-freshness";
 import { seasonLabel } from "@/lib/season";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Infinite Leaderboard" };
 
+/** `?player=<id>` opens the board at that player. Anything that is not a player id is ignored. */
+function playerParam(value: string | undefined) {
+  if (!value || !/^\d{1,9}$/.test(value)) return null;
+  const id = Number(value);
+  return id > 0 ? id : null;
+}
+
 export default async function LeaderboardPage(props: PageProps<"/leaderboard">) {
-  const { region, season, seasons, regions } = await resolveBoardParams(await props.searchParams);
+  const sp = await props.searchParams;
+  const { region, season, seasons, regions } = await resolveBoardParams(sp);
+  const focusId = playerParam(param(sp, "player"));
 
   if (!season) {
     return (
@@ -26,7 +36,12 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
   }
 
   const { meta, rows } = await getBoard(season, region, 24);
-  const [live, checkedAt] = await Promise.all([isSeasonLive(season, region), lastBoardCheck(season, region)]);
+  const onBoard = focusId !== null && rows.some((r) => r.id === focusId);
+  const [live, checkedAt, missingName] = await Promise.all([
+    isSeasonLive(season, region),
+    lastBoardCheck(season, region),
+    focusId !== null && !onBoard ? getPlayerName(focusId) : null,
+  ]);
   const cutoff = rows.at(-1);
 
   return (
@@ -67,6 +82,15 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
       </PageHeader>
 
       <DataFreshness checkedAt={checkedAt} archived={!live} />
+      {/* Above the tiles, which fill a phone screen on their own. */}
+      {missingName !== null && (
+        <p role="status" className="mb-4 rounded-lg border border-line px-3 py-2 text-sm text-muted">
+          <Link href={`/players/${focusId}`} className="font-medium text-ink hover:text-accent">
+            {missingName.trim() || "(blank)"}
+          </Link>{" "}
+          is not in this top {rows.length.toLocaleString()}. Their profile has every board they were on.
+        </p>
+      )}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="#1 right now" value={rows[0]?.name.trim() ?? "—"} hint={`${rows[0]?.score.toLocaleString() ?? 0} points`} />
         <Stat
@@ -91,7 +115,8 @@ export default async function LeaderboardPage(props: PageProps<"/leaderboard">) 
       </div>
 
       <Panel>
-        <LeaderboardTable rows={rows} latestUpdate={meta.updatedAt} />
+        {/* Keyed so that opening the board at another player starts from that player's row. */}
+        <LeaderboardTable key={onBoard ? focusId : "top"} rows={rows} latestUpdate={meta.updatedAt} focusId={onBoard ? focusId : null} />
       </Panel>
     </>
   );

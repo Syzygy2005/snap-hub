@@ -10,6 +10,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    date: "2026-10-21",
+    changes: [
+      { title: "See a player on the board", detail: "A player's profile now links to their row on the leaderboard. The board opens at that row and marks it, even past the first 100, instead of opening at the top. A link to someone who is not on that board says so." },
+    ],
+  },
+  {
     date: "2026-10-19",
     changes: [
       { title: "The tracker page quotes Marvel Snap's terms", detail: "It said the terms limit software that collects information from the game. They say players may not use it, so the page now quotes the rule word for word." },
