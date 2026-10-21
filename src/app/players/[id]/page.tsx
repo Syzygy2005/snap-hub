@@ -7,6 +7,7 @@ import { PageHeader, Panel, Stat, Tabs } from "@/components/ui";
 import { PlayerAdmin } from "@/components/player-admin";
 import { TrackerEvidence } from "@/components/tracker-evidence";
 import { PlayerClaim } from "@/components/player-claim";
+import { WatchButton } from "@/components/watchlist";
 import { claimForViewer } from "@/lib/leaderboard/claims";
 import { otherNamesUsedWith } from "@/lib/stats/identity";
 import { isAdmin } from "@/lib/auth/admin";
@@ -70,10 +71,11 @@ export default async function PlayerPage(props: PageProps<"/players/[id]">) {
 
   return (
     <>
-      <div className="mb-2 text-sm">
+      <div className="mb-2 flex items-center justify-between gap-3 text-sm">
         <Link href="/leaderboard" className="text-muted hover:text-ink">
           ← Leaderboard
         </Link>
+        <WatchButton player={{ id: player.id, name: player.name, firstSeen: player.firstSeen }} />
       </div>
       <PageHeader
         title={player.name.trim() || "(blank name)"}

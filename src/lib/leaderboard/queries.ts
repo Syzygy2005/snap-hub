@@ -253,6 +253,17 @@ export async function getPlayer(id: number) {
   };
 }
 
+/** Name and first sighting for a watchlist: the date is what tells a record apart (`watchlist.ts`). */
+export async function getPlayerRecords(ids: number[]): Promise<{ id: number; name: string; firstSeen: string }[]> {
+  if (ids.length === 0) return [];
+  const db = await getDb();
+  const rows = await db.query<{ id: number; name: string; first_seen: Date }>(
+    `select id, name, first_seen from players where id = any($1::int[]) order by id`,
+    [ids],
+  );
+  return rows.map((r) => ({ id: r.id, name: r.name, firstSeen: r.first_seen.toISOString() }));
+}
+
 /** Just the name, for saying who a link meant when they are not on the board it opened. */
 export async function getPlayerName(id: number): Promise<string | null> {
   const db = await getDb();
