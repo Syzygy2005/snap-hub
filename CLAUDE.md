@@ -129,8 +129,18 @@
   The old month is **live**, not Final, until that mark exists (`isSeasonLive` in `queries.ts`).
   On 1 October 2026 the September board was still changing on every run 16 hours past midnight
   UTC while October came back empty, and both pages had labelled it Final by calendar month.
+  Checked in Supabase on 21 October 2026, the rule held for September: the board changed 473 to
+  728 rows a run all day on 6 October, last at 19:07 UTC plus 16 changes at 20:11, then nothing,
+  and the 23:30 run that found October's first standings fetched September unchanged and closed
+  it, so the stored final is the official one by 3 hours 20 minutes. That is one month. Check
+  October the same way once it closes (its `snapshots` rows, newest first, against the
+  `season_closed` row's `updated_at`). A month closed while still moving is recovered by deleting
+  its `season_closed` row: the next run fetches it again while the API still serves it.
 - Snapshots run every 10 minutes, on Vercel Cron. That cadence was measured, not guessed: detection
   of real renames went 48% hourly to 81% at ten minutes across eight seeds, and phantoms fell.
+- Storage, measured 21 October 2026: `history` held 231,333 rows for September (from the 18
+  September restart) and 140,714 for October so far; the table was 53 MB and the database 71 MB.
+  A season archive that keeps every row forever has to be planned against the Supabase plan's limit.
 - `scripts/reset-leaderboard.sql` is the one-way leaderboard wipe, run by hand in Supabase.
   `reset.test.ts` asserts what it clears and what it must leave standing; if a new table gains a
   foreign key to `players`, both the script and that test need it.
@@ -263,6 +273,15 @@
   with `node scripts/build-brand.mjs`, keeping the cut transparent on both palettes. Check the Apple icon
   and home share preview too. Manrope/Inter remain the UI fonts. Pointer effects belong on featured art only,
   never on readable statistics; honor reduced motion and pointer cancellation.
+- `/leaderboard?player=<id>` opens the board at that player, and a profile links to it when the
+  player is on that season's board. `initialLimit` shows whole pages down to their row and ten
+  below it, since the table pages 100 at a time and rank 734 was not on the page at all; the row
+  carries `aria-current`, a tint and a left bar (the tint alone was barely darker than hover on
+  the forest palette), and it scrolls into view once, centred under the sticky header. It runs
+  in the browser on rows the page already sends, so it asks the source for nothing. The table is
+  keyed by that id, so moving to another player starts fresh. A player who exists but is not on
+  that board gets a notice above the stat tiles: on a phone the tiles fill the first screen, and
+  the test passed with the notice out of sight until it checked the viewport.
 - `LeaderboardTable`'s `compact` means no search bar and no paging, not fewer columns: hiding
   Best and Last played left three auto-width columns splitting 600px of slack, so the numbers
   floated apart with a void between the name and the score. The Player column carries `w-full`
@@ -498,7 +517,10 @@
   the active board to succeed in this run. An empty unpublished month is allowed while the previous live
   board succeeds. The read-only health endpoint uses successful `board_checked` timestamps, never a
   generic cron timestamp, and must not refresh the source itself. The monitor runs on GitHub Actions only,
-  so a GitHub-wide outage silences it even though Vercel Cron keeps taking snapshots.
+  so a GitHub-wide outage silences it even though Vercel Cron keeps taking snapshots. GitHub also
+  throttles it: from 19 to 21 October 2026 the 15-minute schedule ran 12 times in about 50 hours,
+  2.5 to 5.5 hours apart, so an alert, and the stand-in snapshot, can lag that long. Over the same
+  checks Vercel Cron refreshed on every 10-minute mark and the board was never 8 minutes old.
 - Only Vercel Cron schedules snapshots (`vercel.json`, Pro plan). The GitHub snapshot workflow is
   manual, and the freshness monitor takes one snapshot when the health check names a board stale or
   missing, then fails anyway so the alert still goes out. GitHub's 10-minute schedule was removed on
