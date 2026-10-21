@@ -3,6 +3,7 @@ import { describeDbError } from "@/lib/db/errors";
 import { cleanEnv } from "@/lib/env";
 import { getSnapshotHealth, snapshotRunSucceeded } from "@/lib/leaderboard/health";
 import { withSnapshotLease } from "@/lib/leaderboard/lease";
+import { notifyHealthChange } from "@/lib/leaderboard/alert";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -32,7 +33,12 @@ export async function GET(request: Request) {
     const leaderboard = run.value;
     const health = await getSnapshotHealth();
     const ok = snapshotRunSucceeded(leaderboard, health);
-    return Response.json({ ok, leaderboard, health }, {
+    // Tells Discord when the board goes stale or recovers. It never changes this run's answer.
+    const alert = await notifyHealthChange(health, leaderboard).catch((err) => {
+      console.error("[snapshot alert] failed", err);
+      return "failed" as const;
+    });
+    return Response.json({ ok, leaderboard, health, alert }, {
       status: ok ? 200 : 503,
       headers: { "Cache-Control": "no-store" },
     });

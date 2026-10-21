@@ -56,6 +56,11 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
      Without it Vercel's production domain is used, and locally the address the request arrived on.
    - `ADMIN_DISCORD_IDS` (optional): comma separated Discord user ids who can moderate. Unset means
      nobody can, including you.
+   - `SNAPSHOT_ALERT_DISCORD_URL` (optional): a Discord webhook address. The snapshot posts there
+     when the board goes 30 minutes without a successful refresh, and once more when it recovers,
+     never on every stale run. Make one in a private channel's settings, under Integrations →
+     Webhooks, and copy its URL. Anyone holding the URL can post to that channel, so keep it
+     secret. Only an `https://discord.com/api/webhooks/...` address is used. Redeploy after setting it.
 
    Scope `DATABASE_URL` to Production only if you do not want preview deployments writing to the
    live database. Previews then have no database at all: PGlite falls back to an in-memory one,
@@ -405,6 +410,13 @@ takes one snapshot (a separate call; the health endpoint never refreshes anythin
 Failed runs use GitHub Actions notifications, so enable those in your GitHub notification
 preferences. Snapshots do not depend on GitHub, since Vercel Cron takes them, but the monitor does:
 a GitHub-wide outage stops the alerts, and only an external monitor would notice that.
+
+GitHub runs that schedule far less often than it asks (12 times in about 50 hours from 19 to 21
+October 2026), so the faster alert comes from the snapshot itself: with
+`SNAPSHOT_ALERT_DISCORD_URL` set, each run posts to Discord when the board turns stale or fresh
+again. The board counts as stale once its last good refresh is over 30 minutes old and runs come
+every 10, so the alert lands within 40 minutes of the last good refresh. It cannot see Vercel Cron
+stopping, since it runs inside it, and that is what the GitHub monitor stays for.
 
 Run `npm run build`, `npx playwright install chromium`, then `npm run test:e2e` for desktop/mobile
 browser tests. The runner creates a fresh `.data/e2e-*` database and a local Discord stub, using ports
