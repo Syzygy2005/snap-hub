@@ -64,3 +64,38 @@ it("releases the lease after a run, so the next scheduled call goes ahead", asyn
   expect((await GET(request())).status).toBe(200);
   expect(runSnapshot).toHaveBeenCalledTimes(2);
 });
+
+it("tells Discord once when the board goes stale, without changing what the run answers", async () => {
+  const db = await getDb();
+  await db.query(`insert into meta (key, value, updated_at) values ('snapshot_alert', '{"stale":false}'::jsonb, now())
+    on conflict (key) do update set value = excluded.value`);
+  vi.stubEnv("SNAPSHOT_ALERT_DISCORD_URL", "https://discord.com/api/webhooks/1/token");
+  const posts: string[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+    posts.push(JSON.parse(String(init.body)).content);
+    return new Response(null, { status: 204 });
+  }));
+  vi.mocked(getSnapshotHealth).mockResolvedValue({ ok: false, maxAgeMinutes: 30, boards: [{ season: "2026-10", region: "global", checkedAt: "2026-10-21T14:40:17Z", status: "stale" }] });
+  vi.mocked(runSnapshot).mockResolvedValue([{ season: "2026-10", region: "global", status: "error", detail: "Source returned HTTP 503" }]);
+  try {
+    const first = await GET(request());
+    expect(first.status).toBe(503);
+    expect((await first.json()).alert).toBe("sent");
+    const second = await GET(request());
+    expect((await second.json()).alert).toBe("unchanged");
+    expect(posts).toHaveLength(1);
+    expect(posts[0]).toContain("Source returned HTTP 503");
+
+    // Discord down: the run still answers on its own terms, and the next one tries again.
+    vi.mocked(getSnapshotHealth).mockResolvedValue({ ok: true, maxAgeMinutes: 30, boards: [{ season: "2026-10", region: "global", checkedAt: "2026-10-21T15:20:17Z", status: "fresh" }] });
+    vi.mocked(runSnapshot).mockResolvedValue([{ season: "2026-10", region: "global", status: "updated" }]);
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
+    const third = await GET(request());
+    expect(third.status).toBe(200);
+    expect(await third.json()).toMatchObject({ ok: true, alert: "failed" });
+    expect((await (await GET(request())).json()).alert).toBe("sent");
+  } finally {
+    vi.unstubAllGlobals();
+    await db.query(`delete from meta where key = 'snapshot_alert'`);
+  }
+});

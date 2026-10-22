@@ -534,6 +534,16 @@
   throttles it: from 19 to 21 October 2026 the 15-minute schedule ran 12 times in about 50 hours,
   2.5 to 5.5 hours apart, so an alert, and the stand-in snapshot, can lag that long. Over the same
   checks Vercel Cron refreshed on every 10-minute mark and the board was never 8 minutes old.
+  So the fast alert runs inside the snapshot (`alert.ts`, called by the route after `health`):
+  with `SNAPSHOT_ALERT_DISCORD_URL` set, a run posts to that Discord webhook when the board turns
+  stale and when it turns fresh again, never on every stale run. The `snapshot_alert` row in `meta`
+  holds the state last told, and the upsert that flips it decides which run posts (a writable CTE
+  reads the old value in the same statement), so two runs at once post once; checked on Postgres
+  16 through postgres.js, where they really race, and the test runs in the reference-postgres job.
+  A delivery that fails puts the state back so the next run tries again. The first healthy run
+  only records a baseline. Posts carry `allowed_mentions: { parse: [] }`, since run details can
+  hold source text, and stop at Discord's 2000 characters. It never changes the run's own answer.
+  It cannot see Vercel Cron itself stopping, which is why the GitHub monitor stays.
 - Only Vercel Cron schedules snapshots (`vercel.json`, Pro plan). The GitHub snapshot workflow is
   manual, and the freshness monitor takes one snapshot when the health check names a board stale or
   missing, then fails anyway so the alert still goes out. GitHub's 10-minute schedule was removed on
