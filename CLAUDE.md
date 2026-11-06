@@ -460,6 +460,10 @@
   8 to 9.5s under load, against vitest's 10s default. Three suites run at once failed 18 files with
   "Hook timed out in 10000ms", reported as failed files plus extra skipped tests, until it was raised.
   A run with failed files and more than the usual 8 skips is this, or a hook that really hangs.
+- The `checks` CI job is allowed 30 minutes. It normally takes about 6, but on 6 November 2026
+  Ubuntu's apt mirror stalled on the font packages `playwright install --with-deps` pulls and the
+  install alone took 10.5 to 11.5 minutes twice running, so the old 15-minute limit cancelled the
+  browser tests both times. A cancelled `checks` job with a long install step is that, not a test.
 - The browser tests run `next start`, which serves the **last build**. Changing a source file
   and rerunning them tests the old code. Rebuild first; a check written to catch a bug passed
   against the buggy page for exactly this reason until it was rebuilt.

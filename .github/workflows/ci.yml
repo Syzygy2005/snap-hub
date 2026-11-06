@@ -15,7 +15,11 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # A normal run takes about 6 minutes, the browser install under 30 seconds of it. On 6 November
+    # 2026 Ubuntu's mirror stalled on the browser's font packages and the install took 10.5 to 11.5
+    # minutes on two attempts in a row, so a 15-minute limit cancelled the browser tests part way.
+    # 30 is headroom over that, chosen rather than measured.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
