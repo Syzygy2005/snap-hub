@@ -61,6 +61,8 @@ You need GitHub, Supabase and Vercel accounts (all free tiers).
      never on every stale run. Make one in a private channel's settings, under Integrations →
      Webhooks, and copy its URL. Anyone holding the URL can post to that channel, so keep it
      secret. Only an `https://discord.com/api/webhooks/...` address is used. Redeploy after setting it.
+   - `TRACKER_REPORT_DISCORD_URL` (optional): where the tracker page tells people to send problem
+     reports saved with `-SaveRaw`. Only an https discord.gg or discord.com address is shown.
 
    Scope `DATABASE_URL` to Production only if you do not want preview deployments writing to the
    live database. Previews then have no database at all: PGlite falls back to an in-memory one,
@@ -277,6 +279,75 @@ Deploy before running it, or an ingest that still writes bad rows simply starts 
 tables. Afterwards, kick the workflow from Actions rather than waiting for the next run. The
 standings come back from the official API; the point history does not, because the API serves the
 board as it stands and not how it moved, so Movers stays empty until new snapshots pile up.
+
+## Shutting down and bringing it back
+
+The site was shelved in November 2026. Everything that runs it is in this repository. What is not
+is the database, which is the only copy of the leaderboard history, and the secret values, all of
+which can be made again.
+
+### State when it was shelved
+
+- Snapshots ran every 10 minutes on Vercel Cron. History starts with the 18 September 2026 restart.
+  On 6 November 2026 the database was 97 MB, with history rows of 231,333 for September, 281,670
+  for October and 22,240 for November so far, plus the 1,000-row August board it started from.
+- September and October have stored final boards. October's was closed at 22:40 UTC on 3 November
+  after an hour without a change: it had changed 309 rows at 19:10, then 14, 34 and 11 by 21:40.
+  September had sat unchanged for 3 hours 20 minutes before closing, so October's is probably the
+  official final but not proven.
+- November was cut off mid-month. Its stored board is the last one taken, not a final, but on
+  return the site calls any month older than the previous one Final (`isSeasonLive`), so it will be
+  labelled Final anyway.
+- Marvel Snap's terms rule out automated collection from Second Dinner's sites, the leaderboard
+  included (see CLAUDE.md). The owner emailed Second Dinner on 16 October 2026 and applied for
+  approval. Settle that before snapshots run again.
+
+### Shutting down, in this order
+
+1. **Vercel**: pause or delete the project. Its cron fetches the official board every 10 minutes
+   for as long as it is deployed, and stopping it first means nothing writes during the dump.
+2. **Dump the database** (below), if the history should come back.
+3. **Supabase**: pause or delete the project.
+4. **GitHub → Actions**: disable "Leaderboard freshness monitor" and "Reference database sync".
+   Once the site is gone they fail on every run, and GitHub only stops a schedule itself after
+   60 days without commits.
+5. **The PC tracker**: close it wherever it runs. It keeps each game and retries the upload for ever.
+
+The Discord application and webhooks can stay as they are.
+
+### The dump
+
+The official API serves only the current and previous month, so the dump is the history; without
+it the site comes back to an empty board.
+
+```
+pg_dump "<Supabase connection string>" --schema=public --no-owner --no-privileges --format=custom --file=snaphub.dump
+```
+
+- The connection string is under the project's **Connect** panel in Supabase. If the direct
+  connection does not reach from home, use the Session pooler one.
+- `pg_dump` has to be at least the server's major version. Production ran Postgres 17.6. On
+  Windows, the PostgreSQL 17 installer's command line tools include it.
+- Keep the file private and out of this repository: it holds Discord usernames and ids, tracker
+  games and shared decks.
+
+### Bringing it back
+
+1. Make a new Supabase project and restore the dump into it **before** the first deploy:
+
+   ```
+   pg_restore --schema=public --no-owner --no-privileges --dbname="<new connection string>" snaphub.dump
+   ```
+
+   Keep `--schema=public`: without it the restore stops on "schema public already exists" and
+   exits with an error, harmless but alarming. Both commands were run end to end on 6 November
+   2026 against a database the app had built: every table, index and row came back, and the app
+   then connected, applied its schema over the top and carried on with new ids after the old ones.
+2. Follow **Put it online** above. Every secret is new: a fresh `CRON_SECRET` in both Vercel and
+   the GitHub secrets, the new `DATABASE_URL`, `SITE_URL`, a regenerated Discord client secret with
+   the redirect URL registered for the new address, and your Discord id in `ADMIN_DISCORD_IDS`.
+3. Turn the two workflows back on in GitHub Actions.
+4. Read the state above before relying on November's board or turning snapshots back on.
 
 ## What a tracker knows about names
 

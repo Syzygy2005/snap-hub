@@ -132,12 +132,18 @@
   Checked in Supabase on 21 October 2026, the rule held for September: the board changed 473 to
   728 rows a run all day on 6 October, last at 19:07 UTC plus 16 changes at 20:11, then nothing,
   and the 23:30 run that found October's first standings fetched September unchanged and closed
-  it, so the stored final is the official one by 3 hours 20 minutes. That is one month. Check
-  October the same way once it closes (its `snapshots` rows, newest first, against the
-  `season_closed` row's `updated_at`). A month closed while still moving is recovered by deleting
-  its `season_closed` row: the next run fetches it again while the API still serves it.
+  it, so the stored final is the official one by 3 hours 20 minutes. October, checked the same way
+  on 6 November 2026, is less clear: closed at 22:40 UTC on 3 November after one hour unchanged,
+  with 309 rows changed at 19:10 and a trickle of 14, 34 and 11 to 21:40, so probably final but
+  not proven. A month closed while still moving is recovered by deleting its `season_closed` row:
+  the next run fetches it again while the API still serves it.
 - Snapshots run every 10 minutes, on Vercel Cron. That cadence was measured, not guessed: detection
   of real renames went 48% hourly to 81% at ten minutes across eight seeds, and phantoms fell.
+- The site was shelved in November 2026. README "Shutting down and bringing it back" has the state
+  at shutdown, the order to stop things in, and the `pg_dump`/`pg_restore` commands, both run end
+  to end on 6 November 2026. `pg_restore` needs `--schema=public` or it exits with an error on the
+  schema every new database already has. November was cut off mid-month and `isSeasonLive` will
+  still label it Final on return, since it calls every month older than the previous one Final.
 - Storage, measured 21 October 2026: `history` held 231,333 rows for September (from the 18
   September restart) and 140,714 for October so far; the table was 53 MB and the database 71 MB.
   A season archive that keeps every row forever has to be planned against the Supabase plan's limit.
